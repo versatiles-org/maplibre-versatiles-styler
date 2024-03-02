@@ -1,3 +1,4 @@
+export default `
 .maplibregl-ctrl-group .maplibregl-style-list button {
 	background: none;
 	border: none;
@@ -28,3 +29,4 @@
 	background-repeat: no-repeat;
 	background-size: 70%;
 }
+`
