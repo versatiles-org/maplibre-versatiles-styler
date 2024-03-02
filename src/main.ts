@@ -1,24 +1,51 @@
 import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import type { Map as MLGLMap } from 'maplibre-gl';
+import { Styler } from './styler/styler';
+import type { Config } from './styler/styler';
+export type { Config };
+/**
+ * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.
+ */
+export class VersatilesStyler {
+	readonly #config: Config;
+	#map?: MLGLMap;
+	#styler?: Styler;
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+	/**
+	 * Initializes a new instance of the styleControl.
+	 * @param {Object} config Configuration options for the control.
+	 */
+	constructor(config: Config) {
+		this.#config = config;
+	}
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+	/**
+	 * Returns the default position for the control on the map.
+	 * @returns {string} The default position.
+	 */
+	getDefaultPosition() {
+		return 'top-right';
+	}
+
+	/**
+	 * Called when the control is added to the map.
+	 * @param {Map} map The MapLibre GL JS map instance.
+	 * @returns {HTMLElement} The element containing the control.
+	 */
+	onAdd(map: MLGLMap) {
+		this.#map = map;
+		this.#styler = new Styler(this.#map, this.#config);
+
+		return this.#styler.container;
+	}
+
+	/**
+	 * Called when the control is removed from the map.
+	 */
+	onRemove() {
+		if (!!this.#map) return;
+
+		// Clean up references
+		this.#map = undefined;
+	}
+}
