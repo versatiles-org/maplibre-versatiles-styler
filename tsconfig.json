@@ -8,7 +8,7 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
-    "declarationDir": "dist",
+    "declarationDir": "dist/dts",
     /* Bundler mode */
     "moduleResolution": "bundler",
     "noEmit": false,
