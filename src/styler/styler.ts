@@ -1,5 +1,6 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
+import { createElementsFromHTML } from './html';
 
 export interface Config {
 	fontNames: string[],
