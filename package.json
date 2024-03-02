@@ -8,7 +8,7 @@
     "compile": "rollup -c",
     "build": "rm -rf dist && npm run compile && rm -rf dist/dts",
     "lint": "eslint",
-    "watch": "watch 'npm run compile' src"
+    "watch": "rollup -cw"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",

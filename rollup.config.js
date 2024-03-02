@@ -29,11 +29,13 @@ export default [
 			commonjs(),
 			nodeResolve(),
 			typescript()
-		]
+		],
+		watch: {}
 	},
 	{
 		input: './dist/dts/index.d.ts',
 		output: [{ file: 'dist/maplibre-gl-versatiles-styler.d.ts', format: 'es' }],
 		plugins: [dts()],
+		watch: false,
 	},
 ]
