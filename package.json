@@ -22,10 +22,10 @@
     "rollup": "^4.12.0",
     "rollup-plugin-dts": "^6.1.0",
     "tslib": "^2.6.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@versatiles/style": "^4.2.2",
+    "@versatiles/style": "^4.2.3",
     "maplibre-gl": "^4.1.0"
   }
 }
