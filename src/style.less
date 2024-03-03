@@ -1,4 +1,8 @@
 .maplibregl-versatiles-styler {
+	.maplibregl-pane {
+		overflow-y: scroll;
+	}
+
 	h3 {
 		font-weight: bold;
 		font-size: 1em;
@@ -8,15 +12,28 @@
 
 	.maplibregl-list {
 		button {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			column-gap: 4px;
+
 			background: none;
 			border: none;
 			cursor: pointer;
-			display: block;
 			font-size: 14px;
-			padding: 8px;
+			padding: 4px 8px;
 			text-align: left;
 			width: 100%;
 			height: auto;
+
+			.label {
+			}
+
+			.color {
+				padding: 4px 4px;
+				border: 1px solid rgba(0, 0, 0, 0.2);
+				font-family: 'Courier New', Courier, monospace;
+			}
 		}
 
 		button.active {

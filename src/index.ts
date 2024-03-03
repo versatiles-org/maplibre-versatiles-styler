@@ -16,8 +16,7 @@ export type { Config };
 	const head = document.getElementsByTagName('head')[0];
 	const s = document.createElement('style');
 	s.setAttribute('type', 'text/css');
-	console.log(styles);
-	//s.appendChild(document.createTextNode(styles));
+	s.appendChild(document.createTextNode(styles));
 	head.appendChild(s);
 })()
 
