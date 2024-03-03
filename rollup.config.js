@@ -27,7 +27,7 @@ export default [
 		],
 		treeshake: true,
 		plugins: [
-			less(),
+			less({ output: false }),
 			commonjs(),
 			nodeResolve(),
 			typescript()
