@@ -92,20 +92,23 @@ export class Styler {
 				<div id="button" class="entry">
 					<label>${name}</label>
 					<div class="space"></div>
-					<input id="input" type="color" value="${hex}">
+					<input id="input" type="color" value="${hex}" style="background-color:${hex}">
 					<button id="reset" type="button" disabled>&circlearrowleft;</button>
 				</div>
 			`);
 
 			reset.addEventListener('click', () => {
 				(input as HTMLInputElement).value = defaultColor;
+				input.style.backgroundColor = defaultColor;
 				currentColors[name] = defaultColor;
-				this.renderStyle()
 				reset.setAttribute('disabled', 'disabled');
+				this.renderStyle()
 			});
 
 			input.addEventListener('change', () => {
-				currentColors[name] = (input as HTMLInputElement).value;
+				const color = (input as HTMLInputElement).value;
+				currentColors[name] = color;
+				input.style.backgroundColor = color;
 				reset.removeAttribute('disabled');
 				this.renderStyle()
 			}, false);
