@@ -1,4 +1,4 @@
-import styles from './style.css';
+import styles from './style.less';
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { Styler } from './styler/styler';
 import type { Config } from './styler/styler';
@@ -16,7 +16,8 @@ export type { Config };
 	const head = document.getElementsByTagName('head')[0];
 	const s = document.createElement('style');
 	s.setAttribute('type', 'text/css');
-	s.appendChild(document.createTextNode(styles));
+	console.log(styles);
+	//s.appendChild(document.createTextNode(styles));
 	head.appendChild(s);
 })()
 

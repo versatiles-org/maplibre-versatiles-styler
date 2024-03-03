@@ -1,6 +1,6 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
-import type {  } from '@versatiles/style';
+import type { Style } from '@versatiles/style';
 import { createElementsFromHTML } from './html';
 
 export interface Config {
@@ -14,11 +14,12 @@ export class Styler {
 	readonly #container: HTMLElement;
 	readonly #map: MLGLMap;
 	readonly #config: Config;
-	#currentStyle: any;
+	#currentStyle: Style;
 
 	constructor(map: MLGLMap, config: Config) {
 		this.#map = map;
 		this.#config = config;
+		this.#currentStyle = styles.colorful;
 
 		const { button, container, styleList, pane } = createElementsFromHTML(`
 			<div id="container" class="maplibregl-versatiles-styler">
@@ -65,7 +66,7 @@ export class Styler {
 		return this.#container;
 	}
 
-	private setStyle(style) {
+	private setStyle(style: Style) {
 		this.#currentStyle = style;
 		this.renderStyle();
 	}
