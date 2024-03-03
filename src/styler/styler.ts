@@ -1,5 +1,6 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
+import type {  } from '@versatiles/style';
 import { createElementsFromHTML } from './html';
 
 export interface Config {
@@ -18,22 +19,23 @@ export class Styler {
 	constructor(map: MLGLMap, config: Config) {
 		this.#map = map;
 		this.#config = config;
-		this.#currentStyle = styles.colorful;
 
-		const { button, container, list, listContainer } = createElementsFromHTML(`
-			<div id="container">
+		const { button, container, styleList, pane } = createElementsFromHTML(`
+			<div id="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
-					<button id="button" type="button" class="maplibregl-ctrl-icon maplibregl-style-switcher"></button>
+					<button id="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
-				<div id="listContainer" class="maplibregl-ctrl maplibregl-ctrl-group" style="display: none">
-					<p>Select a style:</p>
-					<div id="list" class="maplibregl-style-list"></div>
+				<div id="pane" class="maplibregl-ctrl maplibregl-ctrl-group" style="display: none">
+					<h3>1. Select a style:</h3>
+					<div id="styleList" class="maplibregl-list"></div>
+					<h3>2. Edit colors:</h3>
+					<h3>3. Modify colors:</h3>
 				</div>
 			</div>
 		`);
 		this.#container = container;
 		button.addEventListener('click', () => {
-			listContainer.style.display = listContainer.style.display === 'block' ? 'none' : 'block';
+			pane.style.display = pane.style.display === 'block' ? 'none' : 'block';
 		});
 
 		// Populate style options
@@ -44,115 +46,31 @@ export class Styler {
 			button.addEventListener('click', () => {
 				if (button.classList.contains('active')) return;
 
-				listContainer.style.display = 'none';
-				button.style.display = 'block';
-				listContainer.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+				styleList.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
 				button.classList.add('active');
 
-				this.#currentStyle = style;
-				this.updateStyle();
+				this.setStyle(style);
 			});
 
 			if (style === this.#currentStyle) {
 				button.classList.add('active');
 			}
-			list.appendChild(button);
+			styleList.appendChild(button);
 		});
+
+		this.setStyle(styles.colorful);
 	}
 
 	public get container(): HTMLElement {
 		return this.#container;
 	}
 
-	private updateStyle() {
+	private setStyle(style) {
+		this.#currentStyle = style;
+		this.renderStyle();
+	}
+
+	private renderStyle() {
 		this.#map.setStyle(this.#currentStyle(this.#config));
 	}
-	/*
-	
-
-	const styles = VersaTilesStyle.styles; // Assuming VersaTilesStyle.styles is defined elsewhere
-	let currentStyle = styles.colorful; // Default style
-
-	document.addEventListener('click', onDocumentClick);
-	const button = getButton();
-	const { list, listContainer } = getListContainer();
-
-	updateStyle();
-
-	return { container };
-
-	function updateStyle() {
-		map.setStyle(currentStyle(config));
-	}
-
-	function onDocumentClick(event) {
-		if (!button.contains(event.target)) {
-			listContainer.style.display = 'none';
-		}
-	}
-
-	function getButton() {
-		// Create button container
-		const buttonContainer = createElementFromHTML('<div class="maplibregl-ctrl maplibregl-ctrl-group"></div>');
-		container.appendChild(buttonContainer);
-
-		// Create style toggle button
-		const button = createElementFromHTML('<button type="button" class="maplibregl-ctrl-icon maplibregl-style-switcher"></button>');
-		buttonContainer.appendChild(button);
-
-		// Toggle style list display
-		button.addEventListener('click', () => {
-			listContainer.style.display = listContainer.style.display === 'block' ? 'none' : 'block';
-		});
-
-		return button;
-	}
-
-	function getListContainer() {
-
-		// Create list container
-		const listContainer = createElementFromHTML('<div class="maplibregl-ctrl maplibregl-ctrl-group"></div>');
-		container.appendChild(listContainer);
-		listContainer.style.display = 'none';
-
-		// Create style selector container
-		listContainer.appendChild(createElementFromHTML('<p>Select a style:</p>'));
-
-		// Create style selector container
-		const list = createElementFromHTML('<div class="maplibregl-style-list"></div>');
-		listContainer.appendChild(list);
-
-		// Populate style options
-		Object.entries(styles).forEach(([name, style]) => {
-			const styleElement = createElementFromHTML(`<button type="button">${name}</button>`);
-
-			// Style selection event
-			styleElement.addEventListener('click', (event) => {
-				const target = event.target;
-				if (target.classList.contains('active')) return;
-
-				listContainer.style.display = 'none';
-				button.style.display = 'block';
-				listContainer.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
-				target.classList.add('active');
-
-				currentStyle = style;
-				updateStyle();
-			});
-
-			if (style === currentStyle) {
-				styleElement.classList.add('active');
-			}
-			list.appendChild(styleElement);
-		});
-
-		return { list, listContainer };
-	}
-
-	function createElementFromHTML(htmlString) {
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(htmlString, 'text/html');
-		return doc.body.firstChild; // Returns the first element
-	}
-	*/
 }
