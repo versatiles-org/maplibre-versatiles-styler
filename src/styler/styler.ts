@@ -59,7 +59,7 @@ export class Styler {
 
 	private populateStyleList() {
 		Object.entries(styles).forEach(([name, style]) => {
-			const { button } = createElementsFromHTML(`<button id="button" type="button">${name}</button>`);
+			const { button } = createElementsFromHTML(`<button id="button" type="button" class="entry">${name}</button>`);
 
 			// Style selection event
 			button.addEventListener('click', () => {
@@ -79,32 +79,39 @@ export class Styler {
 	}
 
 	private populateColorList() {
-		const options = this.#currentStyle.getOptions();
 
-		if (!options.colors) throw Error();
+		if (!this.#currentOptions.colors) throw Error();
 
+		const defaultColors = this.#currentStyle.getOptions().colors as Record<string, string>;
+		const currentColors = this.#currentOptions.colors as Record<string, string>;
 		this.#colorList.innerHTML = '';
-		Object.entries(options.colors).forEach(([name, color]) => {
-			const { button } = createElementsFromHTML(`<button id="button" type="button"><label>${name}</label> ${getColor(color)}</button>`);
 
-			// Style selection event
-			button.addEventListener('click', () => {
-				//if (button.classList.contains('active')) return;
+		Object.entries(defaultColors).forEach(([name, defaultColor]) => {
+			const hex = new Color(currentColors[name]).hex();
+			const { button, input, reset } = createElementsFromHTML(`
+				<div id="button" class="entry">
+					<label>${name}</label>
+					<div class="space"></div>
+					<input id="input" type="color" value="${hex}">
+					<button id="reset" type="button" disabled>&circlearrowleft;</button>
+				</div>
+			`);
 
-				//this.#styleList.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
-				//button.classList.add('active');
-
-				//this.setStyle(style);
+			reset.addEventListener('click', () => {
+				(input as HTMLInputElement).value = defaultColor;
+				currentColors[name] = defaultColor;
+				this.renderStyle()
+				reset.setAttribute('disabled', 'disabled');
 			});
+
+			input.addEventListener('change', () => {
+				currentColors[name] = (input as HTMLInputElement).value;
+				reset.removeAttribute('disabled');
+				this.renderStyle()
+			}, false);
+
 			this.#colorList.appendChild(button);
 		});
-
-		function getColor(colorString: string): string {
-			const color = new Color(colorString);
-			const bg = color.hex();
-			const fg = color.isLight() ? '#000' : '#fff';
-			return `<span class="color" style="background:${bg};color:${fg}">${bg}</span>`;
-		}
 	}
 
 	private setStyle(style: SomeBuilder) {

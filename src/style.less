@@ -1,6 +1,9 @@
 .maplibregl-versatiles-styler {
 	.maplibregl-pane {
 		overflow-y: scroll;
+		width: 200px;
+		box-sizing: border-box;
+		max-height: calc(100vh - 80px);
 	}
 
 	h3 {
@@ -11,11 +14,16 @@
 	}
 
 	.maplibregl-list {
-		button {
+		width: 200px;
+
+		.entry {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
-			column-gap: 4px;
+			justify-content: flex-end;
+
+			box-sizing: border-box;
+			width: 200px;
+			height: auto;
 
 			background: none;
 			border: none;
@@ -23,28 +31,46 @@
 			font-size: 14px;
 			padding: 4px 8px;
 			text-align: left;
-			width: 100%;
-			height: auto;
 
-			.label {
+			label {
+				flex-grow: 0;
+			}
+			
+			input[type='color'] {
+				flex-grow: 0;
+				display: inline-block;
+				font-family: 'Courier New', Courier, monospace;
+				background-color: field;
+				padding: 0;
+				border: 0;
+				margin: 0;
+				inline-size: 40px;
 			}
 
-			.color {
-				padding: 4px 4px;
-				border: 1px solid rgba(0, 0, 0, 0.2);
-				font-family: 'Courier New', Courier, monospace;
+			button {
+				flex-grow: 0;
+				width: unset;
+				height: unset;
+
+				:disabled {
+					opacity: 0.3;
+				}
+			}
+
+			.space {
+				flex-grow: 1;
 			}
 		}
 
-		button.active {
+		.entry.active {
 			font-weight: bold;
 		}
 
-		button:hover {
+		.entry:hover {
 			background-color: rgba(0, 0, 0, 0.05);
 		}
 
-		button + button {
+		.entry + .entry {
 			border-top: 1px solid #ddd;
 		}
 	}
