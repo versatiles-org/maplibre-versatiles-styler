@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "compile": "rollup -c",
     "build": "rm -rf dist && npm run compile && rm -rf dist/dts",
+    "compile": "rollup -c",
+    "dev": "trap 'kill 0' SIGINT; npm run watch & http-server -sc0",
     "lint": "eslint",
     "watch": "rollup -cw"
   },
