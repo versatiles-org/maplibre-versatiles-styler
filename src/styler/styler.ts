@@ -33,11 +33,17 @@ export class Styler {
 					<button id="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
 				<div id="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
-					<h3>1. Select a style:</h3>
-					<div id="styleList" class="maplibregl-list"></div>
-					<h3>2. Edit colors:</h3>
-					<div id="colorList" class="maplibregl-list"></div>
-					<h3>3. Modify colors:</h3>
+					<details open>
+						<summary>1. Select a style:</summary>
+						<div id="styleList" class="maplibregl-list"></div>
+					</details>
+					<details>
+						<summary>2. Edit colors:</summary>
+						<div id="colorList" class="maplibregl-list"></div>
+					</details>
+					<details>
+						<summary>3. Modify colors:</summary>
+					</details>
 				</div>
 			</div>
 		`);
