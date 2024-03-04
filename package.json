@@ -9,7 +9,7 @@
     "dev": "trap 'kill 0' SIGINT; npm run watch & http-server -sc0",
     "lint": "eslint",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i",
-    "watch": "rollup -cw"
+    "watch": "rollup -wc rollup.config.fast.js"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",

@@ -21,8 +21,8 @@ export default [
 				name: 'VersatilesStyler',
 				sourcemap: true,
 				plugins: [
-					terser()
-				]
+					terser(),
+				],
 			},
 		],
 		treeshake: true,
@@ -30,9 +30,9 @@ export default [
 			less({ output: false }),
 			commonjs(),
 			nodeResolve(),
-			typescript()
+			typescript(),
 		],
-		watch: {}
+		watch: {},
 	},
 	{
 		input: './dist/dts/index.d.ts',
