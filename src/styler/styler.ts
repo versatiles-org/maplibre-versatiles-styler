@@ -9,6 +9,7 @@ export interface Config {
 	tiles: string[],
 	sprite: string,
 	glyphs: string,
+	open: boolean,
 }
 
 export class Styler {
@@ -31,7 +32,7 @@ export class Styler {
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button id="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
-				<div id="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane" style="display: none">
+				<div id="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
 					<h3>1. Select a style:</h3>
 					<div id="styleList" class="maplibregl-list"></div>
 					<h3>2. Edit colors:</h3>
@@ -44,6 +45,7 @@ export class Styler {
 		this.#colorList = colorList;
 		this.#styleList = styleList;
 
+		pane.style.display = this.#config.open ? 'block' : 'none';
 		button.addEventListener('click', () => {
 			pane.style.display = pane.style.display === 'block' ? 'none' : 'block';
 		});
