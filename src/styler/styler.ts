@@ -2,7 +2,8 @@ import type { Map as MLGLMap } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
 import type { SomeBuilder, SomeOptions } from '@versatiles/style';
 import { createElementsFromHTML } from './html';
-import Color from 'color';
+import { fillColorList } from './colors';
+import { fillRecolorList } from './recolor';
 
 export interface Config {
 	fontNames: string[],
@@ -13,9 +14,11 @@ export interface Config {
 }
 
 export class Styler {
-	readonly #container: HTMLElement;
 	readonly #colorList: HTMLElement;
+	readonly #container: HTMLElement;
+	readonly #recolorList: HTMLElement;
 	readonly #styleList: HTMLElement;
+
 	readonly #map: MLGLMap;
 	readonly #config: Config;
 	#currentStyle: SomeBuilder;
@@ -27,7 +30,7 @@ export class Styler {
 		this.#currentStyle = styles.colorful;
 		this.#currentOptions = {};
 
-		const { button, container, colorList, styleList, pane } = createElementsFromHTML(`
+		const { button, colorList, container, pane, recolorList, styleList } = createElementsFromHTML(`
 			<div id="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button id="button" type="button" class="maplibregl-ctrl-icon"></button>
@@ -43,12 +46,14 @@ export class Styler {
 					</details>
 					<details>
 						<summary>3. Modify colors:</summary>
+						<div id="recolorList" class="maplibregl-list"></div>
 					</details>
 				</div>
 			</div>
 		`);
-		this.#container = container;
 		this.#colorList = colorList;
+		this.#container = container;
+		this.#recolorList = recolorList;
 		this.#styleList = styleList;
 
 		pane.style.display = this.#config.open ? 'block' : 'none';
@@ -86,44 +91,6 @@ export class Styler {
 		});
 	}
 
-	private populateColorList() {
-
-		if (!this.#currentOptions.colors) throw Error();
-
-		const defaultColors = this.#currentStyle.getOptions().colors as Record<string, string>;
-		const currentColors = this.#currentOptions.colors as Record<string, string>;
-		this.#colorList.innerHTML = '';
-
-		Object.entries(defaultColors).forEach(([name, defaultColor]) => {
-			const hex = new Color(currentColors[name]).hex();
-			const { button, input, reset } = createElementsFromHTML(`
-				<div id="button" class="entry">
-					<label>${name}</label>
-					<div class="space"></div>
-					<input id="input" type="color" value="${hex}" style="background-color:${hex}">
-					<button id="reset" type="button" disabled>&circlearrowleft;</button>
-				</div>
-			`);
-
-			reset.addEventListener('click', () => {
-				(input as HTMLInputElement).value = defaultColor;
-				input.style.backgroundColor = defaultColor;
-				currentColors[name] = defaultColor;
-				reset.setAttribute('disabled', 'disabled');
-				this.renderStyle()
-			});
-
-			input.addEventListener('change', () => {
-				const color = (input as HTMLInputElement).value;
-				currentColors[name] = color;
-				input.style.backgroundColor = color;
-				reset.removeAttribute('disabled');
-				this.renderStyle()
-			}, false);
-
-			this.#colorList.appendChild(button);
-		});
-	}
 
 	private setStyle(style: SomeBuilder) {
 		this.#currentStyle = style;
@@ -132,11 +99,17 @@ export class Styler {
 		this.#currentOptions.sprite = this.#config.sprite;
 		this.#currentOptions.glyphs = this.#config.glyphs;
 
-		this.populateColorList();
+		const update = () => { this.renderStyle(); }
+
+		const defaultOptions = style.getOptions();
+
+		fillColorList(this.#colorList, update, this.#currentOptions.colors ?? {}, defaultOptions.colors ?? {});
+		fillRecolorList(this.#recolorList, update, this.#currentOptions.recolor ?? {}, defaultOptions.recolor ?? {});
+
 		this.renderStyle();
 	}
 
 	private renderStyle() {
-		this.#map.setStyle(this.#currentStyle(this.#currentOptions));
+		this.#map.setStyle(this.#currentStyle(this.#currentOptions), { diff: true });
 	}
 }

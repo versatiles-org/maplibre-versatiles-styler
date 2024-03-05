@@ -36,21 +36,24 @@
 				flex-grow: 0;
 			}
 
-			input[type='color'] {
+			input {
 				flex-grow: 0;
 				display: block;
 				font-family: 'Courier New', Courier, monospace;
 				padding: 0;
 				border: 1px solid rgba(0, 0, 0, 0.2);
 				margin: 0;
-				inline-size: 40px;
+				inline-size: 50px;
 				height: 1em;
+				text-align: right;
 
-				&::-webkit-color-swatch-wrapper {
-					padding: 0;
-				}
-				&::-webkit-color-swatch {
-					border: none;
+				&[type='color'] {
+					&::-webkit-color-swatch-wrapper {
+						padding: 0;
+					}
+					&::-webkit-color-swatch {
+						border: none;
+					}
 				}
 			}
 
