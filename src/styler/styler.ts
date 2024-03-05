@@ -1,9 +1,8 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
 import type { SomeBuilder, SomeOptions } from '@versatiles/style';
+import { ListGenerator } from './listgenerator';
 import { createElementsFromHTML } from './html';
-import { fillColorList } from './colors';
-import { fillRecolorList } from './recolor';
 
 export interface Config {
 	fontNames: string[],
@@ -61,7 +60,7 @@ export class Styler {
 			pane.style.display = pane.style.display === 'block' ? 'none' : 'block';
 		});
 
-		this.populateStyleList();
+		this.fillStyleList();
 
 		this.setStyle(styles.colorful);
 	}
@@ -70,7 +69,7 @@ export class Styler {
 		return this.#container;
 	}
 
-	private populateStyleList() {
+	private fillStyleList() {
 		Object.entries(styles).forEach(([name, style]) => {
 			const { button } = createElementsFromHTML(`<button id="button" type="button" class="entry">${name}</button>`);
 
@@ -103,8 +102,20 @@ export class Styler {
 
 		const defaultOptions = style.getOptions();
 
-		fillColorList(this.#colorList, update, this.#currentOptions.colors ?? {}, defaultOptions.colors ?? {});
-		fillRecolorList(this.#recolorList, update, this.#currentOptions.recolor ?? {}, defaultOptions.recolor ?? {});
+		const colorList = new ListGenerator(this.#colorList, this.#currentOptions.colors, defaultOptions.colors, update);
+		Object.keys(defaultOptions.colors ?? {}).forEach(key => {
+			colorList.addColor(key, key);
+		});
+
+		new ListGenerator(this.#recolorList, this.#currentOptions.recolor, defaultOptions.recolor, update)
+			.addCheckbox('invert', 'invert colors')
+			.addNumber('rotate', 'rotate hue')
+			.addNumber('saturate', 'saturate', 100)
+			.addNumber('gamma', 'gamma')
+			.addNumber('contrast', 'contrast', 100)
+			.addNumber('brightness', 'brightness', 100)
+			.addNumber('tint', 'tint', 100)
+			.addColor('tintColor', 'tint color');
 
 		this.renderStyle();
 	}
@@ -112,4 +123,5 @@ export class Styler {
 	private renderStyle() {
 		this.#map.setStyle(this.#currentStyle(this.#currentOptions), { diff: true });
 	}
+
 }
