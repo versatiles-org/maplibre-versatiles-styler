@@ -39,11 +39,12 @@ jobs:
         run: npm run build
 
       - name: Tar and compress
-        run: cd dist; tar -cf - *.js *.map *.ts | gzip -9 > maplibre-gl-versatiles-styler.tar.gz
+        run: tar -cf - *.js *.map *.ts | gzip -9 > maplibre-gl-versatiles-styler.tar.gz
+        working-directory: dist
 
       - name: Upload file to release
-        run: gh release upload $RELEASE_TAG dist/*.gz --clobber
-        working-directory: release
+        run: gh release upload $RELEASE_TAG *.gz --clobber
+        working-directory: dist
 
       - name: Update release
         run: gh release edit $RELEASE_TAG --draft=false --latest --prerelease=false
