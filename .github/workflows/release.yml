@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Get version
+        run: 'echo "RELEASE_TAG=v$(jq -r ''.version'' package.json)" >> $GITHUB_ENV'
+
+      - name: Build code
+        run: npm run build
+
+      - name: Tar and compress
+        run: cd dist; tar -cf - *.js *.map *.ts | gzip -9 > maplibre-gl-versatiles-styler.tar.gz
+
+      - name: Upload file to release
+        run: gh release upload $RELEASE_TAG dist/*.gz --clobber
+        working-directory: release
+
+      - name: Update release
+        run: gh release edit $RELEASE_TAG --draft=false --latest --prerelease=false

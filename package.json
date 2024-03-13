@@ -1,12 +1,13 @@
 {
-  "name": "maplibre-gl-shortbread-styler",
+  "name": "maplibre-gl-versatiles-styler",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build": "rm -rf dist && rollup -c && rm -rf dist/dts",
     "dev": "trap 'kill 0' SIGINT; rollup -wc rollup.config.fast.js & http-server -sc0",
     "lint": "eslint",
+    "release": "npx vrt release-npm",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
   },
   "devDependencies": {
@@ -14,6 +15,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
+    "@versatiles/release-tool": "^1.2.2",
     "eslint": "^8.57.0",
     "http-server": "^14.1.1",
     "npm-check-updates": "^16.14.15",
