@@ -31,6 +31,11 @@ export class ListGenerator {
 		return this;
 	}
 
+	addSelect(key: string, title: string, options: Record<string, string>): ListGenerator {
+		new InputSelect(this, key, title, options).init();
+		return this;
+	}
+
 	setValue(key: string, value: unknown): void {
 		this.#values[key] = value;
 	}
@@ -46,55 +51,56 @@ export class ListGenerator {
 }
 
 abstract class Input {
-	readonly input: HTMLInputElement;
+	input?: HTMLInputElement;
 	readonly key: string;
 	defaultValue?: string;
+	title: string;
 	readonly list: ListGenerator;
 
 	constructor(list: ListGenerator, key: string, title: string) {
 		this.key = key;
 		this.list = list;
+		this.title = title;
+	}
 
+	init() {
 		const { button, input, reset } = createElementsFromHTML(`
 			<div id="button" class="entry">
-				<label>${title}</label>
+				<label>${this.title}</label>
 				<div class="space"></div>
 				${this.getHtml()}
 				<button id="reset" type="button" disabled>&circlearrowleft;</button>
 			</div>
-		`);
+		`) as { button: HTMLDivElement; input: HTMLInputElement; reset: HTMLButtonElement };
 
 		reset.addEventListener('click', () => {
 			reset.setAttribute('disabled', 'disabled');
-			this.setValue(this.defaultValue ?? '');
+			this.setValue(input, this.defaultValue ?? '');
 			this.list.triggerChangeHandler()
 		});
 
 		input.addEventListener('change', () => {
 			reset.removeAttribute('disabled');
-			this.readValue();
+			this.readValue(input);
 			this.list.triggerChangeHandler()
 		});
 
 		this.list.appendChild(button);
 		this.input = input as HTMLInputElement;
-	}
 
-	init() {
 		const defaultValue = this.list.getDefaultValue(this.key);
-		if (defaultValue == null) throw Error();
 
 		this.defaultValue = this.value2text(defaultValue);
-		this.setValue(this.defaultValue);
+		this.setValue(input, this.defaultValue);
 	}
 
-	abstract readValue(): void;
+	abstract readValue(input: HTMLInputElement): void;
 	abstract getHtml(): string;
 	value2text(value: unknown): string {
 		return String(value);
 	}
-	setValue(text: string) {
-		this.input.value = text;
+	setValue(input: HTMLInputElement, text: string) {
+		input.value = text;
 		this.list.setValue(this.key, text);
 	}
 }
@@ -106,9 +112,9 @@ class InputColor extends Input {
 	value2text(value: unknown): string {
 		return new Color(String(value)).hex();
 	}
-	readValue() {
-		this.input.style.backgroundColor = this.input.value;
-		this.list.setValue(this.key, this.input.value);
+	readValue(input: HTMLInputElement,) {
+		input.style.backgroundColor = input.value;
+		this.list.setValue(this.key, input.value);
 	}
 }
 
@@ -124,26 +130,47 @@ class InputNumber extends Input {
 	value2text(value: unknown): string {
 		return String(Number(value) * this.scale);
 	}
-	setValue(text: string) {
-		this.input.value = text;
+	setValue(input: HTMLInputElement, text: string) {
+		input.value = text;
 		this.list.setValue(this.key, parseFloat(text) / this.scale);
 	}
-	readValue() {
-		this.list.setValue(this.key, parseFloat(this.input.value) / this.scale);
+	readValue(input: HTMLInputElement) {
+		this.list.setValue(this.key, parseFloat(input.value) / this.scale);
 	}
 }
 
+
+class InputSelect extends Input {
+	readonly options: Record<string, string>;
+	constructor(list: ListGenerator, key: string, title: string, options: Record<string, string>) {
+		console.log(options);
+		super(list, key, title);
+		this.options = options;
+	}
+	getHtml(): string {
+		console.log(this.options);
+		const options = Object.entries(this.options).map(([label, value]) => `<option value="${value}">${label}</option>`)
+		return `<select id="input">${options.join('')}</select>`
+	}
+	setValue(input: HTMLInputElement, text: string) {
+		input.value = text;
+		this.list.setValue(this.key, text);
+	}
+	readValue(input: HTMLInputElement) {
+		this.list.setValue(this.key, input.value);
+	}
+}
 
 class InputCheckbox extends Input {
 	getHtml(): string {
 		return `<input id="input" type="checkbox">`
 	}
-	setValue(text: string) {
+	setValue(input: HTMLInputElement, text: string) {
 		const value = text === 'true';
-		this.input.checked = Boolean(value);
+		input.checked = Boolean(value);
 		this.list.setValue(this.key, Boolean(value));
 	}
-	readValue() {
-		this.list.setValue(this.key, this.input.checked);
+	readValue(input: HTMLInputElement) {
+		this.list.setValue(this.key, input.checked);
 	}
 }

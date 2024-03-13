@@ -13,10 +13,13 @@ export interface Config {
 }
 
 export class Styler {
-	readonly #colorList: HTMLElement;
 	readonly #container: HTMLElement;
-	readonly #recolorList: HTMLElement;
-	readonly #styleList: HTMLElement;
+	readonly #lists: {
+		color: HTMLElement;
+		recolor: HTMLElement;
+		style: HTMLElement;
+		option: HTMLElement;
+	}
 
 	readonly #map: MLGLMap;
 	readonly #config: Config;
@@ -29,7 +32,7 @@ export class Styler {
 		this.#currentStyle = styles.colorful;
 		this.#currentOptions = {};
 
-		const { button, colorList, container, pane, recolorList, styleList } = createElementsFromHTML(`
+		const { button, colorList, container, optionList, pane, recolorList, styleList } = createElementsFromHTML(`
 			<div id="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button id="button" type="button" class="maplibregl-ctrl-icon"></button>
@@ -47,13 +50,20 @@ export class Styler {
 						<summary>3. Modify colors:</summary>
 						<div id="recolorList" class="maplibregl-list"></div>
 					</details>
+					<details>
+						<summary>4. Select Options:</summary>
+						<div id="optionList" class="maplibregl-list"></div>
+					</details>
 				</div>
 			</div>
 		`);
-		this.#colorList = colorList;
 		this.#container = container;
-		this.#recolorList = recolorList;
-		this.#styleList = styleList;
+		this.#lists = {
+			color: colorList,
+			recolor: recolorList,
+			style: styleList,
+			option: optionList,
+		}
 
 		pane.style.display = this.#config.open ? 'block' : 'none';
 		button.addEventListener('click', () => {
@@ -77,7 +87,7 @@ export class Styler {
 			button.addEventListener('click', () => {
 				if (button.classList.contains('active')) return;
 
-				this.#styleList.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+				this.#lists.style.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
 				button.classList.add('active');
 
 				this.setStyle(style);
@@ -86,7 +96,7 @@ export class Styler {
 			if (style === this.#currentStyle) {
 				button.classList.add('active');
 			}
-			this.#styleList.appendChild(button);
+			this.#lists.style.appendChild(button);
 		});
 	}
 
@@ -102,12 +112,12 @@ export class Styler {
 
 		const defaultOptions = style.getOptions();
 
-		const colorList = new ListGenerator(this.#colorList, this.#currentOptions.colors, defaultOptions.colors, update);
+		const colorList = new ListGenerator(this.#lists.color, this.#currentOptions.colors, defaultOptions.colors, update);
 		Object.keys(defaultOptions.colors ?? {}).forEach(key => {
 			colorList.addColor(key, key);
 		});
 
-		new ListGenerator(this.#recolorList, this.#currentOptions.recolor, defaultOptions.recolor, update)
+		new ListGenerator(this.#lists.recolor, this.#currentOptions.recolor, defaultOptions.recolor, update)
 			.addCheckbox('invert', 'invert colors')
 			.addNumber('rotate', 'rotate hue')
 			.addNumber('saturate', 'saturate', 100)
@@ -116,6 +126,9 @@ export class Styler {
 			.addNumber('brightness', 'brightness', 100)
 			.addNumber('tint', 'tint', 100)
 			.addColor('tintColor', 'tint color');
+
+		new ListGenerator(this.#lists.option, this.#currentOptions, defaultOptions, update)
+			.addSelect('languageSuffix', 'language', { local: '', german: 'de', english: 'en' });
 
 		this.renderStyle();
 	}
