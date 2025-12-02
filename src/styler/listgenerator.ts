@@ -27,8 +27,8 @@ export class ListGenerator {
 		return this;
 	}
 
-	addNumber(key: string, title: string, scale: number = 1): ListGenerator {
-		new InputNumber(this, key, title, scale).init();
+	addNumber(key: string, title: string, minValue: number, maxValue: number, scale: number = 1): ListGenerator {
+		new InputNumber(this, key, title, minValue, maxValue, scale).init();
 		return this;
 	}
 
@@ -72,13 +72,19 @@ abstract class Input {
 
 	init() {
 		const { button, input, reset } = createElementsFromHTML(`
-			<div id="button" class="entry">
+			<div name="button" class="entry">
 				<label>${this.title}</label>
 				<div class="space"></div>
 				${this.getHtml()}
-				<button id="reset" type="button" disabled>&circlearrowleft;</button>
+				<button name="reset" type="button" disabled>&circlearrowleft;</button>
 			</div>
 		`) as { button: HTMLDivElement; input: HTMLInputElement; reset: HTMLButtonElement };
+
+		this.list.appendChild(button);
+		this.input = input as HTMLInputElement;
+
+		this.defaultValue = this.list.getDefaultValue(this.key);
+		this.setValue(input, this.defaultValue);
 
 		reset.addEventListener('click', () => {
 			reset.setAttribute('disabled', 'disabled');
@@ -91,19 +97,10 @@ abstract class Input {
 			this.readValue(input);
 			this.list.triggerChangeHandler()
 		});
-
-		this.list.appendChild(button);
-		this.input = input as HTMLInputElement;
-
-		this.defaultValue = this.list.getDefaultValue(this.key);
-		this.setValue(input, this.defaultValue);
 	}
 
 	abstract readValue(input: HTMLInputElement): void;
 	abstract getHtml(): string;
-	value2text(value: Value): string {
-		return String(value);
-	}
 	setValue(input: HTMLInputElement, value: Value) {
 		input.value = String(value);
 		this.list.setValue(this.key, value);
@@ -112,7 +109,7 @@ abstract class Input {
 
 class InputColor extends Input {
 	getHtml(): string {
-		return `<input id="input" type="color">`
+		return `<input name="input" type="color">`
 	}
 	readValue(input: HTMLInputElement) {
 		input.style.backgroundColor = input.value;
@@ -121,20 +118,23 @@ class InputColor extends Input {
 }
 
 class InputNumber extends Input {
+	readonly minValue: number;
+	readonly maxValue: number;
 	readonly scale: number;
-	constructor(list: ListGenerator, key: string, title: string, scale: number = 1) {
+	constructor(list: ListGenerator, key: string, title: string, minValue: number, maxValue: number, scale: number = 1) {
 		super(list, key, title);
+		this.minValue = minValue;
+		this.maxValue = maxValue;
 		this.scale = scale;
 	}
 	getHtml(): string {
-		return `<input id="input" type="number">`
-	}
-	value2text(value: unknown): string {
-		return String(Number(value) * this.scale);
+		return `<input name="input" type="number">`
 	}
 	setValue(input: HTMLInputElement, value: number) {
-		input.value = value.toString();
-		this.list.setValue(this.key, value / this.scale);
+		if (value < this.minValue) value = this.minValue;
+		if (value > this.maxValue) value = this.maxValue;
+		input.value = (value * this.scale).toString();
+		this.list.setValue(this.key, value);
 	}
 	readValue(input: HTMLInputElement) {
 		this.list.setValue(this.key, parseFloat(input.value) / this.scale);
@@ -152,7 +152,7 @@ class InputSelect extends Input {
 	getHtml(): string {
 		console.log(this.options);
 		const options = Object.entries(this.options).map(([label, value]) => `<option value="${value}">${label}</option>`)
-		return `<select id="input">${options.join('')}</select>`
+		return `<select name="input">${options.join('')}</select>`
 	}
 	setValue(input: HTMLInputElement, text: string) {
 		input.value = text;
@@ -165,7 +165,7 @@ class InputSelect extends Input {
 
 class InputCheckbox extends Input {
 	getHtml(): string {
-		return `<input id="input" type="checkbox">`
+		return `<input name="input" type="checkbox">`
 	}
 	setValue(input: HTMLInputElement, value: boolean) {
 		input.checked = value;

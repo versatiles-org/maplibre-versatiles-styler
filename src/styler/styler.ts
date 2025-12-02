@@ -33,26 +33,26 @@ export class Styler {
 		this.#currentOptions = {};
 
 		const { button, colorList, container, optionList, pane, recolorList, styleList } = createElementsFromHTML(`
-			<div id="container" class="maplibregl-versatiles-styler">
+			<div name="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
-					<button id="button" type="button" class="maplibregl-ctrl-icon"></button>
+					<button name="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
-				<div id="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
+				<div name="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
 					<details open>
 						<summary>1. Select a style:</summary>
-						<div id="styleList" class="maplibregl-list"></div>
+						<div name="styleList" class="maplibregl-list"></div>
 					</details>
 					<details>
 						<summary>2. Edit colors:</summary>
-						<div id="colorList" class="maplibregl-list"></div>
+						<div name="colorList" class="maplibregl-list"></div>
 					</details>
 					<details>
 						<summary>3. Modify colors:</summary>
-						<div id="recolorList" class="maplibregl-list"></div>
+						<div name="recolorList" class="maplibregl-list"></div>
 					</details>
 					<details>
 						<summary>4. Select Options:</summary>
-						<div id="optionList" class="maplibregl-list"></div>
+						<div name="optionList" class="maplibregl-list"></div>
 					</details>
 				</div>
 			</div>
@@ -81,7 +81,7 @@ export class Styler {
 
 	private fillStyleList() {
 		Object.entries(styles).forEach(([name, style]) => {
-			const { button } = createElementsFromHTML(`<button id="button" type="button" class="entry">${name}</button>`);
+			const { button } = createElementsFromHTML(`<button name="button" type="button" class="entry">${name}</button>`);
 
 			// Style selection event
 			button.addEventListener('click', () => {
@@ -108,7 +108,9 @@ export class Styler {
 		this.#currentOptions.sprite = this.#config.sprite;
 		this.#currentOptions.glyphs = this.#config.glyphs;
 
-		const update = () => { this.renderStyle(); }
+		const update = () => {
+			this.renderStyle();
+		}
 
 		const defaultOptions = style.getOptions();
 
@@ -118,14 +120,16 @@ export class Styler {
 		});
 
 		new ListGenerator(this.#lists.recolor, (this.#currentOptions.recolor ?? {}) as ValueStore, (defaultOptions.recolor ?? {}) as ValueStore, update)
-			.addCheckbox('invert', 'invert colors')
-			.addNumber('rotate', 'rotate hue')
-			.addNumber('saturate', 'saturate', 0)
-			.addNumber('gamma', 'gamma', 1)
-			.addNumber('contrast', 'contrast', 1)
-			.addNumber('brightness', 'brightness', 0)
-			.addNumber('tint', 'tint', 0)
-			.addColor('tintColor', 'tint color');
+			.addCheckbox('invertBrightness', 'invert brightness')
+			.addNumber('rotate', 'rotate hue', 0, 360)
+			.addNumber('saturate', 'saturate', -1, 1, 100)
+			.addNumber('gamma', 'gamma', 0.1, 10)
+			.addNumber('contrast', 'contrast', 0, 10, 100)
+			.addNumber('brightness', 'brightness', -1, 1, 100)
+			.addNumber('tint', 'tint', 0, 1, 100)
+			.addColor('tintColor', 'tint color')
+			.addNumber('blend', 'blend', 0, 1, 100)
+			.addColor('blendColor', 'blend color');
 
 		new ListGenerator(this.#lists.option, (this.#currentOptions ?? {}) as ValueStore, (defaultOptions ?? {}) as ValueStore, update)
 			.addSelect('languageSuffix', 'language', { local: '', german: 'de', english: 'en' });
