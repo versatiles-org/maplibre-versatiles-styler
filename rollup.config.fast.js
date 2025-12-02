@@ -1,6 +1,6 @@
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import less from 'rollup-plugin-less';
+import scss from 'rollup-plugin-scss';
 import typescript from '@rollup/plugin-typescript';
 
 export default [
@@ -14,7 +14,7 @@ export default [
 		},
 		treeshake: false,
 		plugins: [
-			less({ output: false }),
+			scss({ output: false }),
 			commonjs({ sourceMap: false }),
 			nodeResolve(),
 			typescript({ cacheDir: '.rollup.tscache' })

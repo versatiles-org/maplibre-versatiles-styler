@@ -1,3 +1,3 @@
-declare module '*.less' {
+declare module '*.scss' {
 	export default string;
 }

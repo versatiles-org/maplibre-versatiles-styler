@@ -1,4 +1,4 @@
-import styles from './style.less';
+import styles from './style.scss';
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { Styler } from './styler/styler';
 import type { Config } from './styler/styler';
@@ -60,7 +60,7 @@ export default class VersatilesStyler {
 	 * Called when the control is removed from the map.
 	 */
 	onRemove() {
-		if (!!this.#map) return;
+		if (this.#map) return;
 
 		// Clean up references
 		this.#map = undefined;

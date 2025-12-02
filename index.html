@@ -4,10 +4,11 @@
 <head>
 	<meta charset="utf-8">
 	<title>MapLibre GL JS Versatiles Styler</title>
+	<link rel="icon" href="data:image/png;base64,iVBORw0KGgo=">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-	<script src="https://tiles.versatiles.org/assets/maplibre/maplibre-gl.js"></script>
-	<link href="https://tiles.versatiles.org/assets/maplibre/maplibre-gl.css" rel="stylesheet">
+	<script src="https://tiles.versatiles.org/assets/lib/maplibre-gl/maplibre-gl.js"></script>
+	<link href="https://tiles.versatiles.org/assets/lib/maplibre-gl/maplibre-gl.css" rel="stylesheet">
 
 	<script src="dist/maplibre-gl-versatiles-styler.js"></script>
 
@@ -50,9 +51,10 @@
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-left');
 		map.addControl(new VersatilesStyler({
+			baseUrl: 'https://tiles.versatiles.org',
 			tiles: ['https://tiles.versatiles.org/tiles/osm/{z}/{x}/{y}'],
-			sprite: 'https://tiles.versatiles.org/assets/sprites/sprites',
-			glyphs: 'https://tiles.versatiles.org/assets/fonts/{fontstack}/{range}.pbf',
+			sprite: [{ id: 'basics', url: 'https://tiles.versatiles.org/assets/sprites/basics/sprites' }],
+			glyphs: 'https://tiles.versatiles.org/assets/glyphs/{fontstack}/{range}.pbf',
 			open: true,
 		}));
 

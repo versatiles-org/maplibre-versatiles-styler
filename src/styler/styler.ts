@@ -1,7 +1,7 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
-import type { SomeBuilder, SomeOptions } from '@versatiles/style';
-import { ListGenerator } from './listgenerator';
+import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
+import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
 
 export interface Config {
@@ -23,8 +23,8 @@ export class Styler {
 
 	readonly #map: MLGLMap;
 	readonly #config: Config;
-	#currentStyle: SomeBuilder;
-	#currentOptions: SomeOptions;
+	#currentStyle: StyleBuilderFunction;
+	#currentOptions: StyleBuilderOptions;
 
 	constructor(map: MLGLMap, config: Config) {
 		this.#map = map;
@@ -101,7 +101,7 @@ export class Styler {
 	}
 
 
-	private setStyle(style: SomeBuilder) {
+	private setStyle(style: StyleBuilderFunction) {
 		this.#currentStyle = style;
 		this.#currentOptions = style.getOptions();
 		this.#currentOptions.tiles = this.#config.tiles;
@@ -112,29 +112,30 @@ export class Styler {
 
 		const defaultOptions = style.getOptions();
 
-		const colorList = new ListGenerator(this.#lists.color, this.#currentOptions.colors, defaultOptions.colors, update);
+		const colorList = new ListGenerator(this.#lists.color, this.#currentOptions.colors ?? {}, defaultOptions.colors ?? {}, update);
 		Object.keys(defaultOptions.colors ?? {}).forEach(key => {
 			colorList.addColor(key, key);
 		});
 
-		new ListGenerator(this.#lists.recolor, this.#currentOptions.recolor, defaultOptions.recolor, update)
+		new ListGenerator(this.#lists.recolor, (this.#currentOptions.recolor ?? {}) as ValueStore, (defaultOptions.recolor ?? {}) as ValueStore, update)
 			.addCheckbox('invert', 'invert colors')
 			.addNumber('rotate', 'rotate hue')
-			.addNumber('saturate', 'saturate', 100)
-			.addNumber('gamma', 'gamma')
-			.addNumber('contrast', 'contrast', 100)
-			.addNumber('brightness', 'brightness', 100)
-			.addNumber('tint', 'tint', 100)
+			.addNumber('saturate', 'saturate', 0)
+			.addNumber('gamma', 'gamma', 1)
+			.addNumber('contrast', 'contrast', 1)
+			.addNumber('brightness', 'brightness', 0)
+			.addNumber('tint', 'tint', 0)
 			.addColor('tintColor', 'tint color');
 
-		new ListGenerator(this.#lists.option, this.#currentOptions, defaultOptions, update)
+		new ListGenerator(this.#lists.option, (this.#currentOptions ?? {}) as ValueStore, (defaultOptions ?? {}) as ValueStore, update)
 			.addSelect('languageSuffix', 'language', { local: '', german: 'de', english: 'en' });
 
 		this.renderStyle();
 	}
 
 	private renderStyle() {
-		this.#map.setStyle(this.#currentStyle(this.#currentOptions), { diff: true });
+		const style = this.#currentStyle(this.#currentOptions);
+		this.#map.setStyle(style);
 	}
 
 }

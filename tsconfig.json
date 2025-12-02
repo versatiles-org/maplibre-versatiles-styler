@@ -24,7 +24,7 @@
       {
         "name": "typescript-plugin-css-modules",
         "options": {
-          "customMatcher": "\\.less$",
+          "customMatcher": "\\.scss$",
         }
       }
     ]

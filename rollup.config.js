@@ -1,7 +1,7 @@
 import { dts } from 'rollup-plugin-dts';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import less from 'rollup-plugin-less';
+import scss from 'rollup-plugin-scss';
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 
@@ -27,7 +27,7 @@ export default [
 		],
 		treeshake: true,
 		plugins: [
-			less({ output: false }),
+			scss({ output: false }),
 			commonjs(),
 			nodeResolve(),
 			typescript(),
