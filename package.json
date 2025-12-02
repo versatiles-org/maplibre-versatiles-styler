@@ -8,6 +8,7 @@
     "check": "npm run lint && npm run build",
     "dev": "trap 'kill 0' SIGINT; rollup -wc rollup.config.fast.js & http-server -sc0",
     "lint": "eslint",
+    "prepack": "npm run build",
     "release": "npx vrt release-npm",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
   },
