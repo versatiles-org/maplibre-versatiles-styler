@@ -132,7 +132,7 @@ export class Styler {
 			.addColor('blendColor', 'blend color');
 
 		new ListGenerator(this.#lists.option, (this.#currentOptions ?? {}) as ValueStore, (defaultOptions ?? {}) as ValueStore, update)
-			.addSelect('languageSuffix', 'language', { local: '', german: 'de', english: 'en' });
+			.addSelect('language', 'language', { local: '', german: 'de', english: 'en' });
 
 		this.renderStyle();
 	}
