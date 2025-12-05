@@ -23,10 +23,11 @@ let colorList: HTMLElement;
 let recolorList: HTMLElement;
 let optionList: HTMLElement;
 let map: MLGLMap;
-let defaultConfig: VersaTilesStylerConfig = { open: true, origin: 'https://tiles.versatiles.org' };
+const defaultConfig: VersaTilesStylerConfig = {
+	open: true,
+	origin: 'https://tiles.versatiles.org'
+};
 const styleButtons: Record<string, HTMLButtonElement> = {};
-
-let createElementsFromHTMLSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
 	// fresh DOM elements for each test
@@ -46,9 +47,8 @@ beforeEach(() => {
 
 	// reset mocks and set implementation
 	vi.restoreAllMocks();
-	createElementsFromHTMLSpy = vi
-		.spyOn(html, 'createElementsFromHTML')
-		.mockImplementation((htmlString: string): Record<string, HTMLElement> => {
+	vi.spyOn(html, 'createElementsFromHTML').mockImplementation(
+		(htmlString: string): Record<string, HTMLElement> => {
 			// first call: main control structure
 			if (htmlString.includes('maplibregl-versatiles-styler')) {
 				return {
@@ -81,7 +81,8 @@ beforeEach(() => {
 			}
 
 			throw new Error(`Unexpected HTML passed to createElementsFromHTML: ${htmlString}`);
-		});
+		}
+	);
 });
 
 afterEach(() => {
