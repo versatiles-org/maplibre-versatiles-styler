@@ -1,5 +1,6 @@
 
-dist
-node_modules
-demo/maplibre-versatiles-styler.*
+coverage/
 demo/maplibre-gl/
+demo/maplibre-versatiles-styler.*
+dist/
+node_modules/

@@ -13,6 +13,7 @@
     "release": "npx vrt release-npm",
     "test": "npm run test-unit",
     "test-unit": "vitest run",
+    "test-coverage": "vitest run --coverage",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
   },
   "devDependencies": {
@@ -21,6 +22,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.3.0",
     "@versatiles/release-tool": "^2.4.5",
+    "@vitest/coverage-v8": "^4.0.15",
     "eslint": "^9.39.1",
     "http-server": "^14.1.1",
     "npm-check-updates": "^19.1.2",
