@@ -162,12 +162,10 @@ class InputNumber extends Input {
 class InputSelect extends Input {
 	readonly options: Record<string, string>;
 	constructor(list: ListGenerator, key: string, title: string, options: Record<string, string>) {
-		console.log(options);
 		super(list, key, title);
 		this.options = options;
 	}
 	getHtml(): string {
-		console.log(this.options);
 		const options = Object.entries(this.options).map(
 			([label, value]) => `<option value="${value}">${label}</option>`
 		);
