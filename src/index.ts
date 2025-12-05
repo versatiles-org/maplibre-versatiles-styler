@@ -1,7 +1,7 @@
 import styles from './style.scss';
 import type { Map as MLGLMap } from 'maplibre-gl';
-import { Styler } from './styler/styler';
-import type { Config } from './styler/config';
+import { Styler } from './lib/styler';
+import type { Config } from './lib/config';
 export type { Config };
 
 let stylesInjected = false;
