@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: Lint and test
+    name: Build Demo
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,11 +21,11 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: Build demo
-        run: rollup -wc rollup.config.demo.js
+      - name: Build Demo
+        run: npx rollup -wc rollup.config.demo.js
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v4
