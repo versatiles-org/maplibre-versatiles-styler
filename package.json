@@ -41,6 +41,6 @@
   "dependencies": {
     "@versatiles/style": "^5.8.0",
     "color": "^5.0.3",
-    "maplibre-gl": "^5.13.0"
+    "maplibre-gl": "^5.14.0"
   }
 }
