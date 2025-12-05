@@ -4,6 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import scss from 'rollup-plugin-scss';
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
+import image from '@rollup/plugin-image';
 
 export default [
 	{
@@ -28,7 +29,8 @@ export default [
 			scss({ output: false, silenceDeprecations: ['legacy-js-api'] }),
 			commonjs(),
 			nodeResolve(),
-			typescript()
+			typescript(),
+			image()
 		],
 		watch: {}
 	},

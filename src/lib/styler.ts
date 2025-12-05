@@ -4,6 +4,7 @@ import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/styl
 import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
 import { VersaTilesStylerConfig } from './config';
+import svg from '../assets/versatiles-logo.svg';
 
 export class Styler {
 	readonly #container: HTMLElement;
@@ -32,8 +33,9 @@ export class Styler {
 					<button name="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
 				<div name="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
+				   <img src="${svg}" alt="VersaTiles" />
 					<details open>
-						<summary>1. Select a style:</summary>
+						<summary>1. Select a base style:</summary>
 						<div name="styleList" class="maplibregl-list"></div>
 					</details>
 					<details>
