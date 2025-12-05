@@ -30,8 +30,8 @@ export class VersaTilesStylerControl {
 	 * Initializes a new instance of the styleControl.
 	 * @param {Object} config Configuration options for the control.
 	 */
-	constructor(config: VersaTilesStylerConfig) {
-		this.#config = config;
+	constructor(config?: VersaTilesStylerConfig) {
+		this.#config = config ?? {};
 	}
 
 	/**
