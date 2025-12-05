@@ -8,7 +8,7 @@ export default [
 		input: 'src/index.ts',
 		output: {
 			file: './demo/maplibre-versatiles-styler.js',
-			format: 'iife',
+			format: 'umd',
 			name: 'VersaTilesStylerControl',
 			sourcemap: true
 		},

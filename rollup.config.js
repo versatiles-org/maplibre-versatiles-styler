@@ -11,13 +11,13 @@ export default [
 		output: [
 			{
 				file: './dist/maplibre-versatiles-styler.js',
-				format: 'iife',
+				format: 'umd',
 				name: 'VersaTilesStylerControl',
 				sourcemap: true
 			},
 			{
 				file: './dist/maplibre-versatiles-styler.min.js',
-				format: 'iife',
+				format: 'umd',
 				name: 'VersaTilesStylerControl',
 				sourcemap: true,
 				plugins: [terser()]
