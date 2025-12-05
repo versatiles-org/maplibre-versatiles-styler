@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rm -rf dist && rollup -c && rm -rf dist/dts",
     "check": "npm run lint && npm run test && npm run build",
-    "dev": "trap 'kill 0' SIGINT; rollup -wc rollup.config.dev.js & http-server -s -c-1 demo",
+    "dev": "trap 'kill 0' SIGINT; rollup -wc rollup.config.demo.js & http-server -s -c-1 demo",
     "format": "prettier --write --log-level warn .",
     "lint": "prettier --check . && eslint --color .",
     "prepack": "npm run build",
