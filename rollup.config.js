@@ -24,7 +24,12 @@ export default [
 			}
 		],
 		treeshake: true,
-		plugins: [scss({ output: false }), commonjs(), nodeResolve(), typescript()],
+		plugins: [
+			scss({ output: false, silenceDeprecations: ['legacy-js-api'] }),
+			commonjs(),
+			nodeResolve(),
+			typescript()
+		],
 		watch: {}
 	},
 	{
