@@ -1,4 +1,4 @@
-import styles from './control-style.scss';
+import styles from '../assets/control-style.scss';
 
 export function createElementsFromHTML(htmlString: string): Record<string, HTMLElement> {
 	const parser = new DOMParser();
