@@ -13,31 +13,24 @@ export default [
 				file: './dist/maplibre-gl-versatiles-styler.js',
 				format: 'umd',
 				name: 'VersatilesStyler',
-				sourcemap: true,
+				sourcemap: true
 			},
 			{
 				file: './dist/maplibre-gl-versatiles-styler.min.js',
 				format: 'umd',
 				name: 'VersatilesStyler',
 				sourcemap: true,
-				plugins: [
-					terser(),
-				],
-			},
+				plugins: [terser()]
+			}
 		],
 		treeshake: true,
-		plugins: [
-			scss({ output: false }),
-			commonjs(),
-			nodeResolve(),
-			typescript(),
-		],
-		watch: {},
+		plugins: [scss({ output: false }), commonjs(), nodeResolve(), typescript()],
+		watch: {}
 	},
 	{
 		input: './dist/dts/index.d.ts',
 		output: [{ file: 'dist/maplibre-gl-versatiles-styler.d.ts', format: 'es' }],
 		plugins: [dts()],
-		watch: false,
-	},
-]
+		watch: false
+	}
+];

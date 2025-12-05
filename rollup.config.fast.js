@@ -10,7 +10,7 @@ export default [
 			file: './dist/maplibre-gl-versatiles-styler.js',
 			format: 'umd',
 			name: 'VersatilesStyler',
-			sourcemap: true,
+			sourcemap: true
 		},
 		treeshake: false,
 		plugins: [
@@ -20,4 +20,4 @@ export default [
 			typescript({ cacheDir: '.rollup.tscache' })
 		]
 	}
-]
+];

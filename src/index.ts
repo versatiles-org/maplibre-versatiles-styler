@@ -4,21 +4,20 @@ import { Styler } from './styler/styler';
 import type { Config } from './styler/styler';
 export type { Config };
 
-
 (async () => {
-	await new Promise(res => {
+	await new Promise((res) => {
 		if (document.readyState === 'complete' || document.readyState === 'interactive') {
 			setTimeout(res, 1);
 		} else {
 			document.addEventListener('DOMContentLoaded', res);
 		}
-	})
+	});
 	const head = document.getElementsByTagName('head')[0];
 	const s = document.createElement('style');
 	s.setAttribute('type', 'text/css');
 	s.appendChild(document.createTextNode(styles));
 	head.appendChild(s);
-})()
+})();
 
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.

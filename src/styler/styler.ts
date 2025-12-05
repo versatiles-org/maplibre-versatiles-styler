@@ -5,11 +5,11 @@ import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
 
 export interface Config {
-	fontNames: string[],
-	tiles: string[],
-	sprite: string,
-	glyphs: string,
-	open: boolean,
+	fontNames: string[];
+	tiles: string[];
+	sprite: string;
+	glyphs: string;
+	open: boolean;
 }
 
 export class Styler {
@@ -19,7 +19,7 @@ export class Styler {
 		recolor: HTMLElement;
 		style: HTMLElement;
 		option: HTMLElement;
-	}
+	};
 
 	readonly #map: MLGLMap;
 	readonly #config: Config;
@@ -62,8 +62,8 @@ export class Styler {
 			color: colorList,
 			recolor: recolorList,
 			style: styleList,
-			option: optionList,
-		}
+			option: optionList
+		};
 
 		pane.style.display = this.#config.open ? 'block' : 'none';
 		button.addEventListener('click', () => {
@@ -87,7 +87,7 @@ export class Styler {
 			button.addEventListener('click', () => {
 				if (button.classList.contains('active')) return;
 
-				this.#lists.style.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+				this.#lists.style.querySelectorAll('.active').forEach((el) => el.classList.remove('active'));
 				button.classList.add('active');
 
 				this.setStyle(style);
@@ -100,7 +100,6 @@ export class Styler {
 		});
 	}
 
-
 	private setStyle(style: StyleBuilderFunction) {
 		this.#currentStyle = style;
 		this.#currentOptions = style.getOptions();
@@ -110,16 +109,26 @@ export class Styler {
 
 		const update = () => {
 			this.renderStyle();
-		}
+		};
 
 		const defaultOptions = style.getOptions();
 
-		const colorList = new ListGenerator(this.#lists.color, this.#currentOptions.colors ?? {}, defaultOptions.colors ?? {}, update);
-		Object.keys(defaultOptions.colors ?? {}).forEach(key => {
+		const colorList = new ListGenerator(
+			this.#lists.color,
+			this.#currentOptions.colors ?? {},
+			defaultOptions.colors ?? {},
+			update
+		);
+		Object.keys(defaultOptions.colors ?? {}).forEach((key) => {
 			colorList.addColor(key, key);
 		});
 
-		new ListGenerator(this.#lists.recolor, (this.#currentOptions.recolor ?? {}) as ValueStore, (defaultOptions.recolor ?? {}) as ValueStore, update)
+		new ListGenerator(
+			this.#lists.recolor,
+			(this.#currentOptions.recolor ?? {}) as ValueStore,
+			(defaultOptions.recolor ?? {}) as ValueStore,
+			update
+		)
 			.addCheckbox('invertBrightness', 'invert brightness')
 			.addNumber('rotate', 'rotate hue', 0, 360)
 			.addNumber('saturate', 'saturate', -1, 1, 100)
@@ -131,8 +140,12 @@ export class Styler {
 			.addNumber('blend', 'blend', 0, 1, 100)
 			.addColor('blendColor', 'blend color');
 
-		new ListGenerator(this.#lists.option, (this.#currentOptions ?? {}) as ValueStore, (defaultOptions ?? {}) as ValueStore, update)
-			.addSelect('language', 'language', { local: '', german: 'de', english: 'en' });
+		new ListGenerator(
+			this.#lists.option,
+			(this.#currentOptions ?? {}) as ValueStore,
+			(defaultOptions ?? {}) as ValueStore,
+			update
+		).addSelect('language', 'language', { local: '', german: 'de', english: 'en' });
 
 		this.renderStyle();
 	}
@@ -141,5 +154,4 @@ export class Styler {
 		const style = this.#currentStyle(this.#currentOptions);
 		this.#map.setStyle(style);
 	}
-
 }

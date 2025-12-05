@@ -1,5 +1,5 @@
-import { createElementsFromHTML } from "./html";
-import { Color } from "@versatiles/style";
+import { createElementsFromHTML } from './html';
+import { Color } from '@versatiles/style';
 
 type Value = Color | string | number | boolean | undefined;
 
@@ -50,9 +50,9 @@ export class ListGenerator {
 	}
 	appendChild(child: HTMLElement) {
 		this.#container.appendChild(child);
-	};
+	}
 	triggerChangeHandler() {
-		this.#changeHandler()
+		this.#changeHandler();
 	}
 }
 
@@ -89,13 +89,13 @@ abstract class Input {
 		reset.addEventListener('click', () => {
 			reset.setAttribute('disabled', 'disabled');
 			this.setValue(input, this.defaultValue);
-			this.list.triggerChangeHandler()
+			this.list.triggerChangeHandler();
 		});
 
 		input.addEventListener('change', () => {
 			reset.removeAttribute('disabled');
 			this.readValue(input);
-			this.list.triggerChangeHandler()
+			this.list.triggerChangeHandler();
 		});
 	}
 
@@ -109,7 +109,7 @@ abstract class Input {
 
 class InputColor extends Input {
 	getHtml(): string {
-		return `<input name="input" type="color">`
+		return `<input name="input" type="color">`;
 	}
 	readValue(input: HTMLInputElement) {
 		input.style.backgroundColor = input.value;
@@ -128,7 +128,7 @@ class InputNumber extends Input {
 		this.scale = scale;
 	}
 	getHtml(): string {
-		return `<input name="input" type="number">`
+		return `<input name="input" type="number">`;
 	}
 	setValue(input: HTMLInputElement, value: number) {
 		if (value < this.minValue) value = this.minValue;
@@ -141,7 +141,6 @@ class InputNumber extends Input {
 	}
 }
 
-
 class InputSelect extends Input {
 	readonly options: Record<string, string>;
 	constructor(list: ListGenerator, key: string, title: string, options: Record<string, string>) {
@@ -151,8 +150,8 @@ class InputSelect extends Input {
 	}
 	getHtml(): string {
 		console.log(this.options);
-		const options = Object.entries(this.options).map(([label, value]) => `<option value="${value}">${label}</option>`)
-		return `<select name="input">${options.join('')}</select>`
+		const options = Object.entries(this.options).map(([label, value]) => `<option value="${value}">${label}</option>`);
+		return `<select name="input">${options.join('')}</select>`;
 	}
 	setValue(input: HTMLInputElement, text: string) {
 		input.value = text;
@@ -165,7 +164,7 @@ class InputSelect extends Input {
 
 class InputCheckbox extends Input {
 	getHtml(): string {
-		return `<input name="input" type="checkbox">`
+		return `<input name="input" type="checkbox">`;
 	}
 	setValue(input: HTMLInputElement, value: boolean) {
 		input.checked = value;

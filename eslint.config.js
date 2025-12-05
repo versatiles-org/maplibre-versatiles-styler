@@ -7,14 +7,10 @@ export default [
 	js.configs.recommended,
 	...ts.configs.recommended,
 	{
-		ignores: [
-			'dist/**/*.*',
-		]
+		ignores: ['dist/**/*.*']
 	},
 	{
-		files: [
-			'src/**/*.ts',
-		],
+		files: ['src/**/*.ts'],
 		languageOptions: {
 			ecmaVersion: 'latest',
 			sourceType: 'module',
@@ -27,14 +23,14 @@ export default [
 			parserOptions: {
 				sourceType: 'module',
 				project: './tsconfig.json',
-				tsconfigRootDir: import.meta.dirname,
-			},
+				tsconfigRootDir: import.meta.dirname
+			}
 		},
 		plugins: {
-			'@typescript-eslint': eslint_plugin,
+			'@typescript-eslint': eslint_plugin
 		},
 		linterOptions: {
-			reportUnusedDisableDirectives: true,
+			reportUnusedDisableDirectives: true
 		},
 		rules: {
 			'no-unused-vars': 'off',
@@ -48,4 +44,4 @@ export default [
 			]
 		}
 	}
-]
+];
