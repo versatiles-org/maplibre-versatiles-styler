@@ -1,4 +1,4 @@
-import type { Map as MLGLMap } from 'maplibre-gl';
+import type { ControlPosition, IControl, Map as MLGLMap } from 'maplibre-gl';
 import { Styler } from './styler';
 import type { VersaTilesStylerConfig } from './config';
 import { ensureStylesInjected } from './html';
@@ -6,7 +6,7 @@ import { ensureStylesInjected } from './html';
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.
  */
-export class VersaTilesStylerControl {
+export class VersaTilesStylerControl implements IControl {
 	readonly #config: VersaTilesStylerConfig;
 	#map?: MLGLMap;
 	#styler?: Styler;
@@ -25,7 +25,7 @@ export class VersaTilesStylerControl {
 	 * @returns {string} The default position.
 	 */
 	getDefaultPosition() {
-		return 'top-right';
+		return 'top-right' as ControlPosition;
 	}
 
 	/**
