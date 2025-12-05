@@ -11,6 +11,8 @@
     "lint": "prettier --check . && eslint --color .",
     "prepack": "npm run build",
     "release": "npx vrt release-npm",
+    "test": "npm run test-unit",
+    "test-unit": "vitest run",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
   },
   "devDependencies": {
