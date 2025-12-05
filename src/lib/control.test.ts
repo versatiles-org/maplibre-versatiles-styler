@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Map as MLGLMap } from 'maplibre-gl';
-
 import { VersaTilesStylerControl } from './control';
-import * as html from './html';
 import { Styler } from './styler';
 import type { VersaTilesStylerConfig } from './config';
+import { JSDOM } from 'jsdom';
 
 // Optional: mock Styler, so we don't pull full UI in
 vi.mock('./styler', () => {
@@ -19,6 +18,10 @@ vi.mock('./styler', () => {
 	};
 });
 
+const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
+(globalThis as any).window = dom.window;
+(globalThis as any).document = dom.window.document;
+
 afterEach(() => {
 	vi.clearAllMocks();
 });
@@ -30,15 +33,17 @@ describe('VersaTilesStylerControl', () => {
 	});
 
 	it('calls ensureStylesInjected only once per control instance', () => {
-		const ensureSpy = vi.spyOn(html, 'ensureStylesInjected');
-
+		function countInjectedStyles(n: number) {
+			expect(document.head.querySelectorAll('style[data-versatiles-styler]').length).toBe(n);
+		}
 		const map = {} as MLGLMap;
 		const control = new VersaTilesStylerControl();
 
+		countInjectedStyles(0);
 		control.onAdd(map);
-		control.onAdd(map); // weird usage, but good for testing the guard
-
-		expect(ensureSpy).toHaveBeenCalledTimes(1);
+		countInjectedStyles(1);
+		control.onAdd(map);
+		countInjectedStyles(1);
 	});
 
 	it('creates a Styler with the given map and config and returns its container', () => {

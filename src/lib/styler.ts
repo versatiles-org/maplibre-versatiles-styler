@@ -35,19 +35,19 @@ export class Styler {
 				<div name="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
 				   <img src="${svg}" alt="VersaTiles" />
 					<details open>
-						<summary>1. Select a base style:</summary>
+						<summary>Select a base style</summary>
 						<div name="styleList" class="maplibregl-list"></div>
 					</details>
 					<details>
-						<summary>2. Edit colors:</summary>
+						<summary>Edit colors</summary>
 						<div name="colorList" class="maplibregl-list"></div>
 					</details>
 					<details>
-						<summary>3. Modify colors:</summary>
+						<summary>Modify colors</summary>
 						<div name="recolorList" class="maplibregl-list"></div>
 					</details>
 					<details>
-						<summary>4. Select Options:</summary>
+						<summary>Select Options</summary>
 						<div name="optionList" class="maplibregl-list"></div>
 					</details>
 				</div>

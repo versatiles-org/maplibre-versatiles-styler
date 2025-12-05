@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
@@ -7,7 +7,7 @@ const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
 (globalThis as any).DOMParser = dom.window.DOMParser;
 
 // Mock the SCSS import before importing the module under test
-vi.mock('./control-style.scss', () => ({
+vi.mock('../assets/control-style.scss', () => ({
 	default: '.mocked-style { color: hotpink; }'
 }));
 
@@ -17,7 +17,7 @@ afterEach(() => {
 	// Clean up any styles we injected between tests
 	if (typeof document === 'undefined') return;
 	const head = document.head;
-	const injected = head.querySelectorAll('style[data-versatiles-styler="true"]');
+	const injected = head.querySelectorAll('style[data-versatiles-styler]');
 	injected.forEach((el) => el.remove());
 });
 
@@ -78,27 +78,31 @@ describe('createElementsFromHTML', () => {
 
 describe('ensureStylesInjected', () => {
 	it('injects a style element into document.head with the expected attributes', () => {
-		expect(document.head.querySelectorAll('style[data-versatiles-styler="true"]').length).toBe(0);
+		expect(document.head.querySelectorAll('style[data-versatiles-styler]').length).toBe(0);
 
 		ensureStylesInjected();
 
-		const styles = document.head.querySelectorAll('style[data-versatiles-styler="true"]');
+		const styles = document.head.querySelectorAll('style[data-versatiles-styler]');
 		expect(styles.length).toBe(1);
 
 		const styleEl = styles[0] as HTMLStyleElement;
 		expect(styleEl.tagName.toLowerCase()).toBe('style');
 		expect(styleEl.getAttribute('type')).toBe('text/css');
-		expect(styleEl.dataset.versatilesStyler).toBe('true');
+		expect(styleEl.getAttribute('data-versatiles-styler')).toBe('');
 		// From our SCSS mock above
 		expect(styleEl.textContent).toContain('.mocked-style');
 	});
 
 	it('injects a new style element on each call (no internal guard)', () => {
-		ensureStylesInjected();
-		ensureStylesInjected();
+		function checkStyles(n: number) {
+			expect(document.head.querySelectorAll('style[data-versatiles-styler]')).toHaveLength(n);
+		}
 
-		const styles = document.head.querySelectorAll('style[data-versatiles-styler="true"]');
-		expect(styles.length).toBe(2);
+		checkStyles(0);
+		ensureStylesInjected();
+		checkStyles(1);
+		ensureStylesInjected();
+		checkStyles(1);
 	});
 
 	it('does nothing when document is undefined (and does not throw)', () => {

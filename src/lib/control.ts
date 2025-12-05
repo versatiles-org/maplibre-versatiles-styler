@@ -10,7 +10,6 @@ export class VersaTilesStylerControl implements IControl {
 	readonly #config: VersaTilesStylerConfig;
 	#map?: MLGLMap;
 	#styler?: Styler;
-	#stylesInjected = false;
 
 	/**
 	 * Initializes a new instance of the styleControl.
@@ -37,10 +36,7 @@ export class VersaTilesStylerControl implements IControl {
 		this.#map = map;
 		this.#styler = new Styler(this.#map, this.#config);
 
-		if (!this.#stylesInjected) {
-			ensureStylesInjected();
-			this.#stylesInjected = true;
-		}
+		ensureStylesInjected();
 
 		return this.#styler.container;
 	}
