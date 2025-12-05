@@ -25,7 +25,8 @@ export class Styler {
 		this.#currentStyle = styles.colorful;
 		this.#currentOptions = {};
 
-		const { button, colorList, container, optionList, pane, recolorList, styleList } = createElementsFromHTML(`
+		const { button, colorList, container, optionList, pane, recolorList, styleList } =
+			createElementsFromHTML(`
 			<div name="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button name="button" type="button" class="maplibregl-ctrl-icon"></button>
@@ -74,13 +75,17 @@ export class Styler {
 
 	private fillStyleList() {
 		Object.entries(styles).forEach(([name, style]) => {
-			const { button } = createElementsFromHTML(`<button name="button" type="button" class="entry">${name}</button>`);
+			const { button } = createElementsFromHTML(
+				`<button name="button" type="button" class="entry">${name}</button>`
+			);
 
 			// Style selection event
 			button.addEventListener('click', () => {
 				if (button.classList.contains('active')) return;
 
-				this.#lists.style.querySelectorAll('.active').forEach((el) => el.classList.remove('active'));
+				this.#lists.style
+					.querySelectorAll('.active')
+					.forEach((el) => el.classList.remove('active'));
 				button.classList.add('active');
 
 				this.setStyle(style);

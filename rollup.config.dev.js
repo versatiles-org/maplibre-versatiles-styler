@@ -17,7 +17,11 @@ export default [
 			scss({ output: false }),
 			commonjs({ sourceMap: false }),
 			nodeResolve(),
-			typescript({ cacheDir: '.rollup.tscache', declaration: false, declarationDir: null })
+			typescript({
+				cacheDir: '.rollup.tscache',
+				declaration: false,
+				declarationDir: null
+			})
 		]
 	}
 ];

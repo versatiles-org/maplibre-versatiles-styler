@@ -13,7 +13,12 @@ export class ListGenerator {
 	readonly #changeHandler: () => void;
 	readonly #container: HTMLElement;
 
-	constructor(container: HTMLElement, values: ValueStore, defaultValues: ValueStore, changeHandler: () => void) {
+	constructor(
+		container: HTMLElement,
+		values: ValueStore,
+		defaultValues: ValueStore,
+		changeHandler: () => void
+	) {
 		this.#container = container;
 		this.#values = values;
 		this.#defaultValues = defaultValues;
@@ -27,7 +32,13 @@ export class ListGenerator {
 		return this;
 	}
 
-	addNumber(key: string, title: string, minValue: number, maxValue: number, scale: number = 1): ListGenerator {
+	addNumber(
+		key: string,
+		title: string,
+		minValue: number,
+		maxValue: number,
+		scale: number = 1
+	): ListGenerator {
 		new InputNumber(this, key, title, minValue, maxValue, scale).init();
 		return this;
 	}
@@ -121,7 +132,14 @@ class InputNumber extends Input {
 	readonly minValue: number;
 	readonly maxValue: number;
 	readonly scale: number;
-	constructor(list: ListGenerator, key: string, title: string, minValue: number, maxValue: number, scale: number = 1) {
+	constructor(
+		list: ListGenerator,
+		key: string,
+		title: string,
+		minValue: number,
+		maxValue: number,
+		scale: number = 1
+	) {
 		super(list, key, title);
 		this.minValue = minValue;
 		this.maxValue = maxValue;
@@ -150,7 +168,9 @@ class InputSelect extends Input {
 	}
 	getHtml(): string {
 		console.log(this.options);
-		const options = Object.entries(this.options).map(([label, value]) => `<option value="${value}">${label}</option>`);
+		const options = Object.entries(this.options).map(
+			([label, value]) => `<option value="${value}">${label}</option>`
+		);
 		return `<select name="input">${options.join('')}</select>`;
 	}
 	setValue(input: HTMLInputElement, text: string) {
