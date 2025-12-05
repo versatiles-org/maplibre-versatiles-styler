@@ -1,4 +1,3 @@
-// control.test.ts
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Map as MLGLMap } from 'maplibre-gl';
 
@@ -16,7 +15,7 @@ vi.mock('./styler', () => {
 	});
 
 	return {
-		Styler: StylerMock,
+		Styler: StylerMock
 	};
 });
 
