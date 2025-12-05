@@ -100,7 +100,9 @@ export class Styler {
 
 	private setStyle(style: StyleBuilderFunction) {
 		this.#currentStyle = style;
-		this.#currentOptions = style.getOptions();
+
+		const defaultOptions = style.getOptions();
+		this.#currentOptions = JSON.parse(JSON.stringify(defaultOptions));
 		this.#currentOptions.baseUrl = this.#config.origin;
 		this.#currentOptions.fonts = undefined;
 		this.#currentOptions.sprite = undefined;
@@ -110,8 +112,6 @@ export class Styler {
 		const update = () => {
 			this.renderStyle();
 		};
-
-		const defaultOptions = style.getOptions();
 
 		const colorList = new ListGenerator(
 			this.#lists.color,
