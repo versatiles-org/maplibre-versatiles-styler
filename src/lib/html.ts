@@ -1,3 +1,5 @@
+import styles from './style.scss';
+
 export function createElementsFromHTML(htmlString: string): Record<string, HTMLElement> {
 	const parser = new DOMParser();
 	const doc = parser.parseFromString(htmlString, 'text/html');
@@ -7,4 +9,14 @@ export function createElementsFromHTML(htmlString: string): Record<string, HTMLE
 	);
 	elements.forEach((element) => element.removeAttribute('name'));
 	return obj;
+}
+
+export function ensureStylesInjected() {	
+	if (typeof document === 'undefined') return;
+
+	const styleEl = document.createElement('style');
+	styleEl.setAttribute('type', 'text/css');
+	styleEl.dataset.versatilesStyler = 'true';
+	styleEl.textContent = styles;
+	document.head.appendChild(styleEl);
 }
