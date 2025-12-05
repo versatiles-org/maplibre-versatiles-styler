@@ -7,7 +7,8 @@
     "build": "rm -rf dist && rollup -c && rm -rf dist/dts",
     "check": "npm run lint && npm run build",
     "dev": "trap 'kill 0' SIGINT; rollup -wc rollup.config.fast.js & http-server -sc0",
-    "lint": "eslint",
+    "format": "prettier --write --log-level warn .",
+    "lint": "prettier --check . && eslint --color .",
     "prepack": "npm run build",
     "release": "npx vrt release-npm",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
@@ -21,6 +22,7 @@
     "eslint": "^9.39.1",
     "http-server": "^14.1.1",
     "npm-check-updates": "^19.1.2",
+    "prettier": "^3.7.4",
     "rollup": "^4.53.3",
     "rollup-plugin-dts": "^6.3.0",
     "rollup-plugin-scss": "^4.0.1",
