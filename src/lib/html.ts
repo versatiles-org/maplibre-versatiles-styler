@@ -1,4 +1,4 @@
-import styles from './style.scss';
+import styles from './control-style.scss';
 
 export function createElementsFromHTML(htmlString: string): Record<string, HTMLElement> {
 	const parser = new DOMParser();
@@ -11,7 +11,7 @@ export function createElementsFromHTML(htmlString: string): Record<string, HTMLE
 	return obj;
 }
 
-export function ensureStylesInjected() {	
+export function ensureStylesInjected() {
 	if (typeof document === 'undefined') return;
 
 	const styleEl = document.createElement('style');
