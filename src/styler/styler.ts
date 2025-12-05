@@ -3,14 +3,7 @@ import { styles } from '@versatiles/style';
 import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
 import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
-
-export interface Config {
-	fontNames: string[];
-	tiles: string[];
-	sprite: string;
-	glyphs: string;
-	open: boolean;
-}
+import { Config } from './config';
 
 export class Styler {
 	readonly #container: HTMLElement;
