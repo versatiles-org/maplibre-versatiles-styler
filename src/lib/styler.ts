@@ -96,9 +96,7 @@ export class Styler {
 	private setStyle(style: StyleBuilderFunction) {
 		this.#currentStyle = style;
 		this.#currentOptions = style.getOptions();
-		this.#currentOptions.tiles = this.#config.tiles;
-		this.#currentOptions.sprite = this.#config.sprite;
-		this.#currentOptions.glyphs = this.#config.glyphs;
+		this.#currentOptions.baseUrl = this.#config.origin;
 
 		const update = () => {
 			this.renderStyle();
