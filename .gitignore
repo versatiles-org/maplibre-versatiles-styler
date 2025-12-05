@@ -1,6 +1,5 @@
 
 coverage/
-demo/maplibre-gl/
 demo/maplibre-versatiles-styler.*
 dist/
 node_modules/
