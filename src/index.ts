@@ -4,20 +4,20 @@ import { Styler } from './styler/styler';
 import type { Config } from './styler/styler';
 export type { Config };
 
-(async () => {
-	await new Promise((res) => {
-		if (document.readyState === 'complete' || document.readyState === 'interactive') {
-			setTimeout(res, 1);
-		} else {
-			document.addEventListener('DOMContentLoaded', res);
-		}
-	});
-	const head = document.getElementsByTagName('head')[0];
-	const s = document.createElement('style');
-	s.setAttribute('type', 'text/css');
-	s.appendChild(document.createTextNode(styles));
-	head.appendChild(s);
-})();
+let stylesInjected = false;
+
+function ensureStylesInjected() {
+	if (stylesInjected) return;
+	if (typeof document === 'undefined') return;
+
+	const styleEl = document.createElement('style');
+	styleEl.setAttribute('type', 'text/css');
+	styleEl.dataset.versatilesStyler = 'true';
+	styleEl.textContent = styles;
+	document.head.appendChild(styleEl);
+
+	stylesInjected = true;
+}
 
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.
@@ -51,6 +51,7 @@ export default class VersatilesStyler {
 	onAdd(map: MLGLMap) {
 		this.#map = map;
 		this.#styler = new Styler(this.#map, this.#config);
+		ensureStylesInjected();
 
 		return this.#styler.container;
 	}
@@ -59,9 +60,10 @@ export default class VersatilesStyler {
 	 * Called when the control is removed from the map.
 	 */
 	onRemove() {
-		if (this.#map) return;
+		if (!this.#map) return;
 
 		// Clean up references
+		this.#styler = undefined;
 		this.#map = undefined;
 	}
 }
