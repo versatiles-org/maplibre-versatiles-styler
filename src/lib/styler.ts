@@ -3,7 +3,7 @@ import { styles } from '@versatiles/style';
 import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
 import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
-import { Config } from './config';
+import { VersaTilesStylerConfig } from './config';
 
 export class Styler {
 	readonly #container: HTMLElement;
@@ -15,11 +15,11 @@ export class Styler {
 	};
 
 	readonly #map: MLGLMap;
-	readonly #config: Config;
+	readonly #config: VersaTilesStylerConfig;
 	#currentStyle: StyleBuilderFunction;
 	#currentOptions: StyleBuilderOptions;
 
-	constructor(map: MLGLMap, config: Config) {
+	constructor(map: MLGLMap, config: VersaTilesStylerConfig) {
 		this.#map = map;
 		this.#config = config;
 		this.#currentStyle = styles.colorful;
@@ -97,6 +97,10 @@ export class Styler {
 		this.#currentStyle = style;
 		this.#currentOptions = style.getOptions();
 		this.#currentOptions.baseUrl = this.#config.origin;
+		this.#currentOptions.fonts = undefined;
+		this.#currentOptions.sprite = undefined;
+		this.#currentOptions.glyphs = undefined;
+		this.#currentOptions.tiles = undefined;
 
 		const update = () => {
 			this.renderStyle();

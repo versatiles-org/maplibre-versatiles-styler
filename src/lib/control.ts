@@ -1,7 +1,7 @@
 import styles from './style.scss';
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { Styler } from './styler';
-import type { Config } from './config';
+import type { VersaTilesStylerConfig } from './config';
 
 let stylesInjected = false;
 
@@ -21,8 +21,8 @@ function ensureStylesInjected() {
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.
  */
-export class Control {
-	readonly #config: Config;
+export class VersaTilesStylerControl {
+	readonly #config: VersaTilesStylerConfig;
 	#map?: MLGLMap;
 	#styler?: Styler;
 
@@ -30,7 +30,7 @@ export class Control {
 	 * Initializes a new instance of the styleControl.
 	 * @param {Object} config Configuration options for the control.
 	 */
-	constructor(config: Config) {
+	constructor(config: VersaTilesStylerConfig) {
 		this.#config = config;
 	}
 

@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>MapLibre GL JS VersaTiles Styler</title>
+		<link rel="icon" href="data:image/png;base64,iVBORw0KGgo=" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+		<script src="./maplibre-gl/maplibre-gl.js" defer></script>
+		<script src="./maplibre-versatiles-styler.js" defer></script>
+		<link href="./maplibre-gl/maplibre-gl.css" rel="stylesheet" />
+
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			#map {
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				width: 100%;
+			}
+
+			#logo {
+				position: absolute;
+				top: 1em;
+				left: 1em;
+				z-index: 1;
+			}
+
+			#logo img {
+				width: 3em;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="map" class="maplibregl-compact"></div>
+		<script defer>
+			window.addEventListener('DOMContentLoaded', () => {
+				const map = new maplibregl.Map({
+					container: 'map',
+					bounds: [-180, -80, 180, 80],
+					zoom: 5,
+					maxZoom: 20,
+					hash: true
+				});
+
+				map.addControl(new maplibregl.NavigationControl(), 'top-left');
+				map.addControl(
+					new VersaTilesStylerControl({
+						origin: 'https://tiles.versatiles.org',
+						open: true
+					})
+				);
+
+				// collapse attribution control
+				document.getElementsByClassName('maplibregl-ctrl-attrib')[0].classList.remove('maplibregl-compact-show');
+			});
+		</script>
+	</body>
+</html>

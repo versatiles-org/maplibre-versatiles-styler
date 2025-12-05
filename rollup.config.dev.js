@@ -7,9 +7,9 @@ export default [
 	{
 		input: 'src/index.ts',
 		output: {
-			file: './dist/maplibre-gl-versatiles-styler.js',
-			format: 'umd',
-			name: 'VersaTilesStyler',
+			file: './demo/maplibre-versatiles-styler.js',
+			format: 'iife',
+			name: 'VersaTilesStylerControl',
 			sourcemap: true
 		},
 		treeshake: false,
@@ -17,7 +17,7 @@ export default [
 			scss({ output: false }),
 			commonjs({ sourceMap: false }),
 			nodeResolve(),
-			typescript({ cacheDir: '.rollup.tscache' })
+			typescript({ cacheDir: '.rollup.tscache', declaration: false, declarationDir: null })
 		]
 	}
 ];

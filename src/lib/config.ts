@@ -1,4 +1,4 @@
-export interface Config {
+export interface VersaTilesStylerConfig {
 	origin?: string;
 	open?: boolean;
 }

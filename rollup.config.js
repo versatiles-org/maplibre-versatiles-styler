@@ -10,15 +10,15 @@ export default [
 		input: 'src/index.ts',
 		output: [
 			{
-				file: './dist/maplibre-gl-versatiles-styler.js',
-				format: 'umd',
-				name: 'VersaTilesStyler',
+				file: './dist/maplibre-versatiles-styler.js',
+				format: 'iife',
+				name: 'VersaTilesStylerControl',
 				sourcemap: true
 			},
 			{
-				file: './dist/maplibre-gl-versatiles-styler.min.js',
-				format: 'umd',
-				name: 'VersaTilesStyler',
+				file: './dist/maplibre-versatiles-styler.min.js',
+				format: 'iife',
+				name: 'VersaTilesStylerControl',
 				sourcemap: true,
 				plugins: [terser()]
 			}
@@ -29,7 +29,7 @@ export default [
 	},
 	{
 		input: './dist/dts/index.d.ts',
-		output: [{ file: 'dist/maplibre-gl-versatiles-styler.d.ts', format: 'es' }],
+		output: [{ file: 'dist/maplibre-versatiles-styler.d.ts', format: 'es' }],
 		plugins: [dts()],
 		watch: false
 	}

@@ -7,7 +7,7 @@ export default [
 	js.configs.recommended,
 	...ts.configs.recommended,
 	{
-		ignores: ['dist/**/*.*']
+		ignores: ['dist/**/*.*', 'demo/**/*.*', 'node_modules/**/*.*']
 	},
 	{
 		files: ['src/**/*.ts'],
