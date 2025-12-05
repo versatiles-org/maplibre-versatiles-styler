@@ -9,7 +9,7 @@ export default [
 		output: {
 			file: './dist/maplibre-gl-versatiles-styler.js',
 			format: 'umd',
-			name: 'VersatilesStyler',
+			name: 'VersaTilesStyler',
 			sourcemap: true
 		},
 		treeshake: false,

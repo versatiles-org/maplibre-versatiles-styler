@@ -12,13 +12,13 @@ export default [
 			{
 				file: './dist/maplibre-gl-versatiles-styler.js',
 				format: 'umd',
-				name: 'VersatilesStyler',
+				name: 'VersaTilesStyler',
 				sourcemap: true
 			},
 			{
 				file: './dist/maplibre-gl-versatiles-styler.min.js',
 				format: 'umd',
-				name: 'VersatilesStyler',
+				name: 'VersaTilesStyler',
 				sourcemap: true,
 				plugins: [terser()]
 			}

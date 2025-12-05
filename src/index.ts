@@ -22,7 +22,7 @@ function ensureStylesInjected() {
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.
  */
-export default class VersatilesStyler {
+export default class VersaTilesStyler {
 	readonly #config: Config;
 	#map?: MLGLMap;
 	#styler?: Styler;
