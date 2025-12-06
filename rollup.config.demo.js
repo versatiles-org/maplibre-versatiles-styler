@@ -15,7 +15,7 @@ export default [
 		},
 		treeshake: false,
 		plugins: [
-			scss({ output: false }),
+			scss({ output: false, silenceDeprecations: ['legacy-js-api'] }),
 			commonjs({ sourceMap: false }),
 			nodeResolve(),
 			typescript({
