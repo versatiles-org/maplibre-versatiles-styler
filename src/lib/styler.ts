@@ -7,24 +7,24 @@ import { VersaTilesStylerConfig } from './config';
 import svg from '../assets/versatiles-logo.svg';
 
 export class Styler {
-	readonly #container: HTMLElement;
-	readonly #lists: {
+	readonly container: HTMLElement;
+	readonly lists: {
 		color: HTMLElement;
 		recolor: HTMLElement;
 		style: HTMLElement;
 		option: HTMLElement;
 	};
 
-	readonly #map: MLGLMap;
-	readonly #config: VersaTilesStylerConfig;
-	#currentStyle: StyleBuilderFunction;
-	#currentOptions: StyleBuilderOptions;
+	readonly map: MLGLMap;
+	readonly config: VersaTilesStylerConfig;
+	currentStyle: StyleBuilderFunction;
+	currentOptions: StyleBuilderOptions;
 
 	constructor(map: MLGLMap, config: VersaTilesStylerConfig) {
-		this.#map = map;
-		this.#config = config;
-		this.#currentStyle = styles.colorful;
-		this.#currentOptions = {};
+		this.map = map;
+		this.config = config;
+		this.currentStyle = styles.colorful;
+		this.currentOptions = {};
 
 		const { button, colorList, container, optionList, pane, recolorList, styleList } =
 			createElementsFromHTML(`
@@ -53,15 +53,15 @@ export class Styler {
 				</div>
 			</div>
 		`);
-		this.#container = container;
-		this.#lists = {
+		this.container = container;
+		this.lists = {
 			color: colorList,
 			recolor: recolorList,
 			style: styleList,
 			option: optionList
 		};
 
-		pane.style.display = this.#config.open ? 'block' : 'none';
+		pane.style.display = this.config.open ? 'block' : 'none';
 		button.addEventListener('click', () => {
 			pane.style.display = pane.style.display === 'block' ? 'none' : 'block';
 		});
@@ -69,10 +69,6 @@ export class Styler {
 		this.fillStyleList();
 
 		this.setBaseStyle(styles.colorful);
-	}
-
-	public get container(): HTMLElement {
-		return this.#container;
 	}
 
 	private fillStyleList() {
@@ -85,39 +81,37 @@ export class Styler {
 			button.addEventListener('click', () => {
 				if (button.classList.contains('active')) return;
 
-				this.#lists.style
-					.querySelectorAll('.active')
-					.forEach((el) => el.classList.remove('active'));
+				this.lists.style.querySelectorAll('.active').forEach((el) => el.classList.remove('active'));
 				button.classList.add('active');
 
 				this.setBaseStyle(style);
 			});
 
-			if (style === this.#currentStyle) {
+			if (style === this.currentStyle) {
 				button.classList.add('active');
 			}
-			this.#lists.style.appendChild(button);
+			this.lists.style.appendChild(button);
 		});
 	}
 
 	private setBaseStyle(baseStyle: StyleBuilderFunction) {
-		this.#currentStyle = baseStyle;
+		this.currentStyle = baseStyle;
 
 		const defaultOptions = baseStyle.getOptions();
-		this.#currentOptions = JSON.parse(JSON.stringify(defaultOptions));
-		this.#currentOptions.baseUrl = this.#config.origin;
-		this.#currentOptions.fonts = undefined;
-		this.#currentOptions.sprite = undefined;
-		this.#currentOptions.glyphs = undefined;
-		this.#currentOptions.tiles = undefined;
+		this.currentOptions = JSON.parse(JSON.stringify(defaultOptions));
+		this.currentOptions.baseUrl = this.config.origin;
+		this.currentOptions.fonts = undefined;
+		this.currentOptions.sprite = undefined;
+		this.currentOptions.glyphs = undefined;
+		this.currentOptions.tiles = undefined;
 
 		const update = () => {
 			this.renderStyle();
 		};
 
 		const colorList = new ListGenerator(
-			this.#lists.color,
-			this.#currentOptions.colors ?? {},
+			this.lists.color,
+			this.currentOptions.colors ?? {},
 			defaultOptions.colors ?? {},
 			update
 		);
@@ -126,8 +120,8 @@ export class Styler {
 		});
 
 		new ListGenerator(
-			this.#lists.recolor,
-			(this.#currentOptions.recolor ?? {}) as ValueStore,
+			this.lists.recolor,
+			(this.currentOptions.recolor ?? {}) as ValueStore,
 			(defaultOptions.recolor ?? {}) as ValueStore,
 			update
 		)
@@ -143,8 +137,8 @@ export class Styler {
 			.addColor('blendColor', 'blend color');
 
 		new ListGenerator(
-			this.#lists.option,
-			(this.#currentOptions ?? {}) as ValueStore,
+			this.lists.option,
+			(this.currentOptions ?? {}) as ValueStore,
 			(defaultOptions ?? {}) as ValueStore,
 			update
 		).addSelect('language', 'language', { local: '', german: 'de', english: 'en' });
@@ -153,7 +147,7 @@ export class Styler {
 	}
 
 	private renderStyle() {
-		const style = this.#currentStyle(this.#currentOptions);
-		this.#map.setStyle(style);
+		const style = this.currentStyle(this.currentOptions);
+		this.map.setStyle(style);
 	}
 }
