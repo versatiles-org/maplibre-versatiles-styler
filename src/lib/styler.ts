@@ -98,12 +98,14 @@ export class Styler {
 		this.currentStyle = baseStyle;
 
 		const defaultOptions = baseStyle.getOptions();
-		this.currentOptions = JSON.parse(JSON.stringify(defaultOptions));
-		this.currentOptions.baseUrl = this.config.origin;
-		this.currentOptions.fonts = undefined;
-		this.currentOptions.sprite = undefined;
-		this.currentOptions.glyphs = undefined;
-		this.currentOptions.tiles = undefined;
+		this.currentOptions = {
+			...defaultOptions,
+			baseUrl: this.config.origin,
+			fonts: undefined,
+			glyphs: undefined,
+			sprite: undefined,
+			tiles: undefined
+		}
 
 		const update = () => {
 			this.renderStyle();
