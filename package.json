@@ -10,10 +10,11 @@
     "format": "prettier --write --log-level warn .",
     "lint": "prettier --check . && eslint --color .",
     "prepack": "npm run build",
+    "prepare": "husky",
     "release": "npx vrt release-npm",
-    "test": "npm run test-unit",
-    "test-unit": "vitest run",
     "test-coverage": "vitest run --coverage",
+    "test-unit": "vitest run",
+    "test": "npm run test-unit",
     "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
   },
   "devDependencies": {
@@ -27,6 +28,7 @@
     "@vitest/coverage-v8": "^4.0.15",
     "eslint": "^9.39.1",
     "http-server": "^14.1.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.2.0",
     "npm-check-updates": "^19.1.2",
     "prettier": "^3.7.4",
