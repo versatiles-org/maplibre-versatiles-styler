@@ -28,30 +28,30 @@ export class Styler {
 
 		const { button, colorList, container, optionList, pane, recolorList, styleList } =
 			createElementsFromHTML(`
-			<div name="container" class="maplibregl-versatiles-styler">
+			<div data-key="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
-					<button name="button" type="button" class="maplibregl-ctrl-icon"></button>
+					<button data-key="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
-				<div name="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
+				<div data-key="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
 					<h3>
 						<a href="https://versatiles.org" target="_blank"><img src="${svg}" alt="VersaTiles" /></a>
 						<a href="https://github.com/versatiles-org/maplibre-versatiles-styler" target="_blank">VersaTiles Styler</a>
 					</h3>
 					<details open>
 						<summary>Select a base style</summary>
-						<div name="styleList" class="maplibregl-list style-list"></div>
+						<div data-key="styleList" class="maplibregl-list style-list"></div>
 					</details>
 					<details>
 						<summary>Edit individual colors</summary>
-						<div name="colorList" class="maplibregl-list"></div>
+						<div data-key="colorList" class="maplibregl-list"></div>
 					</details>
 					<details>
 						<summary>Modify all colors</summary>
-						<div name="recolorList" class="maplibregl-list"></div>
+						<div data-key="recolorList" class="maplibregl-list"></div>
 					</details>
 					<details>
 						<summary>Select Options</summary>
-						<div name="optionList" class="maplibregl-list"></div>
+						<div data-key="optionList" class="maplibregl-list"></div>
 					</details>
 				</div>
 			</div>
@@ -75,25 +75,29 @@ export class Styler {
 	}
 
 	private fillStyleList() {
+		let first = true;
+		let inputs: HTMLInputElement[] = [];
 		Object.entries(styles).forEach(([name, style]) => {
-			const { button } = createElementsFromHTML(
-				`<button name="button" type="button">${name}</button>`
-			);
+			const { wrapper, input } = createElementsFromHTML(
+				`<label data-key="wrapper">
+				<input type="radio" data-key="input" value="${name}" />
+				<span>${name}</span>
+				</label>`
+			) as { wrapper: HTMLLabelElement; input: HTMLInputElement };
+
+			if (first) {
+				input.checked = true;
+				first = false;
+			}
 
 			// Style selection event
-			button.addEventListener('click', () => {
-				if (button.classList.contains('active')) return;
-
-				this.lists.style.querySelectorAll('.active').forEach((el) => el.classList.remove('active'));
-				button.classList.add('active');
-
+			input.addEventListener('click', () => {
+				inputs.forEach((i) => (i.checked = i === input));
 				this.setBaseStyle(style);
 			});
-
-			if (style === this.currentStyle) {
-				button.classList.add('active');
-			}
-			this.lists.style.appendChild(button);
+			
+			this.lists.style.appendChild(wrapper);
+			inputs.push(input);
 		});
 	}
 

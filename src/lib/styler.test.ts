@@ -35,10 +35,7 @@ function extractElements(styler: Styler) {
 	const recolorList = styler.lists.recolor;
 	const optionList = styler.lists.option;
 	const styleButtons = Object.fromEntries(
-		Array.from(styleList.querySelectorAll('button')).map((button) => [
-			button.textContent || '',
-			button,
-		])
+		Array.from(styleList.querySelectorAll('input')).map((i) => [i.value || '', i])
 	);
 
 	return {

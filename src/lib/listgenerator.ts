@@ -83,11 +83,11 @@ abstract class Input {
 
 	init() {
 		const { button, input, reset } = createElementsFromHTML(`
-			<div name="button" class="entry">
+			<div data-key="button" class="entry">
 				<label>${this.title}</label>
 				<div class="space"></div>
 				${this.getHtml()}
-				<button name="reset" type="button" disabled>&circlearrowleft;</button>
+				<button data-key="reset" type="button" disabled>&circlearrowleft;</button>
 			</div>
 		`) as { button: HTMLDivElement; input: HTMLInputElement; reset: HTMLButtonElement };
 
@@ -120,7 +120,7 @@ abstract class Input {
 
 class InputColor extends Input {
 	getHtml(): string {
-		return `<input name="input" type="color">`;
+		return `<input data-key="input" type="color">`;
 	}
 	readValue(input: HTMLInputElement) {
 		input.style.backgroundColor = input.value;
@@ -146,7 +146,7 @@ class InputNumber extends Input {
 		this.scale = scale;
 	}
 	getHtml(): string {
-		return `<input name="input" type="number">`;
+		return `<input data-key="input" type="number">`;
 	}
 	setValue(input: HTMLInputElement, value: number) {
 		if (value < this.minValue) value = this.minValue;
@@ -169,7 +169,7 @@ class InputSelect extends Input {
 		const options = Object.entries(this.options).map(
 			([label, value]) => `<option value="${value}">${label}</option>`
 		);
-		return `<select name="input">${options.join('')}</select>`;
+		return `<select data-key="input">${options.join('')}</select>`;
 	}
 	setValue(input: HTMLInputElement, text: string) {
 		input.value = text;
@@ -182,7 +182,7 @@ class InputSelect extends Input {
 
 class InputCheckbox extends Input {
 	getHtml(): string {
-		return `<input name="input" type="checkbox">`;
+		return `<input data-key="input" type="checkbox">`;
 	}
 	setValue(input: HTMLInputElement, value: boolean) {
 		input.checked = value;

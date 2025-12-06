@@ -22,13 +22,13 @@ afterEach(() => {
 });
 
 describe('createElementsFromHTML', () => {
-	it('returns a mapping from name attribute to element', () => {
+	it('returns a mapping from data-key attribute to element', () => {
 		const html = `
 			<div>
-				<button name="foo">Foo</button>
-				<input name="bar" value="baz" />
+				<button data-key="foo">Foo</button>
+				<input data-key="bar" value="baz" />
 				<span>No name</span>
-				<div name="nested">
+				<div data-key="nested">
 					<span>Inside</span>
 				</div>
 			</div>
@@ -51,8 +51,8 @@ describe('createElementsFromHTML', () => {
 	it('removes the name attribute from all mapped elements', () => {
 		const html = `
 			<div>
-				<button name="foo">Foo</button>
-				<input name="bar" />
+				<button data-key="foo">Foo</button>
+				<input data-key="bar" />
 			</div>
 		`;
 
