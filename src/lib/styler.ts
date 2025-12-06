@@ -33,7 +33,10 @@ export class Styler {
 					<button name="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
 				<div name="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
-				   <h3><img src="${svg}" alt="VersaTiles" /> VersaTiles Styler</h3>
+					<h3>
+						<a href="https://versatiles.org" target="_blank"><img src="${svg}" alt="VersaTiles" /></a>
+						<a href="https://github.com/versatiles-org/maplibre-versatiles-styler" target="_blank">VersaTiles Styler</a>
+					</h3>
 					<details open>
 						<summary>Select a base style</summary>
 						<div name="styleList" class="maplibregl-list style-list"></div>

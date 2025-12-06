@@ -12,6 +12,15 @@
 		background-size: 70%;
 	}
 
+	a {
+		color: var(--fg-color);
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
 	.maplibregl-pane {
 		overflow-y: scroll;
 		width: 200px;
@@ -27,10 +36,9 @@
 			padding: 0.5em 0em 0.5em 0.5em;
 
 			img {
-				vertical-align: middle;
+				vertical-align: -0.39em;
 				width: 1.5em;
 				height: 1.5em;
-				margin-right: 4px;
 			}
 		}
 
