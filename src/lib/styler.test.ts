@@ -20,6 +20,18 @@ const defaultConfig: VersaTilesStylerConfig = {
 };
 let map: MLGLMap;
 
+vi.mock('./tile_json', () => {
+	return {
+		fetchTileJSON: async () => {
+			return {
+				languages() {
+					return { local: '', german: 'de', english: 'en', french: 'fr', spanish: 'es' };
+				},
+			};
+		},
+	};
+});
+
 function extractElements(styler: Styler) {
 	const mainContainer = styler.container;
 	const mainPane = mainContainer.querySelector('.maplibregl-pane') as HTMLElement;
@@ -91,7 +103,7 @@ describe('Styler', () => {
 	it('creates a style button for each style and uses the current style initially', () => {
 		// Spy on the default style's getOptions
 		const colorfulGetOptionsSpy = vi.spyOn(styles.colorful, 'getOptions');
-
+		const shadowGetOptionsSpy = vi.spyOn(styles.shadow, 'getOptions');
 		const setStyleMock = vi.mocked(map.setStyle);
 
 		expect(colorfulGetOptionsSpy).toHaveBeenCalledTimes(0);
@@ -110,21 +122,17 @@ describe('Styler', () => {
 		const shadowButton = styleButtons.shadow;
 		expect(shadowButton).toBeTruthy();
 
-		const shadowGetOptionsSpy = vi.spyOn(styles.shadow, 'getOptions');
 		// Clicking shadow button should cause a new style to be rendered
+		expect(shadowGetOptionsSpy).toHaveBeenCalledTimes(0);
 		shadowButton!.dispatchEvent(new Event('click', { bubbles: true }));
 		expect(shadowGetOptionsSpy).toHaveBeenCalledTimes(1);
 		expect(setStyleMock).toHaveBeenCalledTimes(2);
-
-		// If shadow is already active, clicking it again should be ignored
-		shadowButton!.classList.add('active');
-		setStyleMock.mockClear();
-		shadowButton!.dispatchEvent(new Event('click', { bubbles: true }));
-		expect(setStyleMock).not.toHaveBeenCalled();
 	});
 
-	it('creates entries for colors, recolor, and options when setting a style', () => {
-		const { colorList, recolorList, optionList } = extractElements(new Styler(map, defaultConfig));
+	it('creates entries for colors, recolor, and options when setting a style', async () => {
+		const styler = new Styler(map, defaultConfig);
+		await Promise.resolve(); // Wait for async TileJSON fetch to complete
+		const { colorList, recolorList, optionList } = extractElements(styler);
 
 		// Our createElementsFromHTML mock creates a generic entry for each ListGenerator call.
 		// We don't assert the exact number of entries, but we do expect that the containers

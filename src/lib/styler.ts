@@ -5,6 +5,7 @@ import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
 import { VersaTilesStylerConfig } from './types';
 import svg from '../assets/versatiles-logo.svg';
+import { fetchTileJSON } from './tile_json';
 
 export class Styler {
 	readonly container: HTMLElement;
@@ -76,7 +77,7 @@ export class Styler {
 
 	private fillStyleList() {
 		let first = true;
-		let inputs: HTMLInputElement[] = [];
+		const inputs: HTMLInputElement[] = [];
 		Object.entries(styles).forEach(([name, style]) => {
 			const { wrapper, input } = createElementsFromHTML(
 				`<label data-key="wrapper">
@@ -95,7 +96,7 @@ export class Styler {
 				inputs.forEach((i) => (i.checked = i === input));
 				this.setBaseStyle(style);
 			});
-			
+
 			this.lists.style.appendChild(wrapper);
 			inputs.push(input);
 		});
@@ -145,12 +146,16 @@ export class Styler {
 			.addNumber('blend', 'blend', 0, 1, 100)
 			.addColor('blendColor', 'blend color');
 
-		new ListGenerator(
+		const optionList = new ListGenerator(
 			this.lists.option,
 			(this.currentOptions ?? {}) as ValueStore,
 			(defaultOptions ?? {}) as ValueStore,
 			update
-		).addSelect('language', 'language', { local: '', german: 'de', english: 'en' });
+		);
+
+		fetchTileJSON(new URL('/tiles/osm/tiles.json', this.config.origin)).then((tileJSON) => {
+			optionList.addSelect('language', 'language', tileJSON.languages());
+		});
 
 		this.renderStyle();
 	}
