@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Map as MLGLMap } from 'maplibre-gl';
 import { VersaTilesStylerControl } from './control';
 import { Styler } from './styler';
-import type { VersaTilesStylerConfig } from './config';
+import type { VersaTilesStylerConfig } from './types';
 import { JSDOM } from 'jsdom';
 
 // Optional: mock Styler, so we don't pull full UI in

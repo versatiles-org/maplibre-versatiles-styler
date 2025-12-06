@@ -3,7 +3,7 @@ import { styles } from '@versatiles/style';
 import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
 import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
-import { VersaTilesStylerConfig } from './config';
+import { VersaTilesStylerConfig } from './types';
 import svg from '../assets/versatiles-logo.svg';
 
 export class Styler {

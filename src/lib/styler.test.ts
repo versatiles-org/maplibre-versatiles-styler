@@ -12,7 +12,7 @@ const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
 // --- Import the SUT and mocked modules AFTER mocks ---
 import { Styler } from './styler';
 import { styles } from '@versatiles/style';
-import { type VersaTilesStylerConfig } from './config';
+import { type VersaTilesStylerConfig } from './types';
 
 const defaultConfig: VersaTilesStylerConfig = {
 	open: true,

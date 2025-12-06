@@ -1,2 +1,2 @@
-export type { VersaTilesStylerConfig } from './lib/config';
+export type { VersaTilesStylerConfig } from './lib/types';
 export { VersaTilesStylerControl as default } from './lib/control';

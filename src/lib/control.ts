@@ -1,6 +1,6 @@
 import type { ControlPosition, IControl, Map as MLGLMap } from 'maplibre-gl';
 import { Styler } from './styler';
-import type { VersaTilesStylerConfig } from './config';
+import type { VersaTilesStylerConfig } from './types';
 import { ensureStylesInjected } from './html';
 
 /**
