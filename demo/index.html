@@ -51,12 +51,12 @@
 					hash: true
 				});
 
-				map.addControl(new maplibregl.NavigationControl(), 'top-left');
+				map.addControl(new maplibregl.NavigationControl(), 'top-right');
 				map.addControl(
 					new VersaTilesStylerControl({
 						origin: 'https://tiles.versatiles.org',
 						open: true
-					})
+					}),'top-left'
 				);
 
 				// collapse attribution control

@@ -33,17 +33,17 @@ export class Styler {
 					<button name="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
 				<div name="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
-				   <img src="${svg}" alt="VersaTiles" />
+				   <h3><img src="${svg}" alt="VersaTiles" /> VersaTiles Styler</h3>
 					<details open>
 						<summary>Select a base style</summary>
-						<div name="styleList" class="maplibregl-list"></div>
+						<div name="styleList" class="maplibregl-list style-list"></div>
 					</details>
 					<details>
-						<summary>Edit colors</summary>
+						<summary>Edit individual colors</summary>
 						<div name="colorList" class="maplibregl-list"></div>
 					</details>
 					<details>
-						<summary>Modify colors</summary>
+						<summary>Modify all colors</summary>
 						<div name="recolorList" class="maplibregl-list"></div>
 					</details>
 					<details>
@@ -68,7 +68,7 @@ export class Styler {
 
 		this.fillStyleList();
 
-		this.setStyle(styles.colorful);
+		this.setBaseStyle(styles.colorful);
 	}
 
 	public get container(): HTMLElement {
@@ -78,7 +78,7 @@ export class Styler {
 	private fillStyleList() {
 		Object.entries(styles).forEach(([name, style]) => {
 			const { button } = createElementsFromHTML(
-				`<button name="button" type="button" class="entry">${name}</button>`
+				`<button name="button" type="button">${name}</button>`
 			);
 
 			// Style selection event
@@ -90,7 +90,7 @@ export class Styler {
 					.forEach((el) => el.classList.remove('active'));
 				button.classList.add('active');
 
-				this.setStyle(style);
+				this.setBaseStyle(style);
 			});
 
 			if (style === this.#currentStyle) {
@@ -100,10 +100,10 @@ export class Styler {
 		});
 	}
 
-	private setStyle(style: StyleBuilderFunction) {
-		this.#currentStyle = style;
+	private setBaseStyle(baseStyle: StyleBuilderFunction) {
+		this.#currentStyle = baseStyle;
 
-		const defaultOptions = style.getOptions();
+		const defaultOptions = baseStyle.getOptions();
 		this.#currentOptions = JSON.parse(JSON.stringify(defaultOptions));
 		this.#currentOptions.baseUrl = this.#config.origin;
 		this.#currentOptions.fonts = undefined;
