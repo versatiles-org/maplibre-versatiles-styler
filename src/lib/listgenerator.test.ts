@@ -140,7 +140,7 @@ describe('ListGenerator', () => {
 
 		const options: Record<string, string> = {
 			English: 'en',
-			German: 'de'
+			German: 'de',
 		};
 
 		const list = new ListGenerator(container, values, defaultValues, changeHandler);
@@ -160,11 +160,11 @@ describe('ListGenerator', () => {
 		// Options rendered correctly
 		const renderedOptions = Array.from(select.options).map((o) => ({
 			value: o.value,
-			label: o.textContent
+			label: o.textContent,
 		}));
 		expect(renderedOptions).toEqual([
 			{ value: 'en', label: 'English' },
-			{ value: 'de', label: 'German' }
+			{ value: 'de', label: 'German' },
 		]);
 
 		// Change selection

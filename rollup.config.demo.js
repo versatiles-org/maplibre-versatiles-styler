@@ -11,7 +11,7 @@ export default [
 			file: './demo/maplibre-versatiles-styler.js',
 			format: 'umd',
 			name: 'VersaTilesStylerControl',
-			sourcemap: true
+			sourcemap: true,
 		},
 		treeshake: false,
 		plugins: [
@@ -21,9 +21,9 @@ export default [
 			typescript({
 				cacheDir: '.rollup.tscache',
 				declaration: false,
-				declarationDir: null
+				declarationDir: null,
 			}),
-			image()
-		]
-	}
+			image(),
+		],
+	},
 ];

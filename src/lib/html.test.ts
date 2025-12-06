@@ -8,7 +8,7 @@ const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
 
 // Mock the SCSS import before importing the module under test
 vi.mock('../assets/control-style.scss', () => ({
-	default: '.mocked-style { color: hotpink; }'
+	default: '.mocked-style { color: hotpink; }',
 }));
 
 import { createElementsFromHTML, ensureStylesInjected } from './html';

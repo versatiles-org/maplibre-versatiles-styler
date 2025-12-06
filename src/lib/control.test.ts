@@ -14,7 +14,7 @@ vi.mock('./styler', () => {
 	});
 
 	return {
-		Styler: StylerMock
+		Styler: StylerMock,
 	};
 });
 

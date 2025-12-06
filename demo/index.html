@@ -48,14 +48,14 @@
 					bounds: [-180, -80, 180, 80],
 					zoom: 5,
 					maxZoom: 20,
-					hash: true
+					hash: true,
 				});
 
 				map.addControl(new maplibregl.NavigationControl(), 'top-right');
 				map.addControl(
 					new VersaTilesStylerControl({
 						origin: 'https://tiles.versatiles.org',
-						open: true
+						open: true,
 					}),
 					'top-left'
 				);

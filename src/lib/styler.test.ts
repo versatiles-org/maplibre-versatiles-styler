@@ -16,7 +16,7 @@ import { type VersaTilesStylerConfig } from './config';
 
 const defaultConfig: VersaTilesStylerConfig = {
 	open: true,
-	origin: 'https://tiles.versatiles.org'
+	origin: 'https://tiles.versatiles.org',
 };
 let map: MLGLMap;
 
@@ -37,7 +37,7 @@ function extractElements(styler: Styler) {
 	const styleButtons = Object.fromEntries(
 		Array.from(styleList.querySelectorAll('button')).map((button) => [
 			button.textContent || '',
-			button
+			button,
 		])
 	);
 
@@ -49,14 +49,14 @@ function extractElements(styler: Styler) {
 		optionList,
 		recolorList,
 		styleButtons,
-		styleList
+		styleList,
 	};
 }
 
 beforeEach(() => {
 	map = {
 		setStyle: vi.fn(),
-		getStyle: vi.fn().mockReturnValue({})
+		getStyle: vi.fn().mockReturnValue({}),
 	} as unknown as MLGLMap;
 });
 

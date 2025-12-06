@@ -7,7 +7,7 @@ export default [
 	js.configs.recommended,
 	...ts.configs.recommended,
 	{
-		ignores: ['dist/**/*.*', 'demo/**/*.*', 'node_modules/**/*.*']
+		ignores: ['dist/**/*.*', 'demo/**/*.*', 'node_modules/**/*.*'],
 	},
 	{
 		files: ['src/**/*.ts'],
@@ -17,20 +17,20 @@ export default [
 			globals: {
 				browser: false,
 				es6: true,
-				node: true
+				node: true,
 			},
 			parser,
 			parserOptions: {
 				sourceType: 'module',
 				project: './tsconfig.json',
-				tsconfigRootDir: import.meta.dirname
-			}
+				tsconfigRootDir: import.meta.dirname,
+			},
 		},
 		plugins: {
-			'@typescript-eslint': eslint_plugin
+			'@typescript-eslint': eslint_plugin,
 		},
 		linterOptions: {
-			reportUnusedDisableDirectives: true
+			reportUnusedDisableDirectives: true,
 		},
 		rules: {
 			'no-unused-vars': 'off',
@@ -39,15 +39,15 @@ export default [
 				{
 					argsIgnorePattern: '^_',
 					varsIgnorePattern: '^_',
-					caughtErrorsIgnorePattern: '^_'
-				}
-			]
-		}
+					caughtErrorsIgnorePattern: '^_',
+				},
+			],
+		},
 	},
 	{
 		files: ['src/**/*.test.ts'],
 		rules: {
-			'@typescript-eslint/no-explicit-any': 'off'
-		}
-	}
+			'@typescript-eslint/no-explicit-any': 'off',
+		},
+	},
 ];

@@ -58,7 +58,7 @@ export class Styler {
 			color: colorList,
 			recolor: recolorList,
 			style: styleList,
-			option: optionList
+			option: optionList,
 		};
 
 		pane.style.display = this.config.open ? 'block' : 'none';
@@ -104,8 +104,8 @@ export class Styler {
 			fonts: undefined,
 			glyphs: undefined,
 			sprite: undefined,
-			tiles: undefined
-		}
+			tiles: undefined,
+		};
 
 		const update = () => {
 			this.renderStyle();

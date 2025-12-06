@@ -1,35 +1,29 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "skipLibCheck": true,
-    "declarationDir": "dist/dts",
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "noEmit": false,
-    "noEmitOnError": true,
-    "sourceMap": true,
-    "declaration": true,
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "plugins": [
-      {
-        "name": "typescript-plugin-css-modules",
-        "options": {
-          "customMatcher": "\\.scss$",
-        }
-      }
-    ]
-  },
-  "include": [
-    "src"
-  ]
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "ESNext",
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"skipLibCheck": true,
+		"declarationDir": "dist/dts",
+		/* Bundler mode */
+		"moduleResolution": "bundler",
+		"noEmit": false,
+		"noEmitOnError": true,
+		"sourceMap": true,
+		"declaration": true,
+		/* Linting */
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"plugins": [
+			{
+				"name": "typescript-plugin-css-modules",
+				"options": {
+					"customMatcher": "\\.scss$"
+				}
+			}
+		]
+	},
+	"include": ["src"]
 }

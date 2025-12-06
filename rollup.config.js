@@ -14,15 +14,15 @@ export default [
 				file: './dist/maplibre-versatiles-styler.js',
 				format: 'umd',
 				name: 'VersaTilesStylerControl',
-				sourcemap: true
+				sourcemap: true,
 			},
 			{
 				file: './dist/maplibre-versatiles-styler.min.js',
 				format: 'umd',
 				name: 'VersaTilesStylerControl',
 				sourcemap: true,
-				plugins: [terser()]
-			}
+				plugins: [terser()],
+			},
 		],
 		treeshake: true,
 		plugins: [
@@ -30,14 +30,14 @@ export default [
 			commonjs(),
 			nodeResolve(),
 			typescript(),
-			image()
+			image(),
 		],
-		watch: {}
+		watch: {},
 	},
 	{
 		input: './dist/dts/index.d.ts',
 		output: [{ file: 'dist/maplibre-versatiles-styler.d.ts', format: 'es' }],
 		plugins: [dts()],
-		watch: false
-	}
+		watch: false,
+	},
 ];
