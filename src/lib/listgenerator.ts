@@ -73,6 +73,7 @@ abstract class Input {
 	defaultValue: Value;
 	title: string;
 	readonly list: ListGenerator;
+	abstract type: string;
 
 	constructor(list: ListGenerator, key: string, title: string, defaultValue?: Value) {
 		this.key = key;
@@ -83,11 +84,12 @@ abstract class Input {
 
 	init() {
 		const { button, input, reset } = createElementsFromHTML(`
-			<div data-key="button" class="entry">
+			<div data-key="button" class="entry ${this.type}-container">
 				<label>${this.title}</label>
-				<div class="space"></div>
-				${this.getHtml()}
-				<button data-key="reset" type="button" disabled>&circlearrowleft;</button>
+				<div class="input">
+					${this.getHtml()}
+					<button data-key="reset" type="button" disabled>&circlearrowleft;</button>
+				</div>
 			</div>
 		`) as { button: HTMLDivElement; input: HTMLInputElement; reset: HTMLButtonElement };
 
@@ -119,6 +121,7 @@ abstract class Input {
 }
 
 class InputColor extends Input {
+	readonly type = 'color';
 	getHtml(): string {
 		return `<input data-key="input" type="color">`;
 	}
@@ -132,6 +135,7 @@ class InputNumber extends Input {
 	readonly minValue: number;
 	readonly maxValue: number;
 	readonly scale: number;
+	readonly type = 'number';
 	constructor(
 		list: ListGenerator,
 		key: string,
@@ -146,7 +150,9 @@ class InputNumber extends Input {
 		this.scale = scale;
 	}
 	getHtml(): string {
-		return `<input data-key="input" type="number">`;
+		const min = this.minValue * this.scale;
+		const max = this.maxValue * this.scale;
+		return `<input data-key="input" type="range" min="${min}" max="${max}" step="1">`;
 	}
 	setValue(input: HTMLInputElement, value: number) {
 		if (value < this.minValue) value = this.minValue;
@@ -160,6 +166,7 @@ class InputNumber extends Input {
 }
 
 class InputSelect extends Input {
+	readonly type = 'select';
 	readonly options: Record<string, string>;
 	constructor(list: ListGenerator, key: string, title: string, options: Record<string, string>) {
 		super(list, key, title);
@@ -181,6 +188,7 @@ class InputSelect extends Input {
 }
 
 class InputCheckbox extends Input {
+	readonly type = 'checkbox';
 	getHtml(): string {
 		return `<input data-key="input" type="checkbox">`;
 	}

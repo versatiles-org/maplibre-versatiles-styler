@@ -83,7 +83,7 @@
 		.entry {
 			display: flex;
 			align-items: center;
-			justify-content: flex-start;
+			justify-content: space-between;
 
 			box-sizing: border-box;
 			height: auto;
@@ -95,6 +95,13 @@
 
 			label {
 				flex-grow: 0;
+			}
+
+			.input {
+				display: flex;
+				justify-content: flex-end;
+				align-items: center;
+				gap: 1em;
 			}
 
 			input {
@@ -128,9 +135,27 @@
 					cursor: default;
 				}
 			}
+		}
 
-			.space {
+		.entry.number-container {
+			flex-direction: column;
+			align-items: flex-start;
+			margin: 0.8em 0;
+
+			.input {
+				inline-size: 70px;
+				flex-shrink: 0;
 				flex-grow: 1;
+				width: 100%;
+			}
+
+			input[type='range'] {
+				flex-grow: 1;
+				inline-size: 100%;
+				margin: 0.4em 0;
+
+				background: transparent;
+				outline: none;
 			}
 		}
 
@@ -141,6 +166,10 @@
 		.entry:hover {
 			background-color: rgba(0, 0, 0, 0.05);
 		}
+	}
+
+	.range-container {
+		width: 100%;
 	}
 
 	.maplibregl-list.style-list {
@@ -155,7 +184,7 @@
 				position: absolute;
 				left: -9999px;
 
-				&:checked + span {
+				&:checked+span {
 					&:before {
 						box-shadow: inset 0 0 0 0.4375em var(--primary-color);
 					}
