@@ -24,7 +24,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/jsdom": "^27.0.0",
-    "@versatiles/release-tool": "^2.4.5",
+    "@versatiles/release-tool": "^2.5.0",
     "@vitest/coverage-v8": "^4.0.15",
     "eslint": "^9.39.1",
     "http-server": "^14.1.1",
@@ -42,7 +42,7 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "@versatiles/style": "^5.8.1",
+    "@versatiles/style": "^5.8.2",
     "color": "^5.0.3",
     "maplibre-gl": "^5.14.0"
   }
