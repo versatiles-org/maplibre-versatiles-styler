@@ -42,7 +42,7 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "@versatiles/style": "^5.8.0",
+    "@versatiles/style": "^5.8.1",
     "color": "^5.0.3",
     "maplibre-gl": "^5.14.0"
   }
