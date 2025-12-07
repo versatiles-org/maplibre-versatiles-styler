@@ -4,7 +4,6 @@ import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/styl
 import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
 import { VersaTilesStylerConfig } from './types';
-import svg from '../assets/versatiles-logo.svg';
 import { fetchTileJSON } from './tile_json';
 
 export class Styler {
@@ -34,10 +33,6 @@ export class Styler {
 					<button data-key="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
 				<div data-key="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
-					<h3>
-						<a href="https://versatiles.org" target="_blank"><img src="${svg}" alt="VersaTiles" /></a>
-						<a href="https://github.com/versatiles-org/maplibre-versatiles-styler" target="_blank">VersaTiles Styler</a>
-					</h3>
 					<details open>
 						<summary>Select a base style</summary>
 						<div data-key="styleList" class="maplibregl-list style-list"></div>
