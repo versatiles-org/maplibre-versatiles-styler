@@ -89,7 +89,7 @@ describe('ListGenerator', () => {
 		list.addNumber('zoom', 'Zoom', 0, 10, 2);
 
 		const entry = container.querySelector('.entry') as HTMLDivElement;
-		const input = entry.querySelector('input[type="number"]') as HTMLInputElement;
+		const input = entry.querySelector('input[type="range"]') as HTMLInputElement;
 
 		expect(input).toBeTruthy();
 
