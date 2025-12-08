@@ -173,9 +173,9 @@ class InputSelect extends Input {
 		this.options = options;
 	}
 	getHtml(): string {
-		const options = Object.entries(this.options).map(
-			([label, value]) => `<option value="${value}">${label}</option>`
-		).join('\n');
+		const options = Object.entries(this.options)
+			.map(([label, value]) => `<option value="${value}">${label}</option>`)
+			.join('\n');
 		return `<select data-key="input">${options}</select>`;
 	}
 	setValue(input: HTMLInputElement, text: string) {

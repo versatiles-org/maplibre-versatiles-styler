@@ -93,7 +93,7 @@ export class Styler {
 			console.log('Updating origin to', input.value);
 			this.config.origin = input.value;
 			this.updateBaseStyle();
-		}
+		};
 
 		input.addEventListener('change', updateOrigin);
 		//input.addEventListener('blur', updateOrigin);
