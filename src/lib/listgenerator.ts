@@ -175,11 +175,11 @@ class InputSelect extends Input {
 	getHtml(): string {
 		const options = Object.entries(this.options).map(
 			([label, value]) => `<option value="${value}">${label}</option>`
-		);
-		return `<select data-key="input">${options.join('')}</select>`;
+		).join('\n');
+		return `<select data-key="input">${options}</select>`;
 	}
 	setValue(input: HTMLInputElement, text: string) {
-		input.value = text;
+		input.value = text ?? '';
 		this.list.setValue(this.key, text);
 	}
 	readValue(input: HTMLInputElement) {
