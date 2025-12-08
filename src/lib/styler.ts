@@ -10,9 +10,10 @@ export class Styler {
 	readonly container: HTMLElement;
 	readonly lists: {
 		color: HTMLElement;
+		option: HTMLElement;
+		origin: HTMLElement;
 		recolor: HTMLElement;
 		style: HTMLElement;
-		option: HTMLElement;
 	};
 
 	readonly map: MLGLMap;
@@ -23,16 +24,23 @@ export class Styler {
 	constructor(map: MLGLMap, config: VersaTilesStylerConfig) {
 		this.map = map;
 		this.config = config;
+		if (!this.config.origin) {
+			this.config.origin = window.location.origin;
+		}
 		this.currentStyle = styles.colorful;
 		this.currentOptions = {};
 
-		const { button, colorList, container, optionList, pane, recolorList, styleList } =
+		const { button, colorList, container, optionList, originList, pane, recolorList, styleList } =
 			createElementsFromHTML(`
 			<div data-key="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button data-key="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
 				<div data-key="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
+					<details>
+						<summary>Select origin</summary>
+						<div data-key="originList" class="maplibregl-list"></div>
+					</details>
 					<details open>
 						<summary>Select a base style</summary>
 						<div data-key="styleList" class="maplibregl-list style-list"></div>
@@ -55,9 +63,10 @@ export class Styler {
 		this.container = container;
 		this.lists = {
 			color: colorList,
+			option: optionList,
+			origin: originList,
 			recolor: recolorList,
 			style: styleList,
-			option: optionList,
 		};
 
 		pane.style.display = this.config.open ? 'block' : 'none';
@@ -65,9 +74,34 @@ export class Styler {
 			pane.style.display = pane.style.display === 'block' ? 'none' : 'block';
 		});
 
+		this.addOriginInput();
 		this.fillStyleList();
-
 		this.setBaseStyle(styles.colorful);
+	}
+
+	private addOriginInput() {
+		const { wrapper, input } = createElementsFromHTML(
+			`<div class="entry text-container" data-key="wrapper">
+				<label>Origin</label>
+				<div class="input">
+					<input type="text" data-key="input" value="${this.config.origin}" />
+				</div>
+			</div>`
+		) as { wrapper: HTMLDivElement; input: HTMLInputElement };
+
+		const updateOrigin = () => {
+			console.log('Updating origin to', input.value);
+			this.config.origin = input.value;
+			this.updateBaseStyle();
+		}
+
+		input.addEventListener('change', updateOrigin);
+		//input.addEventListener('blur', updateOrigin);
+		//input.addEventListener('keyup', (e) => {
+		//	if (e.key === 'Enter') updateOrigin();
+		//});
+
+		this.lists.origin.appendChild(wrapper);
 	}
 
 	private fillStyleList() {
@@ -99,8 +133,11 @@ export class Styler {
 
 	private setBaseStyle(baseStyle: StyleBuilderFunction) {
 		this.currentStyle = baseStyle;
+		this.updateBaseStyle();
+	}
 
-		const defaultOptions = baseStyle.getOptions();
+	private updateBaseStyle() {
+		const defaultOptions = this.currentStyle.getOptions();
 		this.currentOptions = {
 			...defaultOptions,
 			baseUrl: this.config.origin,

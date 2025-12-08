@@ -2,6 +2,7 @@
 	--bg-color: #fff;
 	--fg-color: #000;
 	--primary-color: #3388ff;
+	--border-color: color-mix(in srgb, var(--bg-color) 80%, var(--fg-color) 20%);
 	--btn-color: color-mix(in srgb, var(--bg-color) 95%, var(--fg-color) 5%);
 	--primary-color-light: color-mix(in srgb, var(--bg-color) 90%, var(--primary-color) 10%);
 
@@ -107,7 +108,6 @@
 			input {
 				flex-grow: 0;
 				display: block;
-				font-family: 'Courier New', Courier, monospace;
 				padding: 0;
 				margin: 0;
 				inline-size: 50px;
@@ -156,6 +156,32 @@
 
 				background: transparent;
 				outline: none;
+			}
+		}
+
+		.entry.text-container {
+			flex-direction: column;
+			align-items: flex-start;
+			margin: 0.8em 0;
+
+			.input {
+				inline-size: 70px;
+				flex-shrink: 0;
+				flex-grow: 1;
+				width: 100%;
+			}
+
+			input[type="text"] {
+				flex-grow: 1;
+				width: 100%;
+				margin: 0.4em 0;
+
+				background: transparent;
+				outline: none;
+				font-size: 10px;
+				text-align: left;
+				border: 1px solid var(--border-color);
+				padding: 0.2em 0.4em;
 			}
 		}
 
