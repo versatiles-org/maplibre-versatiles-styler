@@ -43,9 +43,12 @@
 			}
 		}
 
+		details:not(:first-of-type) {
+			border-top: 1px solid var(--border-color);
+		}
+
 		details {
 			margin: 0.2em 0em;
-			border-top: 1px solid var(--border-color);
 			overflow: hidden;
 
 			summary {
