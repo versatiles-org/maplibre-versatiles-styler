@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   test:
-    name: Lint and test
+    name: Audit, Lint, Build and Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
