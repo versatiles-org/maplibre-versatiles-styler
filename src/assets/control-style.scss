@@ -184,7 +184,7 @@
 				width: 100%;
 			}
 
-			input[type='range'] {
+			input {
 				flex-grow: 1;
 				inline-size: 100%;
 				margin: 0.4em 0;
@@ -194,7 +194,8 @@
 			}
 		}
 
-		.entry.text-container {
+		.entry.text-container,
+		.entry.select-container {
 			flex-direction: column;
 			align-items: flex-start;
 			margin: 0.8em 0;
@@ -206,10 +207,11 @@
 				width: 100%;
 			}
 
-			input[type='text'] {
+			input,
+			select {
 				flex-grow: 1;
 				width: 100%;
-				margin: 0.4em 0;
+				margin: 0;
 
 				background: transparent;
 				outline: none;

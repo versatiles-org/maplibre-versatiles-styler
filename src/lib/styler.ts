@@ -4,12 +4,13 @@ import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/styl
 import { ListGenerator, ValueStore } from './listgenerator';
 import { createElementsFromHTML } from './html';
 import { VersaTilesStylerConfig } from './types';
-import { fetchTileJSON } from './tile_json';
+import { fetchJSON, fetchTileJSON } from './tile_json';
 
 type StyleKeys = keyof typeof styles;
 type EnforcedStyleBuilderOptions = StyleBuilderOptions & {
 	colors: NonNullable<StyleBuilderOptions['colors']>;
 	recolor: NonNullable<StyleBuilderOptions['recolor']>;
+	fonts: NonNullable<StyleBuilderOptions['fonts']>;
 };
 
 export class Styler {
@@ -17,6 +18,7 @@ export class Styler {
 	readonly lists: {
 		color: HTMLElement;
 		export: HTMLElement;
+		font: HTMLElement;
 		option: HTMLElement;
 		origin: HTMLElement;
 		recolor: HTMLElement;
@@ -38,6 +40,7 @@ export class Styler {
 		this.currentOptions = {
 			colors: {},
 			recolor: {},
+			fonts: {},
 		};
 
 		const {
@@ -45,6 +48,7 @@ export class Styler {
 			colorList,
 			container,
 			exportList,
+			fontList,
 			optionList,
 			originList,
 			pane,
@@ -74,7 +78,10 @@ export class Styler {
 					</details>
 					<details>
 						<summary>Select Options</summary>
-						<div data-key="optionList" class="maplibregl-list"></div>
+						<div class="maplibregl-list">
+							<div data-key="fontList"></div>
+							<div data-key="optionList"></div>
+						</div>
 					</details>
 					<details>
 						<summary>Export</summary>
@@ -88,6 +95,7 @@ export class Styler {
 		this.lists = {
 			color: colorList,
 			export: exportList,
+			font: fontList,
 			option: optionList,
 			origin: originList,
 			recolor: recolorList,
@@ -208,6 +216,7 @@ export class Styler {
 			baseUrl: this.config.origin,
 			colors: {},
 			recolor: {},
+			fonts: {},
 		};
 
 		const update = () => {
@@ -232,16 +241,34 @@ export class Styler {
 			(defaultOptions.recolor ?? {}) as ValueStore,
 			update
 		)
-			.addCheckbox('invertBrightness', 'invert brightness')
-			.addNumber('rotate', 'rotate hue', 0, 360)
-			.addNumber('saturate', 'saturate', -1, 1, 100)
-			.addNumber('gamma', 'gamma', 0.1, 10)
-			.addNumber('contrast', 'contrast', 0, 10, 100)
-			.addNumber('brightness', 'brightness', -1, 1, 100)
-			.addNumber('tint', 'tint', 0, 1, 100)
-			.addColor('tintColor', 'tint color')
-			.addNumber('blend', 'blend', 0, 1, 100)
-			.addColor('blendColor', 'blend color');
+			.addCheckbox('invertBrightness', 'Invert Brightness')
+			.addNumber('rotate', 'Rotate Hue', 0, 360)
+			.addNumber('saturate', 'Saturate', -1, 1, 100)
+			.addNumber('gamma', 'Gamma', 0.1, 10)
+			.addNumber('contrast', 'Contrast', 0, 10, 100)
+			.addNumber('brightness', 'Brightness', -1, 1, 100)
+			.addNumber('tint', 'Tint', 0, 1, 100)
+			.addColor('tintColor', 'Tint Color')
+			.addNumber('blend', 'Blend', 0, 1, 100)
+			.addColor('blendColor', 'Blend Color');
+
+		// Create font list
+		const fontList = new ListGenerator(
+			this.lists.font,
+			this.currentOptions.fonts,
+			(defaultOptions ?? {}) as ValueStore,
+			update
+		);
+		fetchJSON(new URL('/assets/glyphs/index.json', this.config.origin)).then((fonts) => {
+			const fontNames = Object.fromEntries(
+				(fonts as string[]).map((f) => {
+					const title = f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+					return [title, f];
+				})
+			);
+			fontList.addSelect('regular', 'Font Regular', fontNames);
+			fontList.addSelect('bold', 'Font Bold', fontNames);
+		});
 
 		// Create option list
 		const optionList = new ListGenerator(
@@ -251,7 +278,7 @@ export class Styler {
 			update
 		);
 		fetchTileJSON(new URL('/tiles/osm/tiles.json', this.config.origin)).then((tileJSON) => {
-			optionList.addSelect('language', 'language', tileJSON.languages());
+			optionList.addSelect('language', 'Language', tileJSON.languages());
 		});
 
 		this.renderStyle();
