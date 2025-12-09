@@ -191,7 +191,7 @@ export class Styler {
 		copy.addEventListener('click', async () => {
 			const minimalOptions = this.getMinimalOptions();
 			let optionsString = minimalOptions ? JSON.stringify(minimalOptions, null, 2) : '';
-			optionsString = optionsString.replace(/  "([^"]+)": /g, '  $1: ');
+			optionsString = optionsString.replace(/\s\s"([^"]+)": /g, '  $1: ');
 			const code = [
 				`const style = VersaTilesStyle.${this.currentStyleKey}(${optionsString});`,
 			].join('\n');

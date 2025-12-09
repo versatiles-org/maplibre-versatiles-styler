@@ -178,7 +178,7 @@ describe('removeRecursively', () => {
 
 		for (const test of tests) {
 			const pathParts = test.path.split('.');
-			let obj = JSON.parse(JSON.stringify(defaultOptions));
+			const obj = JSON.parse(JSON.stringify(defaultOptions));
 			setNestedValue(obj, pathParts, test.value);
 			const result = removeRecursively(obj, defaultOptions);
 
