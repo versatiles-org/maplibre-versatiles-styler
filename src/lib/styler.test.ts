@@ -29,6 +29,7 @@ vi.mock('./tile_json', () => {
 				},
 			};
 		},
+		fetchJSON: async () => ['font_one', 'font_two', 'font_three'],
 	};
 });
 
@@ -159,7 +160,7 @@ describe('removeRecursively', () => {
 		{ path: 'tiles', value: ['https://example.org'] },
 		{ path: 'hideLabels', value: true },
 		{ path: 'language', value: 'de' },
-		{ path: 'language', value: '', expectedEmpty: true },
+		{ path: 'language', value: '' },
 		{ path: 'language', value: null, expectedEmpty: true },
 		{ path: 'language', value: undefined, expectedEmpty: true },
 		{ path: 'colors.water', value: '#0000ff' },
