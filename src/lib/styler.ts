@@ -6,6 +6,12 @@ import { createElementsFromHTML } from './html';
 import { VersaTilesStylerConfig } from './types';
 import { fetchTileJSON } from './tile_json';
 
+type StyleKeys = keyof typeof styles;
+type EnforcedStyleBuilderOptions = StyleBuilderOptions & {
+	colors: NonNullable<StyleBuilderOptions['colors']>;
+	recolor: NonNullable<StyleBuilderOptions['recolor']>;
+};
+
 export class Styler {
 	readonly container: HTMLElement;
 	readonly lists: {
@@ -19,8 +25,8 @@ export class Styler {
 
 	readonly map: MLGLMap;
 	readonly config: VersaTilesStylerConfig;
-	currentStyle: StyleBuilderFunction;
-	currentOptions: StyleBuilderOptions;
+	currentStyleKey: StyleKeys;
+	currentOptions: EnforcedStyleBuilderOptions;
 
 	constructor(map: MLGLMap, config: VersaTilesStylerConfig) {
 		this.map = map;
@@ -28,11 +34,23 @@ export class Styler {
 		if (!this.config.origin) {
 			this.config.origin = window.location.origin;
 		}
-		this.currentStyle = styles.colorful;
-		this.currentOptions = {};
+		this.currentStyleKey = 'colorful';
+		this.currentOptions = {
+			colors: {},
+			recolor: {},
+		};
 
-		const { button, colorList, container, exportList, optionList, originList, pane, recolorList, styleList } =
-			createElementsFromHTML(`
+		const {
+			button,
+			colorList,
+			container,
+			exportList,
+			optionList,
+			originList,
+			pane,
+			recolorList,
+			styleList,
+		} = createElementsFromHTML(`
 			<div data-key="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button data-key="button" type="button" class="maplibregl-ctrl-icon"></button>
@@ -84,7 +102,7 @@ export class Styler {
 		this.fillStyleList();
 		this.fillExportList();
 
-		this.setBaseStyle(styles.colorful);
+		this.setBaseStyle('colorful');
 	}
 
 	private addOriginInput() {
@@ -98,16 +116,11 @@ export class Styler {
 		) as { wrapper: HTMLDivElement; input: HTMLInputElement };
 
 		const updateOrigin = () => {
-			console.log('Updating origin to', input.value);
 			this.config.origin = input.value;
 			this.updateBaseStyle();
 		};
 
 		input.addEventListener('change', updateOrigin);
-		//input.addEventListener('blur', updateOrigin);
-		//input.addEventListener('keyup', (e) => {
-		//	if (e.key === 'Enter') updateOrigin();
-		//});
 
 		this.lists.origin.appendChild(wrapper);
 	}
@@ -116,11 +129,11 @@ export class Styler {
 		this.lists.style.innerHTML = '';
 		let first = true;
 		const inputs: HTMLInputElement[] = [];
-		Object.entries(styles).forEach(([name, style]) => {
+		Object.keys(styles).forEach((key) => {
 			const { wrapper, input } = createElementsFromHTML(
 				`<label data-key="wrapper">
-				<input type="radio" data-key="input" value="${name}" />
-				<span>${name}</span>
+				<input type="radio" data-key="input" value="${key}" />
+				<span>${key}</span>
 				</label>`
 			) as { wrapper: HTMLLabelElement; input: HTMLInputElement };
 
@@ -132,7 +145,7 @@ export class Styler {
 			// Style selection event
 			input.addEventListener('click', () => {
 				inputs.forEach((i) => (i.checked = i === input));
-				this.setBaseStyle(style);
+				this.setBaseStyle(key as StyleKeys);
 			});
 
 			this.lists.style.appendChild(wrapper);
@@ -141,14 +154,15 @@ export class Styler {
 	}
 
 	private fillExportList() {
-
 		const { wrapper, download, copy } = createElementsFromHTML(
 			`<div class="entry button-container" data-key="wrapper">
 			<button data-key="download">Download style.json</button>
 			<button data-key="copy">Copy style code</button>
 			</div>`
 		) as {
-			wrapper: HTMLDivElement; download: HTMLButtonElement; copy: HTMLButtonElement
+			wrapper: HTMLDivElement;
+			download: HTMLButtonElement;
+			copy: HTMLButtonElement;
 		};
 
 		this.lists.export.innerHTML = '';
@@ -166,35 +180,43 @@ export class Styler {
 		});
 
 		copy.addEventListener('click', async () => {
-			const json = JSON.stringify(this.currentOptions, null, 2)
-			await navigator.clipboard.writeText(json);
-			alert('Style options copied to clipboard');
+			const minimalOptions = this.getMinimalOptions();
+			let optionsString = minimalOptions ? JSON.stringify(minimalOptions, null, 2) : '';
+			optionsString = optionsString.replace(/  "([^"]+)": /g, '  $1: ');
+			const code = [
+				`const style = VersaTilesStyle.${this.currentStyleKey}(${optionsString});`,
+			].join('\n');
+			await navigator.clipboard.writeText(code);
+			alert('Style code copied to clipboard');
 		});
 	}
 
-	private setBaseStyle(baseStyle: StyleBuilderFunction) {
-		this.currentStyle = baseStyle;
+	private setBaseStyle(key: StyleKeys) {
+		this.currentStyleKey = key;
 		this.updateBaseStyle();
 	}
 
+	private getBaseStyleFunction(): StyleBuilderFunction {
+		return styles[this.currentStyleKey];
+	}
+
 	private updateBaseStyle() {
-		const defaultOptions = this.currentStyle.getOptions();
+		const baseStyle = this.getBaseStyleFunction();
+		const defaultOptions = baseStyle.getOptions();
 		this.currentOptions = {
-			...defaultOptions,
 			baseUrl: this.config.origin,
-			fonts: undefined,
-			glyphs: undefined,
-			sprite: undefined,
-			tiles: undefined,
+			colors: {},
+			recolor: {},
 		};
 
 		const update = () => {
 			this.renderStyle();
 		};
 
+		// Create color list
 		const colorList = new ListGenerator(
 			this.lists.color,
-			this.currentOptions.colors ?? {},
+			this.currentOptions.colors,
 			defaultOptions.colors ?? {},
 			update
 		);
@@ -202,9 +224,10 @@ export class Styler {
 			colorList.addColor(key, key);
 		});
 
+		// Create recolor list
 		new ListGenerator(
 			this.lists.recolor,
-			(this.currentOptions.recolor ?? {}) as ValueStore,
+			this.currentOptions.recolor as ValueStore,
 			(defaultOptions.recolor ?? {}) as ValueStore,
 			update
 		)
@@ -219,13 +242,13 @@ export class Styler {
 			.addNumber('blend', 'blend', 0, 1, 100)
 			.addColor('blendColor', 'blend color');
 
+		// Create option list
 		const optionList = new ListGenerator(
 			this.lists.option,
-			(this.currentOptions ?? {}) as ValueStore,
+			this.currentOptions as unknown as ValueStore,
 			(defaultOptions ?? {}) as ValueStore,
 			update
 		);
-
 		fetchTileJSON(new URL('/tiles/osm/tiles.json', this.config.origin)).then((tileJSON) => {
 			optionList.addSelect('language', 'language', tileJSON.languages());
 		});
@@ -234,10 +257,46 @@ export class Styler {
 	}
 
 	private getStyle(): StyleSpecification {
-		return this.currentStyle(this.currentOptions);
+		return this.getBaseStyleFunction()(this.currentOptions);
 	}
 
 	private renderStyle() {
 		this.map.setStyle(this.getStyle());
 	}
+
+	private getMinimalOptions(): StyleBuilderOptions {
+		return removeRecursively(
+			JSON.parse(JSON.stringify(this.currentOptions)),
+			this.getBaseStyleFunction().getOptions()
+		) as StyleBuilderOptions;
+	}
+}
+
+export function removeRecursively(current: unknown, defaults: unknown): unknown {
+	if (current === undefined) return undefined;
+	if (current === null) return undefined;
+	if (current === defaults) return undefined;
+	if (typeof current === 'number') return current;
+	if (typeof current === 'string') return current;
+	if (typeof current === 'boolean') return current;
+	if (typeof current === 'object') {
+		if (Array.isArray(current)) {
+			if (JSON.stringify(current) === JSON.stringify(defaults)) return undefined;
+			return current;
+		}
+		const newObj: Record<string, unknown> = {};
+		type R = Record<string, unknown>;
+		let entryFound = false;
+		for (const key of Object.keys(current as R)) {
+			const cleaned = removeRecursively((current as R)[key], (defaults as R)?.[key]);
+			if (cleaned !== undefined) {
+				newObj[key] = cleaned;
+				entryFound = true;
+			}
+		}
+		return entryFound ? newObj : undefined;
+	}
+
+	console.log('Comparing', current, defaults);
+	throw new Error('Not implemented');
 }
