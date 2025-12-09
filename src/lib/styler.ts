@@ -1,4 +1,4 @@
-import type { Map as MLGLMap } from 'maplibre-gl';
+import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
 import { styles } from '@versatiles/style';
 import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
 import { ListGenerator, ValueStore } from './listgenerator';
@@ -10,6 +10,7 @@ export class Styler {
 	readonly container: HTMLElement;
 	readonly lists: {
 		color: HTMLElement;
+		export: HTMLElement;
 		option: HTMLElement;
 		origin: HTMLElement;
 		recolor: HTMLElement;
@@ -30,7 +31,7 @@ export class Styler {
 		this.currentStyle = styles.colorful;
 		this.currentOptions = {};
 
-		const { button, colorList, container, optionList, originList, pane, recolorList, styleList } =
+		const { button, colorList, container, exportList, optionList, originList, pane, recolorList, styleList } =
 			createElementsFromHTML(`
 			<div data-key="container" class="maplibregl-versatiles-styler">
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
@@ -57,12 +58,17 @@ export class Styler {
 						<summary>Select Options</summary>
 						<div data-key="optionList" class="maplibregl-list"></div>
 					</details>
+					<details>
+						<summary>Export</summary>
+						<div data-key="exportList" class="maplibregl-list"></div>
+					</details>
 				</div>
 			</div>
 		`);
 		this.container = container;
 		this.lists = {
 			color: colorList,
+			export: exportList,
 			option: optionList,
 			origin: originList,
 			recolor: recolorList,
@@ -76,6 +82,8 @@ export class Styler {
 
 		this.addOriginInput();
 		this.fillStyleList();
+		this.fillExportList();
+
 		this.setBaseStyle(styles.colorful);
 	}
 
@@ -105,6 +113,7 @@ export class Styler {
 	}
 
 	private fillStyleList() {
+		this.lists.style.innerHTML = '';
 		let first = true;
 		const inputs: HTMLInputElement[] = [];
 		Object.entries(styles).forEach(([name, style]) => {
@@ -128,6 +137,38 @@ export class Styler {
 
 			this.lists.style.appendChild(wrapper);
 			inputs.push(input);
+		});
+	}
+
+	private fillExportList() {
+
+		const { wrapper, download, copy } = createElementsFromHTML(
+			`<div class="entry button-container" data-key="wrapper">
+			<button data-key="download">Download style.json</button>
+			<button data-key="copy">Copy style code</button>
+			</div>`
+		) as {
+			wrapper: HTMLDivElement; download: HTMLButtonElement; copy: HTMLButtonElement
+		};
+
+		this.lists.export.innerHTML = '';
+		this.lists.export.appendChild(wrapper);
+
+		download.addEventListener('click', () => {
+			const json = JSON.stringify(this.getStyle(), null, 2);
+			const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(json);
+			const a = document.createElement('a');
+			a.setAttribute('href', dataStr);
+			a.setAttribute('download', 'style.json');
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+		});
+
+		copy.addEventListener('click', async () => {
+			const json = JSON.stringify(this.currentOptions, null, 2)
+			await navigator.clipboard.writeText(json);
+			alert('Style options copied to clipboard');
 		});
 	}
 
@@ -192,8 +233,11 @@ export class Styler {
 		this.renderStyle();
 	}
 
+	private getStyle(): StyleSpecification {
+		return this.currentStyle(this.currentOptions);
+	}
+
 	private renderStyle() {
-		const style = this.currentStyle(this.currentOptions);
-		this.map.setStyle(style);
+		this.map.setStyle(this.getStyle());
 	}
 }
