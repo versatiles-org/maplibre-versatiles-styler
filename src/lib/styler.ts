@@ -80,6 +80,7 @@ export class Styler {
 						<summary>Export</summary>
 						<div data-key="exportList" class="maplibregl-list"></div>
 					</details>
+					<p class="github-link"><a href="https://github.com/versatiles-org/maplibre-versatiles-styler" target="_blank">Improve me on GitHub</a></p>
 				</div>
 			</div>
 		`);

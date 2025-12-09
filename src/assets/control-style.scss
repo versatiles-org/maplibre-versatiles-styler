@@ -43,13 +43,10 @@
 			}
 		}
 
-		details:not(:first-of-type) {
-			border-top: 1px solid var(--border-color);
-		}
-
 		details {
 			margin: 0.2em 0em;
 			overflow: hidden;
+			border-bottom: 1px solid var(--border-color);
 
 			summary {
 				list-style: none;
@@ -75,6 +72,21 @@
 
 			&[open] summary:after {
 				transform: rotate(-180deg);
+			}
+		}
+
+		.github-link {
+			margin: 0em;
+			font-size: 0.7em;
+			text-align: center;
+			padding: 0;
+
+			a {
+				opacity: 0.3;
+
+				&:hover {
+					opacity: 1;
+				}
 			}
 		}
 	}
