@@ -160,7 +160,7 @@ describe('removeRecursively', () => {
 		{ path: 'tiles', value: ['https://example.org'] },
 		{ path: 'hideLabels', value: true },
 		{ path: 'language', value: 'de' },
-		{ path: 'language', value: '' },
+		{ path: 'language', value: '', expectedEmpty: true },
 		{ path: 'language', value: null, expectedEmpty: true },
 		{ path: 'language', value: undefined, expectedEmpty: true },
 		{ path: 'colors.water', value: '#0000ff' },
@@ -191,7 +191,7 @@ describe('removeRecursively', () => {
 				if (JSON.stringify(expected) === '{}') expected = undefined;
 			}
 
-			it(`setting ${test.path} to ${test.value}`, () => {
+			it(`setting ${test.path} to ${JSON.stringify(test.value)}`, () => {
 				expect(result).toEqual(expected);
 			});
 		}

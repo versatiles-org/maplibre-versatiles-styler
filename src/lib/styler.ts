@@ -256,7 +256,7 @@ export class Styler {
 		const fontList = new ListGenerator(
 			this.lists.font,
 			this.currentOptions.fonts,
-			(defaultOptions ?? {}) as ValueStore,
+			(defaultOptions.fonts ?? {}) as ValueStore,
 			update
 		);
 		fetchJSON(new URL('/assets/glyphs/index.json', this.config.origin)).then((fonts) => {
