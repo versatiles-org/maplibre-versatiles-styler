@@ -59,7 +59,7 @@ export class Styler {
 				<div class="maplibregl-ctrl maplibregl-ctrl-group">
 					<button data-key="button" type="button" class="maplibregl-ctrl-icon"></button>
 				</div>
-				<div data-key="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane">
+				<div data-key="pane" class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
 					<details>
 						<summary>Select origin</summary>
 						<div data-key="originList" class="maplibregl-list"></div>

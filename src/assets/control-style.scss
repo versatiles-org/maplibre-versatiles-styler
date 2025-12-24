@@ -21,6 +21,15 @@
 		}
 	}
 
+	.hide-scrollbar {
+		&::-webkit-scrollbar {
+			display: none;
+		}
+
+		-ms-overflow-style: none; /* IE and Edge */
+		scrollbar-width: none; /* Firefox */
+	}
+
 	.maplibregl-pane {
 		overflow-y: scroll;
 		width: 200px;
