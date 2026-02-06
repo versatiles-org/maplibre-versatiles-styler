@@ -4,6 +4,7 @@
 	import type { StyleBuilderOptions } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import { fetchJSON, fetchTileJSON } from './tile_json';
+	import { untrack } from 'svelte';
 	import { removeRecursively } from './utils';
 	import InputColor from './components/InputColor.svelte';
 	import InputNumber from './components/InputNumber.svelte';
@@ -19,9 +20,8 @@
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
-
-	let origin = $state(config.origin ?? window.location.origin);
-	let paneOpen = $state(config.open ?? false);
+	let origin = $state(untrack(() => config.origin ?? window.location.origin));
+	let paneOpen = $state(untrack(() => config.open ?? false));
 	let currentStyleKey = $state<StyleKeys>('colorful');
 	let currentOptions = $state<EnforcedStyleBuilderOptions>({
 		colors: {},
