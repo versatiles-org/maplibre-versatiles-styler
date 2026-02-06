@@ -3,5 +3,14 @@
 	"singleQuote": true,
 	"trailingComma": "es5",
 	"printWidth": 100,
-	"singleAttributePerLine": false
+	"singleAttributePerLine": false,
+	"plugins": ["prettier-plugin-svelte"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": {
+				"parser": "svelte"
+			}
+		}
+	]
 }

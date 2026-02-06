@@ -1,7 +1,8 @@
 import type { ControlPosition, IControl, Map as MLGLMap } from 'maplibre-gl';
-import { Styler } from './styler';
+import { mount, unmount } from 'svelte';
+import Styler from './Styler.svelte';
 import type { VersaTilesStylerConfig } from './types';
-import { ensureStylesInjected } from './html';
+import { ensureStylesInjected } from './styles';
 
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.
@@ -9,7 +10,7 @@ import { ensureStylesInjected } from './html';
 export class VersaTilesStylerControl implements IControl {
 	readonly config: VersaTilesStylerConfig;
 	map?: MLGLMap;
-	styler?: Styler;
+	private component?: Record<string, unknown>;
 
 	/**
 	 * Initializes a new instance of the styleControl.
@@ -34,11 +35,16 @@ export class VersaTilesStylerControl implements IControl {
 	 */
 	onAdd(map: MLGLMap) {
 		this.map = map;
-		this.styler = new Styler(this.map, this.config);
 
 		ensureStylesInjected();
 
-		return this.styler.container;
+		const container = document.createElement('div');
+		container.className = 'maplibregl-versatiles-styler';
+		this.component = mount(Styler, {
+			target: container,
+			props: { map, config: this.config },
+		});
+		return container;
 	}
 
 	/**
@@ -47,8 +53,11 @@ export class VersaTilesStylerControl implements IControl {
 	onRemove() {
 		if (!this.map) return;
 
-		// Clean up references
-		this.styler = undefined;
+		if (this.component) {
+			unmount(this.component);
+		}
+
+		this.component = undefined;
 		this.map = undefined;
 	}
 }

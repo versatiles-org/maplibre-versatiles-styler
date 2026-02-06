@@ -2,10 +2,12 @@ import js from '@eslint/js';
 import ts from 'typescript-eslint';
 import parser from '@typescript-eslint/parser';
 import eslint_plugin from '@typescript-eslint/eslint-plugin';
+import svelte from 'eslint-plugin-svelte';
 
 export default [
 	js.configs.recommended,
 	...ts.configs.recommended,
+	...svelte.configs['flat/recommended'],
 	{
 		ignores: ['dist/**/*.*', 'demo/**/*.*', 'node_modules/**/*.*'],
 	},
@@ -48,6 +50,17 @@ export default [
 		files: ['src/**/*.test.ts'],
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off',
+		},
+	},
+	{
+		files: ['**/*.svelte'],
+		languageOptions: {
+			parserOptions: {
+				parser: parser,
+			},
+		},
+		rules: {
+			'no-undef': 'off',
 		},
 	},
 ];

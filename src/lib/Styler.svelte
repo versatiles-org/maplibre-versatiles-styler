@@ -1,0 +1,334 @@
+<script lang="ts">
+	import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
+	import { styles } from '@versatiles/style';
+	import type { StyleBuilderOptions } from '@versatiles/style';
+	import type { VersaTilesStylerConfig } from './types';
+	import { fetchJSON, fetchTileJSON } from './tile_json';
+	import { removeRecursively } from './utils';
+	import InputColor from './components/InputColor.svelte';
+	import InputNumber from './components/InputNumber.svelte';
+	import InputSelect from './components/InputSelect.svelte';
+	import InputCheckbox from './components/InputCheckbox.svelte';
+
+	type StyleKeys = keyof typeof styles;
+	type EnforcedStyleBuilderOptions = StyleBuilderOptions & {
+		colors: NonNullable<StyleBuilderOptions['colors']>;
+		recolor: NonNullable<StyleBuilderOptions['recolor']>;
+		fonts: NonNullable<StyleBuilderOptions['fonts']>;
+	};
+
+	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
+
+	let origin = $state(config.origin ?? window.location.origin);
+	let paneOpen = $state(config.open ?? false);
+	let currentStyleKey = $state<StyleKeys>('colorful');
+	let currentOptions = $state<EnforcedStyleBuilderOptions>({
+		colors: {},
+		recolor: {},
+		fonts: {},
+	});
+
+	let baseStyle = $derived(styles[currentStyleKey]);
+	let defaultOptions = $derived(baseStyle.getOptions());
+
+	let fontsPromise = $derived(
+		fetchJSON(new URL('/assets/glyphs/index.json', origin)).then((fonts) =>
+			Object.fromEntries(
+				(fonts as string[]).map((f) => {
+					const title = f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+					return [title, f];
+				})
+			)
+		)
+	);
+
+	let languagesPromise = $derived(
+		fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)).then((tileJSON) => tileJSON.languages())
+	);
+
+	function setBaseStyle(key: StyleKeys) {
+		currentStyleKey = key;
+		currentOptions = {
+			baseUrl: origin,
+			colors: {},
+			recolor: {},
+			fonts: {},
+		};
+	}
+
+	function renderStyle() {
+		const style = getStyle();
+		map.setStyle(style);
+	}
+
+	function getStyle(): StyleSpecification {
+		return styles[currentStyleKey]({
+			...currentOptions,
+			baseUrl: origin,
+		});
+	}
+
+	function getMinimalOptions(): StyleBuilderOptions {
+		return removeRecursively(
+			JSON.parse(JSON.stringify(currentOptions)),
+			baseStyle.getOptions()
+		) as StyleBuilderOptions;
+	}
+
+	function downloadStyle() {
+		const json = JSON.stringify(getStyle(), null, 2);
+		const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(json);
+		const a = document.createElement('a');
+		a.setAttribute('href', dataStr);
+		a.setAttribute('download', 'style.json');
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+	}
+
+	async function copyStyleCode() {
+		const minimalOptions = getMinimalOptions();
+		let optionsString = minimalOptions ? JSON.stringify(minimalOptions, null, 2) : '';
+		optionsString = optionsString.replace(/\s\s"([^"]+)": /g, '  $1: ');
+		const code = `const style = VersaTilesStyle.${currentStyleKey}(${optionsString});`;
+		await navigator.clipboard.writeText(code);
+		alert('Style code copied to clipboard');
+	}
+
+	function handleOriginChange() {
+		currentOptions = {
+			baseUrl: origin,
+			colors: {},
+			recolor: {},
+			fonts: {},
+		};
+		renderStyle();
+	}
+
+	$effect(() => {
+		// Track all reactive dependencies and render
+		void currentStyleKey;
+		void currentOptions;
+		void origin;
+		renderStyle();
+	});
+
+	// Initialize style on first render
+	setBaseStyle('colorful');
+</script>
+
+<div class="maplibregl-ctrl maplibregl-ctrl-group">
+	<button
+		type="button"
+		class="maplibregl-ctrl-icon"
+		title="Toggle style editor"
+		onclick={() => (paneOpen = !paneOpen)}
+	></button>
+</div>
+{#if paneOpen}
+	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
+		<details>
+			<summary>Select origin</summary>
+			<div class="maplibregl-list">
+				<div class="entry text-container">
+					<label>Origin</label>
+					<div class="input">
+						<input type="text" bind:value={origin} onchange={handleOriginChange} />
+					</div>
+				</div>
+			</div>
+		</details>
+		<details open>
+			<summary>Select a base style</summary>
+			<div class="maplibregl-list style-list">
+				{#each Object.keys(styles) as key (key)}
+					<label>
+						<input
+							type="radio"
+							value={key}
+							checked={currentStyleKey === key}
+							onclick={() => setBaseStyle(key as StyleKeys)}
+						/>
+						<span>{key}</span>
+					</label>
+				{/each}
+			</div>
+		</details>
+		<details>
+			<summary>Edit individual colors</summary>
+			<div class="maplibregl-list">
+				{#each Object.keys(defaultOptions.colors ?? {}) as key (key)}
+					<InputColor
+						label={key}
+						bind:value={currentOptions.colors[key]}
+						defaultValue={(defaultOptions.colors ?? {})[key]}
+						onchange={renderStyle}
+					/>
+				{/each}
+			</div>
+		</details>
+		<details>
+			<summary>Modify all colors</summary>
+			<div class="maplibregl-list">
+				<InputCheckbox
+					label="Invert Brightness"
+					bind:value={
+						() => currentOptions.recolor.invertBrightness as boolean,
+						(v) => (currentOptions.recolor.invertBrightness = v)
+					}
+					defaultValue={(defaultOptions.recolor?.invertBrightness as boolean) ?? false}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Rotate Hue"
+					bind:value={
+						() => (currentOptions.recolor.rotate as number) ?? 0,
+						(v) => (currentOptions.recolor.rotate = v)
+					}
+					defaultValue={(defaultOptions.recolor?.rotate as number) ?? 0}
+					min={0}
+					max={360}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Saturate"
+					bind:value={
+						() => (currentOptions.recolor.saturate as number) ?? 0,
+						(v) => (currentOptions.recolor.saturate = v)
+					}
+					defaultValue={(defaultOptions.recolor?.saturate as number) ?? 0}
+					min={-1}
+					max={1}
+					scale={100}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Gamma"
+					bind:value={
+						() => (currentOptions.recolor.gamma as number) ?? 1,
+						(v) => (currentOptions.recolor.gamma = v)
+					}
+					defaultValue={(defaultOptions.recolor?.gamma as number) ?? 1}
+					min={0.1}
+					max={10}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Contrast"
+					bind:value={
+						() => (currentOptions.recolor.contrast as number) ?? 1,
+						(v) => (currentOptions.recolor.contrast = v)
+					}
+					defaultValue={(defaultOptions.recolor?.contrast as number) ?? 1}
+					min={0}
+					max={10}
+					scale={100}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Brightness"
+					bind:value={
+						() => (currentOptions.recolor.brightness as number) ?? 0,
+						(v) => (currentOptions.recolor.brightness = v)
+					}
+					defaultValue={(defaultOptions.recolor?.brightness as number) ?? 0}
+					min={-1}
+					max={1}
+					scale={100}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Tint"
+					bind:value={
+						() => (currentOptions.recolor.tint as number) ?? 0,
+						(v) => (currentOptions.recolor.tint = v)
+					}
+					defaultValue={(defaultOptions.recolor?.tint as number) ?? 0}
+					min={0}
+					max={1}
+					scale={100}
+					onchange={renderStyle}
+				/>
+				<InputColor
+					label="Tint Color"
+					bind:value={currentOptions.recolor.tintColor}
+					defaultValue={defaultOptions.recolor?.tintColor}
+					onchange={renderStyle}
+				/>
+				<InputNumber
+					label="Blend"
+					bind:value={
+						() => (currentOptions.recolor.blend as number) ?? 0,
+						(v) => (currentOptions.recolor.blend = v)
+					}
+					defaultValue={(defaultOptions.recolor?.blend as number) ?? 0}
+					min={0}
+					max={1}
+					scale={100}
+					onchange={renderStyle}
+				/>
+				<InputColor
+					label="Blend Color"
+					bind:value={currentOptions.recolor.blendColor}
+					defaultValue={defaultOptions.recolor?.blendColor}
+					onchange={renderStyle}
+				/>
+			</div>
+		</details>
+		<details>
+			<summary>Select Options</summary>
+			<div class="maplibregl-list">
+				{#await fontsPromise then fontNames}
+					<InputSelect
+						label="Font Regular"
+						bind:value={
+							() => (currentOptions.fonts.regular as string) ?? '',
+							(v) => (currentOptions.fonts.regular = v)
+						}
+						defaultValue={(defaultOptions.fonts?.regular as string) ?? ''}
+						options={fontNames}
+						onchange={renderStyle}
+					/>
+					<InputSelect
+						label="Font Bold"
+						bind:value={
+							() => (currentOptions.fonts.bold as string) ?? '',
+							(v) => (currentOptions.fonts.bold = v)
+						}
+						defaultValue={(defaultOptions.fonts?.bold as string) ?? ''}
+						options={fontNames}
+						onchange={renderStyle}
+					/>
+				{/await}
+				{#await languagesPromise then languages}
+					<InputSelect
+						label="Language"
+						bind:value={
+							() => ((currentOptions as Record<string, unknown>).language as string) ?? '',
+							(v: string) => ((currentOptions as Record<string, unknown>).language = v)
+						}
+						defaultValue=""
+						options={languages}
+						onchange={renderStyle}
+					/>
+				{/await}
+			</div>
+		</details>
+		<details>
+			<summary>Export</summary>
+			<div class="maplibregl-list">
+				<div class="entry button-container">
+					<button onclick={downloadStyle}>Download style.json</button>
+					<button onclick={copyStyleCode}>Copy style code</button>
+				</div>
+			</div>
+		</details>
+		<p class="github-link">
+			<a
+				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
+				target="_blank"
+				rel="noopener noreferrer">Improve me on GitHub</a
+			>
+		</p>
+	</div>
+{/if}

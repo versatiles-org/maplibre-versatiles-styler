@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>MapLibre GL JS VersaTiles Styler</title>
+		<link rel="icon" href="data:image/png;base64,iVBORw0KGgo=" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+		/>
+
+		<script src="https://unpkg.com/maplibre-gl@^5.14.0/dist/maplibre-gl.js" defer></script>
+		<link href="https://unpkg.com/maplibre-gl@^5.14.0/dist/maplibre-gl.css" rel="stylesheet" />
+
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			#map {
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				width: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="map" class="maplibregl-compact"></div>
+		<script type="module" src="./demo/main.ts"></script>
+	</body>
+</html>
