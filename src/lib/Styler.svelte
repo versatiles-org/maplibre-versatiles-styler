@@ -131,9 +131,9 @@
 			<summary>Select origin</summary>
 			<div class="maplibregl-list">
 				<div class="entry text-container">
-					<label>Origin</label>
+					<label for="styler-origin">Origin</label>
 					<div class="input">
-						<input type="text" bind:value={origin} onchange={handleOriginChange} />
+						<input id="styler-origin" type="text" bind:value={origin} onchange={handleOriginChange} />
 					</div>
 				</div>
 			</div>
