@@ -13,7 +13,7 @@
 		onchange?: () => void;
 	} = $props();
 
-	const inputId = `select-${Math.random().toString(36).slice(2, 9)}`;
+	const uid = $props.id();
 	let isModified = $derived(value !== defaultValue);
 
 	function handleChange(e: Event) {
@@ -29,9 +29,9 @@
 </script>
 
 <div class="entry select-container">
-	<label for={inputId}>{label}</label>
+	<label for={uid}>{label}</label>
 	<div class="input">
-		<select id={inputId} {value} onchange={handleChange}>
+		<select id={uid} {value} onchange={handleChange}>
 			{#each Object.entries(options) as [optLabel, optValue] (optValue)}
 				<option value={optValue}>{optLabel}</option>
 			{/each}

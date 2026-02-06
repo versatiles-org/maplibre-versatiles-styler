@@ -18,6 +18,7 @@
 	};
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
+	const uid = $props.id();
 
 	let origin = $state(config.origin ?? window.location.origin);
 	let paneOpen = $state(config.open ?? false);
@@ -131,9 +132,9 @@
 			<summary>Select origin</summary>
 			<div class="maplibregl-list">
 				<div class="entry text-container">
-					<label for="styler-origin">Origin</label>
+					<label for="{uid}-origin">Origin</label>
 					<div class="input">
-						<input id="styler-origin" type="text" bind:value={origin} onchange={handleOriginChange} />
+						<input id="{uid}-origin" type="text" bind:value={origin} onchange={handleOriginChange} />
 					</div>
 				</div>
 			</div>

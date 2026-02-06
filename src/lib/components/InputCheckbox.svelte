@@ -11,7 +11,7 @@
 		onchange?: () => void;
 	} = $props();
 
-	const inputId = `checkbox-${Math.random().toString(36).slice(2, 9)}`;
+	const uid = $props.id();
 	let isModified = $derived(value !== defaultValue);
 
 	function handleChange(e: Event) {
@@ -27,9 +27,9 @@
 </script>
 
 <div class="entry checkbox-container">
-	<label for={inputId}>{label}</label>
+	<label for={uid}>{label}</label>
 	<div class="input">
-		<input id={inputId} type="checkbox" checked={value} onchange={handleChange} />
+		<input id={uid} type="checkbox" checked={value} onchange={handleChange} />
 		<button type="button" disabled={!isModified} onclick={reset}>&circlearrowleft;</button>
 	</div>
 </div>

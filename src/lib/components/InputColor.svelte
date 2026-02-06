@@ -13,7 +13,7 @@
 		onchange?: () => void;
 	} = $props();
 
-	const inputId = `color-${Math.random().toString(36).slice(2, 9)}`;
+	const uid = $props.id();
 	let isModified = $derived(String(value) !== String(defaultValue));
 
 	function handleChange(e: Event) {
@@ -30,9 +30,9 @@
 </script>
 
 <div class="entry color-container">
-	<label for={inputId}>{label}</label>
+	<label for={uid}>{label}</label>
 	<div class="input">
-		<input id={inputId} type="color" value={String(value)} onchange={handleChange} />
+		<input id={uid} type="color" value={String(value)} onchange={handleChange} />
 		<button type="button" disabled={!isModified} onclick={reset}>&circlearrowleft;</button>
 	</div>
 </div>

@@ -17,7 +17,7 @@
 		onchange?: () => void;
 	} = $props();
 
-	const inputId = `number-${Math.random().toString(36).slice(2, 9)}`;
+	const uid = $props.id();
 	let isModified = $derived(value !== defaultValue);
 	let scaledMin = $derived(min * scale);
 	let scaledMax = $derived(max * scale);
@@ -42,10 +42,10 @@
 </script>
 
 <div class="entry number-container">
-	<label for={inputId}>{label}</label>
+	<label for={uid}>{label}</label>
 	<div class="input">
 		<input
-			id={inputId}
+			id={uid}
 			type="range"
 			min={scaledMin}
 			max={scaledMax}
