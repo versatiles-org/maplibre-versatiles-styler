@@ -49,9 +49,10 @@
 
 	function setBaseStyle(key: StyleKeys) {
 		currentStyleKey = key;
+		const defaults = styles[key].getOptions();
 		currentOptions = {
 			baseUrl: origin,
-			colors: {},
+			colors: { ...defaults.colors },
 			recolor: {},
 			fonts: {},
 		};
@@ -97,9 +98,10 @@
 	}
 
 	function handleOriginChange() {
+		const defaults = baseStyle.getOptions();
 		currentOptions = {
 			baseUrl: origin,
-			colors: {},
+			colors: { ...defaults.colors },
 			recolor: {},
 			fonts: {},
 		};
@@ -134,7 +136,12 @@
 				<div class="entry text-container">
 					<label for="{uid}-origin">Origin</label>
 					<div class="input">
-						<input id="{uid}-origin" type="text" bind:value={origin} onchange={handleOriginChange} />
+						<input
+							id="{uid}-origin"
+							type="text"
+							bind:value={origin}
+							onchange={handleOriginChange}
+						/>
 					</div>
 				</div>
 			</div>
