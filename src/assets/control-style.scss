@@ -138,11 +138,20 @@
 				text-align: right;
 
 				&[type='color'] {
+					appearance: none;
+					border: 1px solid var(--border-color);
+					background: none;
+					cursor: pointer;
+
 					&::-webkit-color-swatch-wrapper {
 						padding: 0;
 					}
 
 					&::-webkit-color-swatch {
+						border: none;
+					}
+
+					&::-moz-color-swatch {
 						border: none;
 					}
 				}
