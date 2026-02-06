@@ -21,14 +21,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Demo
-        run: npx rollup -c rollup.config.demo.js
+      - name: Build
+        run: npm run build
+
+      - name: Prepare demo
+        run: |
+          cp dist/maplibre-versatiles-styler.umd.cjs demo/
+          sed -i 's|../dist/maplibre-versatiles-styler.umd.cjs|./maplibre-versatiles-styler.umd.cjs|' demo/index.html
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v4
