@@ -11,6 +11,9 @@ window.addEventListener('DOMContentLoaded', () => {
 		hash: true,
 	});
 
+	// Expose map for E2E tests
+	(window as any)._map = map;
+
 	map.addControl(new maplibregl.NavigationControl(), 'top-right');
 	map.addControl(
 		new VersaTilesStylerControl({

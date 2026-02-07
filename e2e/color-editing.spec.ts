@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getMapStyle } from './helpers';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/');
@@ -21,11 +22,13 @@ test('color inputs render with values and reset buttons disabled', async ({ page
 	}
 });
 
-test('modifying a color enables reset button', async ({ page }) => {
+test('modifying a color updates the map style', async ({ page }) => {
 	const colorsDetails = page.locator(
 		'.maplibregl-versatiles-styler details:has(summary:text("Edit individual colors"))'
 	);
 	await colorsDetails.locator('summary').click();
+
+	const styleBefore = await getMapStyle(page);
 
 	const firstEntry = colorsDetails.locator('.color-container').first();
 	const colorInput = firstEntry.locator('input[type="color"]');
@@ -37,13 +40,25 @@ test('modifying a color enables reset button', async ({ page }) => {
 	await colorInput.dispatchEvent('change');
 
 	await expect(resetButton).toBeEnabled();
+
+	const styleAfter = await getMapStyle(page);
+
+	// At least one layer's paint properties should differ
+	const changedLayers = styleAfter.layers.filter((layerAfter) => {
+		const layerBefore = styleBefore.layers.find((l) => l.id === layerAfter.id);
+		if (!layerBefore) return true;
+		return JSON.stringify(layerAfter.paint) !== JSON.stringify(layerBefore.paint);
+	});
+	expect(changedLayers.length).toBeGreaterThan(0);
 });
 
-test('reset restores default and disables button', async ({ page }) => {
+test('reset restores default map style', async ({ page }) => {
 	const colorsDetails = page.locator(
 		'.maplibregl-versatiles-styler details:has(summary:text("Edit individual colors"))'
 	);
 	await colorsDetails.locator('summary').click();
+
+	const styleBefore = await getMapStyle(page);
 
 	const firstEntry = colorsDetails.locator('.color-container').first();
 	const colorInput = firstEntry.locator('input[type="color"]');
@@ -58,6 +73,13 @@ test('reset restores default and disables button', async ({ page }) => {
 	await resetButton.click();
 	await expect(resetButton).toBeDisabled();
 	await expect(colorInput).toHaveValue(originalValue);
+
+	const styleAfterReset = await getMapStyle(page);
+
+	// Style should match the original after reset
+	const layerPaintsBefore = styleBefore.layers.map((l) => JSON.stringify(l.paint));
+	const layerPaintsAfterReset = styleAfterReset.layers.map((l) => JSON.stringify(l.paint));
+	expect(layerPaintsAfterReset).toEqual(layerPaintsBefore);
 });
 
 test('"Modify all colors" has 1 checkbox, 7 ranges, and 2 color pickers', async ({ page }) => {
@@ -74,4 +96,28 @@ test('"Modify all colors" has 1 checkbox, 7 ranges, and 2 color pickers', async 
 
 	const colorPickers = recolorDetails.locator('input[type="color"]');
 	await expect(colorPickers).toHaveCount(2);
+});
+
+test('recolor slider changes map style', async ({ page }) => {
+	const recolorDetails = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:text("Modify all colors"))'
+	);
+	await recolorDetails.locator('summary').click();
+
+	const styleBefore = await getMapStyle(page);
+
+	// Change "Rotate Hue" slider (first range input)
+	const hueSlider = recolorDetails.locator('input[type="range"]').first();
+	await hueSlider.fill('180');
+	await hueSlider.dispatchEvent('change');
+
+	const styleAfter = await getMapStyle(page);
+
+	// Many layers should have different paint colors after hue rotation
+	const changedLayers = styleAfter.layers.filter((layerAfter) => {
+		const layerBefore = styleBefore.layers.find((l) => l.id === layerAfter.id);
+		if (!layerBefore) return true;
+		return JSON.stringify(layerAfter.paint) !== JSON.stringify(layerBefore.paint);
+	});
+	expect(changedLayers.length).toBeGreaterThan(5);
 });
