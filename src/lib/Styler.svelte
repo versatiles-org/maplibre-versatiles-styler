@@ -1,7 +1,11 @@
 <script lang="ts">
 	import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
-	import { colorful, eclipse, graybeard, neutrino, shadow } from '@versatiles/style';
-	import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
+	import { colorful, eclipse, graybeard, neutrino, shadow, satellite } from '@versatiles/style';
+	import type {
+		StyleBuilderFunction,
+		StyleBuilderOptions,
+		SatelliteStyleOptions,
+	} from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import { fetchJSON, fetchTileJSON } from './tile_json';
 	import { untrack } from 'svelte';
@@ -10,6 +14,7 @@
 	import FontOptions from './components/FontOptions.svelte';
 	import LanguageOptions from './components/LanguageOptions.svelte';
 	import RecolorOptions from './components/RecolorOptions.svelte';
+	import SatelliteOptions from './components/SatelliteOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
 
 	const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
@@ -17,25 +22,39 @@
 		StyleBuilderFunction
 	>;
 	type VectorStyleKey = keyof typeof vectorStyles;
+	type StyleKey = VectorStyleKey | 'satellite';
 	type EnforcedStyleBuilderOptions = StyleBuilderOptions & {
 		colors: NonNullable<StyleBuilderOptions['colors']>;
 		recolor: NonNullable<StyleBuilderOptions['recolor']>;
 		fonts: NonNullable<StyleBuilderOptions['fonts']>;
 	};
 
+	const styleKeys: StyleKey[] = [...(Object.keys(vectorStyles) as VectorStyleKey[]), 'satellite'];
+	const defaultSatelliteOptions = {
+		overlay: true,
+		rasterOpacity: 1,
+		rasterHueRotate: 0,
+		rasterBrightnessMin: 0,
+		rasterBrightnessMax: 1,
+		rasterSaturation: 0,
+		rasterContrast: 0,
+	};
+
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
-	let currentStyleKey = $state<VectorStyleKey>('colorful');
-	let currentOptions = $state<EnforcedStyleBuilderOptions>({
+	let currentStyleKey = $state<StyleKey>('colorful');
+	let isSatellite = $derived(currentStyleKey === 'satellite');
+	let currentVectorOptions = $state<EnforcedStyleBuilderOptions>({
 		colors: {},
 		recolor: {},
 		fonts: {},
 	});
+	let currentSatelliteOptions = $state<SatelliteStyleOptions>({});
 
-	let baseStyle = $derived(vectorStyles[currentStyleKey]);
-	let defaultOptions = $derived(baseStyle.getOptions());
+	let baseStyle = $derived(isSatellite ? null : vectorStyles[currentStyleKey as VectorStyleKey]);
+	let defaultOptions = $derived(baseStyle ? baseStyle.getOptions() : null);
 
 	let fontsPromise = $derived(
 		fetchJSON(new URL('/assets/glyphs/index.json', origin)).then((fonts) =>
@@ -52,15 +71,19 @@
 		fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)).then((tileJSON) => tileJSON.languages())
 	);
 
-	function setBaseStyle(key: VectorStyleKey) {
+	function setBaseStyle(key: StyleKey) {
 		currentStyleKey = key;
-		const defaults = vectorStyles[key].getOptions();
-		currentOptions = {
-			baseUrl: origin,
-			colors: { ...defaults.colors },
-			recolor: {},
-			fonts: {},
-		};
+		if (key === 'satellite') {
+			currentSatelliteOptions = {};
+		} else {
+			const defaults = vectorStyles[key].getOptions();
+			currentVectorOptions = {
+				baseUrl: origin,
+				colors: { ...defaults.colors },
+				recolor: {},
+				fonts: {},
+			};
+		}
 	}
 
 	function renderStyle() {
@@ -69,16 +92,25 @@
 	}
 
 	function getStyle(): StyleSpecification {
-		return vectorStyles[currentStyleKey]({
-			...currentOptions,
+		if (isSatellite) {
+			return satellite({ ...currentSatelliteOptions, baseUrl: origin });
+		}
+		return vectorStyles[currentStyleKey as VectorStyleKey]({
+			...currentVectorOptions,
 			baseUrl: origin,
 		});
 	}
 
-	function getMinimalOptions(): StyleBuilderOptions {
+	function getMinimalOptions(): StyleBuilderOptions | SatelliteStyleOptions {
+		if (isSatellite) {
+			return removeRecursively(
+				JSON.parse(JSON.stringify(currentSatelliteOptions)),
+				defaultSatelliteOptions
+			) as SatelliteStyleOptions;
+		}
 		return removeRecursively(
-			JSON.parse(JSON.stringify(currentOptions)),
-			baseStyle.getOptions()
+			JSON.parse(JSON.stringify(currentVectorOptions)),
+			baseStyle!.getOptions()
 		) as StyleBuilderOptions;
 	}
 
@@ -103,20 +135,25 @@
 	}
 
 	function handleOriginChange() {
-		const defaults = baseStyle.getOptions();
-		currentOptions = {
-			baseUrl: origin,
-			colors: { ...defaults.colors },
-			recolor: {},
-			fonts: {},
-		};
+		if (isSatellite) {
+			currentSatelliteOptions = {};
+		} else {
+			const defaults = baseStyle!.getOptions();
+			currentVectorOptions = {
+				baseUrl: origin,
+				colors: { ...defaults.colors },
+				recolor: {},
+				fonts: {},
+			};
+		}
 		renderStyle();
 	}
 
 	$effect(() => {
 		// Track all reactive dependencies and render
 		void currentStyleKey;
-		void currentOptions;
+		void currentVectorOptions;
+		void currentSatelliteOptions;
 		void origin;
 		renderStyle();
 	});
@@ -144,47 +181,71 @@
 			</div>
 		</SidebarSection>
 		<SidebarSection title="Select a base style" open listClass="style-list">
-			{#each Object.keys(vectorStyles) as key (key)}
+			{#each styleKeys as key (key)}
 				<label>
 					<input
 						type="radio"
 						value={key}
 						checked={currentStyleKey === key}
-						onclick={() => setBaseStyle(key as VectorStyleKey)}
+						onclick={() => setBaseStyle(key)}
 					/>
 					<span>{key}</span>
 				</label>
 			{/each}
 		</SidebarSection>
-		<SidebarSection title="Edit individual colors">
-			<ColorOptions
-				bind:colors={currentOptions.colors}
-				defaults={defaultOptions.colors}
-				onchange={renderStyle}
-			/>
-		</SidebarSection>
-		<SidebarSection title="Modify all colors">
-			<RecolorOptions
-				bind:recolor={currentOptions.recolor}
-				defaults={defaultOptions.recolor}
-				onchange={renderStyle}
-			/>
-		</SidebarSection>
+		{#if !isSatellite && defaultOptions}
+			<SidebarSection title="Edit individual colors">
+				<ColorOptions
+					bind:colors={currentVectorOptions.colors}
+					defaults={defaultOptions.colors}
+					onchange={renderStyle}
+				/>
+			</SidebarSection>
+			<SidebarSection title="Modify all colors">
+				<RecolorOptions
+					bind:recolor={currentVectorOptions.recolor}
+					defaults={defaultOptions.recolor}
+					onchange={renderStyle}
+				/>
+			</SidebarSection>
+		{/if}
+		{#if isSatellite}
+			<SidebarSection title="Satellite options" open>
+				<SatelliteOptions
+					bind:options={currentSatelliteOptions}
+					defaults={defaultSatelliteOptions}
+					onchange={renderStyle}
+				/>
+			</SidebarSection>
+		{/if}
 		<SidebarSection title="Select Options">
-			<FontOptions
-				bind:fonts={currentOptions.fonts}
-				defaults={defaultOptions.fonts}
-				fontNames={fontsPromise}
-				onchange={renderStyle}
-			/>
-			<LanguageOptions
-				bind:language={
-					() => (currentOptions.language as string) ?? '',
-					(v: string) => (currentOptions.language = v)
-				}
-				languages={languagesPromise}
-				onchange={renderStyle}
-			/>
+			{#if !isSatellite && defaultOptions}
+				<FontOptions
+					bind:fonts={currentVectorOptions.fonts}
+					defaults={defaultOptions.fonts}
+					fontNames={fontsPromise}
+					onchange={renderStyle}
+				/>
+			{/if}
+			{#if isSatellite}
+				<LanguageOptions
+					bind:language={
+						() => (currentSatelliteOptions.language as string) ?? '',
+						(v: string) => (currentSatelliteOptions.language = v)
+					}
+					languages={languagesPromise}
+					onchange={renderStyle}
+				/>
+			{:else}
+				<LanguageOptions
+					bind:language={
+						() => (currentVectorOptions.language as string) ?? '',
+						(v: string) => (currentVectorOptions.language = v)
+					}
+					languages={languagesPromise}
+					onchange={renderStyle}
+				/>
+			{/if}
 		</SidebarSection>
 		<SidebarSection title="Export">
 			<div class="entry button-container">
