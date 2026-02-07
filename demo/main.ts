@@ -8,7 +8,6 @@ window.addEventListener('DOMContentLoaded', () => {
 		bounds: [-180, -80, 180, 80],
 		zoom: 5,
 		maxZoom: 20,
-		hash: true,
 	});
 
 	// Expose map for E2E tests

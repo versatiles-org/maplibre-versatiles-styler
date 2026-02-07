@@ -8,8 +8,9 @@
 	} from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import { fetchJSON, fetchTileJSON } from './tile_json';
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { removeRecursively } from './utils';
+	import { HashManager } from './hash';
 	import ColorOptions from './components/ColorOptions.svelte';
 	import FontOptions from './components/FontOptions.svelte';
 	import LanguageOptions from './components/LanguageOptions.svelte';
@@ -73,6 +74,7 @@
 
 	function setBaseStyle(key: StyleKey) {
 		currentStyleKey = key;
+		hashManager?.setStyleKey(key);
 		if (key === 'satellite') {
 			currentSatelliteOptions = {};
 		} else {
@@ -158,8 +160,17 @@
 		renderStyle();
 	});
 
-	// Initialize style on first render
-	setBaseStyle('colorful');
+	// Initialize hash management and style
+	let hashManager: HashManager | undefined;
+	if (config.hash !== false) {
+		hashManager = new HashManager(map, (key) => setBaseStyle(key as StyleKey));
+		const initialStyle = hashManager.initialize();
+		setBaseStyle(initialStyle as StyleKey);
+	} else {
+		setBaseStyle('colorful');
+	}
+
+	onDestroy(() => hashManager?.destroy());
 </script>
 
 <div class="maplibregl-ctrl maplibregl-ctrl-group">
