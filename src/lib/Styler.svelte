@@ -162,13 +162,15 @@
 
 	// Initialize hash management and style
 	let hashManager: HashManager | undefined;
-	if (config.hash !== false) {
-		hashManager = new HashManager(map, (key) => setBaseStyle(key as StyleKey));
-		const initialStyle = hashManager.initialize();
-		setBaseStyle(initialStyle as StyleKey);
-	} else {
-		setBaseStyle('colorful');
-	}
+	untrack(() => {
+		if (config.hash !== false) {
+			hashManager = new HashManager(map, (key) => setBaseStyle(key as StyleKey));
+			const initialStyle = hashManager.initialize();
+			setBaseStyle(initialStyle as StyleKey);
+		} else {
+			setBaseStyle('colorful');
+		}
+	});
 
 	onDestroy(() => hashManager?.destroy());
 </script>
