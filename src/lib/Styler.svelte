@@ -10,6 +10,7 @@
 	import InputNumber from './components/InputNumber.svelte';
 	import InputSelect from './components/InputSelect.svelte';
 	import InputCheckbox from './components/InputCheckbox.svelte';
+	import SidebarSection from './components/SidebarSection.svelte';
 
 	const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
 		string,
@@ -134,207 +135,184 @@
 </div>
 {#if paneOpen}
 	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
-		<details>
-			<summary>Select origin</summary>
-			<div class="maplibregl-list">
-				<div class="entry text-container">
-					<label for="{uid}-origin">Origin</label>
-					<div class="input">
-						<input
-							id="{uid}-origin"
-							type="text"
-							bind:value={origin}
-							onchange={handleOriginChange}
-						/>
-					</div>
+		<SidebarSection title="Select origin">
+			<div class="entry text-container">
+				<label for="{uid}-origin">Origin</label>
+				<div class="input">
+					<input id="{uid}-origin" type="text" bind:value={origin} onchange={handleOriginChange} />
 				</div>
 			</div>
-		</details>
-		<details open>
-			<summary>Select a base style</summary>
-			<div class="maplibregl-list style-list">
-				{#each Object.keys(vectorStyles) as key (key)}
-					<label>
-						<input
-							type="radio"
-							value={key}
-							checked={currentStyleKey === key}
-							onclick={() => setBaseStyle(key as VectorStyleKey)}
-						/>
-						<span>{key}</span>
-					</label>
-				{/each}
-			</div>
-		</details>
-		<details>
-			<summary>Edit individual colors</summary>
-			<div class="maplibregl-list">
-				{#each Object.keys(defaultOptions.colors ?? {}) as key (key)}
-					<InputColor
-						label={key}
-						bind:value={currentOptions.colors[key]}
-						defaultValue={(defaultOptions.colors ?? {})[key]}
-						onchange={renderStyle}
+		</SidebarSection>
+		<SidebarSection title="Select a base style" open listClass="style-list">
+			{#each Object.keys(vectorStyles) as key (key)}
+				<label>
+					<input
+						type="radio"
+						value={key}
+						checked={currentStyleKey === key}
+						onclick={() => setBaseStyle(key as VectorStyleKey)}
 					/>
-				{/each}
-			</div>
-		</details>
-		<details>
-			<summary>Modify all colors</summary>
-			<div class="maplibregl-list">
-				<InputCheckbox
-					label="Invert Brightness"
-					bind:value={
-						() => currentOptions.recolor.invertBrightness as boolean,
-						(v) => (currentOptions.recolor.invertBrightness = v)
-					}
-					defaultValue={(defaultOptions.recolor?.invertBrightness as boolean) ?? false}
-					onchange={renderStyle}
-				/>
-				<InputNumber
-					label="Rotate Hue"
-					bind:value={
-						() => (currentOptions.recolor.rotate as number) ?? 0,
-						(v) => (currentOptions.recolor.rotate = v)
-					}
-					defaultValue={(defaultOptions.recolor?.rotate as number) ?? 0}
-					min={0}
-					max={360}
-					onchange={renderStyle}
-				/>
-				<InputNumber
-					label="Saturate"
-					bind:value={
-						() => (currentOptions.recolor.saturate as number) ?? 0,
-						(v) => (currentOptions.recolor.saturate = v)
-					}
-					defaultValue={(defaultOptions.recolor?.saturate as number) ?? 0}
-					min={-1}
-					max={1}
-					scale={100}
-					onchange={renderStyle}
-				/>
-				<InputNumber
-					label="Gamma"
-					bind:value={
-						() => (currentOptions.recolor.gamma as number) ?? 1,
-						(v) => (currentOptions.recolor.gamma = v)
-					}
-					defaultValue={(defaultOptions.recolor?.gamma as number) ?? 1}
-					min={0.1}
-					max={10}
-					onchange={renderStyle}
-				/>
-				<InputNumber
-					label="Contrast"
-					bind:value={
-						() => (currentOptions.recolor.contrast as number) ?? 1,
-						(v) => (currentOptions.recolor.contrast = v)
-					}
-					defaultValue={(defaultOptions.recolor?.contrast as number) ?? 1}
-					min={0}
-					max={10}
-					scale={100}
-					onchange={renderStyle}
-				/>
-				<InputNumber
-					label="Brightness"
-					bind:value={
-						() => (currentOptions.recolor.brightness as number) ?? 0,
-						(v) => (currentOptions.recolor.brightness = v)
-					}
-					defaultValue={(defaultOptions.recolor?.brightness as number) ?? 0}
-					min={-1}
-					max={1}
-					scale={100}
-					onchange={renderStyle}
-				/>
-				<InputNumber
-					label="Tint"
-					bind:value={
-						() => (currentOptions.recolor.tint as number) ?? 0,
-						(v) => (currentOptions.recolor.tint = v)
-					}
-					defaultValue={(defaultOptions.recolor?.tint as number) ?? 0}
-					min={0}
-					max={1}
-					scale={100}
-					onchange={renderStyle}
-				/>
+					<span>{key}</span>
+				</label>
+			{/each}
+		</SidebarSection>
+		<SidebarSection title="Edit individual colors">
+			{#each Object.keys(defaultOptions.colors ?? {}) as key (key)}
 				<InputColor
-					label="Tint Color"
-					bind:value={currentOptions.recolor.tintColor}
-					defaultValue={defaultOptions.recolor?.tintColor}
+					label={key}
+					bind:value={currentOptions.colors[key]}
+					defaultValue={(defaultOptions.colors ?? {})[key]}
 					onchange={renderStyle}
 				/>
-				<InputNumber
-					label="Blend"
+			{/each}
+		</SidebarSection>
+		<SidebarSection title="Modify all colors">
+			<InputCheckbox
+				label="Invert Brightness"
+				bind:value={
+					() => currentOptions.recolor.invertBrightness as boolean,
+					(v) => (currentOptions.recolor.invertBrightness = v)
+				}
+				defaultValue={(defaultOptions.recolor?.invertBrightness as boolean) ?? false}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Rotate Hue"
+				bind:value={
+					() => (currentOptions.recolor.rotate as number) ?? 0,
+					(v) => (currentOptions.recolor.rotate = v)
+				}
+				defaultValue={(defaultOptions.recolor?.rotate as number) ?? 0}
+				min={0}
+				max={360}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Saturate"
+				bind:value={
+					() => (currentOptions.recolor.saturate as number) ?? 0,
+					(v) => (currentOptions.recolor.saturate = v)
+				}
+				defaultValue={(defaultOptions.recolor?.saturate as number) ?? 0}
+				min={-1}
+				max={1}
+				scale={100}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Gamma"
+				bind:value={
+					() => (currentOptions.recolor.gamma as number) ?? 1,
+					(v) => (currentOptions.recolor.gamma = v)
+				}
+				defaultValue={(defaultOptions.recolor?.gamma as number) ?? 1}
+				min={0.1}
+				max={10}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Contrast"
+				bind:value={
+					() => (currentOptions.recolor.contrast as number) ?? 1,
+					(v) => (currentOptions.recolor.contrast = v)
+				}
+				defaultValue={(defaultOptions.recolor?.contrast as number) ?? 1}
+				min={0}
+				max={10}
+				scale={100}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Brightness"
+				bind:value={
+					() => (currentOptions.recolor.brightness as number) ?? 0,
+					(v) => (currentOptions.recolor.brightness = v)
+				}
+				defaultValue={(defaultOptions.recolor?.brightness as number) ?? 0}
+				min={-1}
+				max={1}
+				scale={100}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Tint"
+				bind:value={
+					() => (currentOptions.recolor.tint as number) ?? 0,
+					(v) => (currentOptions.recolor.tint = v)
+				}
+				defaultValue={(defaultOptions.recolor?.tint as number) ?? 0}
+				min={0}
+				max={1}
+				scale={100}
+				onchange={renderStyle}
+			/>
+			<InputColor
+				label="Tint Color"
+				bind:value={currentOptions.recolor.tintColor}
+				defaultValue={defaultOptions.recolor?.tintColor}
+				onchange={renderStyle}
+			/>
+			<InputNumber
+				label="Blend"
+				bind:value={
+					() => (currentOptions.recolor.blend as number) ?? 0,
+					(v) => (currentOptions.recolor.blend = v)
+				}
+				defaultValue={(defaultOptions.recolor?.blend as number) ?? 0}
+				min={0}
+				max={1}
+				scale={100}
+				onchange={renderStyle}
+			/>
+			<InputColor
+				label="Blend Color"
+				bind:value={currentOptions.recolor.blendColor}
+				defaultValue={defaultOptions.recolor?.blendColor}
+				onchange={renderStyle}
+			/>
+		</SidebarSection>
+		<SidebarSection title="Select Options">
+			{#await fontsPromise then fontNames}
+				<InputSelect
+					label="Font Regular"
 					bind:value={
-						() => (currentOptions.recolor.blend as number) ?? 0,
-						(v) => (currentOptions.recolor.blend = v)
+						() => (currentOptions.fonts.regular as string) ?? '',
+						(v) => (currentOptions.fonts.regular = v)
 					}
-					defaultValue={(defaultOptions.recolor?.blend as number) ?? 0}
-					min={0}
-					max={1}
-					scale={100}
+					defaultValue={(defaultOptions.fonts?.regular as string) ?? ''}
+					options={fontNames}
 					onchange={renderStyle}
 				/>
-				<InputColor
-					label="Blend Color"
-					bind:value={currentOptions.recolor.blendColor}
-					defaultValue={defaultOptions.recolor?.blendColor}
+				<InputSelect
+					label="Font Bold"
+					bind:value={
+						() => (currentOptions.fonts.bold as string) ?? '',
+						(v) => (currentOptions.fonts.bold = v)
+					}
+					defaultValue={(defaultOptions.fonts?.bold as string) ?? ''}
+					options={fontNames}
 					onchange={renderStyle}
 				/>
+			{/await}
+			{#await languagesPromise then languages}
+				<InputSelect
+					label="Language"
+					bind:value={
+						() => ((currentOptions as Record<string, unknown>).language as string) ?? '',
+						(v: string) => ((currentOptions as Record<string, unknown>).language = v)
+					}
+					defaultValue=""
+					options={languages}
+					onchange={renderStyle}
+				/>
+			{/await}
+		</SidebarSection>
+		<SidebarSection title="Export">
+			<div class="entry button-container">
+				<button onclick={downloadStyle}>Download style.json</button>
+				<button onclick={copyStyleCode}>Copy style code</button>
 			</div>
-		</details>
-		<details>
-			<summary>Select Options</summary>
-			<div class="maplibregl-list">
-				{#await fontsPromise then fontNames}
-					<InputSelect
-						label="Font Regular"
-						bind:value={
-							() => (currentOptions.fonts.regular as string) ?? '',
-							(v) => (currentOptions.fonts.regular = v)
-						}
-						defaultValue={(defaultOptions.fonts?.regular as string) ?? ''}
-						options={fontNames}
-						onchange={renderStyle}
-					/>
-					<InputSelect
-						label="Font Bold"
-						bind:value={
-							() => (currentOptions.fonts.bold as string) ?? '',
-							(v) => (currentOptions.fonts.bold = v)
-						}
-						defaultValue={(defaultOptions.fonts?.bold as string) ?? ''}
-						options={fontNames}
-						onchange={renderStyle}
-					/>
-				{/await}
-				{#await languagesPromise then languages}
-					<InputSelect
-						label="Language"
-						bind:value={
-							() => ((currentOptions as Record<string, unknown>).language as string) ?? '',
-							(v: string) => ((currentOptions as Record<string, unknown>).language = v)
-						}
-						defaultValue=""
-						options={languages}
-						onchange={renderStyle}
-					/>
-				{/await}
-			</div>
-		</details>
-		<details>
-			<summary>Export</summary>
-			<div class="maplibregl-list">
-				<div class="entry button-container">
-					<button onclick={downloadStyle}>Download style.json</button>
-					<button onclick={copyStyleCode}>Copy style code</button>
-				</div>
-			</div>
-		</details>
+		</SidebarSection>
 		<p class="github-link">
 			<a
 				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
