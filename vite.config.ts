@@ -31,5 +31,10 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		exclude: ['e2e/**', 'node_modules/**'],
+		coverage: {
+			include: ['src/**/*.ts'],
+			exclude: ['src/**/*.(test|d).ts'],
+			all: true,
+		},
 	},
 });
