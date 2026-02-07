@@ -11,16 +11,17 @@ export default defineConfig({
 			name: 'chromium',
 			use: {
 				...devices['Desktop Chrome'],
+				deviceScaleFactor: 1,
 				launchOptions: { args: ['--use-gl=angle'] },
 			},
 		},
 		{
 			name: 'firefox',
-			use: { ...devices['Desktop Firefox'] },
+			use: { ...devices['Desktop Firefox'], deviceScaleFactor: 1 },
 		},
 		{
 			name: 'webkit',
-			use: { ...devices['Desktop Safari'] },
+			use: { ...devices['Desktop Safari'], deviceScaleFactor: 1 },
 		},
 	],
 	webServer: {
