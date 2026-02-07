@@ -177,11 +177,8 @@ describe('HashManager', () => {
 			vi.advanceTimersByTime(300);
 
 			const url = replaceStateSpy.mock.calls[0][2] as string;
-			expect(url).toMatch(/^#map=10\//);
-			expect(url).toContain('/51.5');
-			expect(url).toContain('/-0.1');
-			// No bearing/pitch segment
-			expect(url.split('/').length).toBe(3);
+			// zoom 10 → precision 4 → lat 51.5, lng -0.12
+			expect(url).toBe('#map=10/51.5/-0.12');
 		});
 
 		it('includes bearing and pitch when non-zero', () => {
@@ -194,8 +191,7 @@ describe('HashManager', () => {
 			vi.advanceTimersByTime(300);
 
 			const url = replaceStateSpy.mock.calls[0][2] as string;
-			expect(url).toMatch(/\/45\/30$/);
-			expect(url.split('/').length).toBe(5);
+			expect(url).toBe('#map=10/51.5/-0.12/45/30');
 		});
 
 		it('omits bearing and pitch when both are zero', () => {

@@ -112,10 +112,11 @@ export class HashManager {
 		const bearing = this.map.getBearing();
 		const pitch = this.map.getPitch();
 
-		const precision = Math.max(0, Math.ceil(Math.log2(zoom) + Math.log2(180) + 8));
+		const precision = Math.ceil((zoom * Math.LN2 + Math.log(512 / 360 / 0.5)) / Math.LN10);
+		const m = Math.pow(10, precision);
 		const zStr = zoom.toFixed(2).replace(/\.?0+$/, '');
-		const latStr = center.lat.toFixed(precision);
-		const lngStr = center.lng.toFixed(precision);
+		const latStr = String(Math.round(center.lat * m) / m);
+		const lngStr = String(Math.round(center.lng * m) / m);
 
 		let mapValue = `${zStr}/${latStr}/${lngStr}`;
 		if (bearing !== 0 || pitch !== 0) {
