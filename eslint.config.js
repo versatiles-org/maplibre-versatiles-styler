@@ -7,7 +7,7 @@ import svelte from 'eslint-plugin-svelte';
 export default [
 	js.configs.recommended,
 	...ts.configs.recommended,
-	...svelte.configs['flat/recommended'],
+	...svelte.configs.recommended,
 	{
 		ignores: [
 			'dist/**/*.*',
