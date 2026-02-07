@@ -42,7 +42,7 @@ jobs:
         run: npm run build
 
       - name: Tar and compress
-        run: tar -cf - *.js *.map *.ts | gzip -9 > maplibre-versatiles-styler.tar.gz
+        run: tar -cf - maplibre-versatiles-styler.* | gzip -9 > maplibre-versatiles-styler.tar.gz
         working-directory: dist
 
       - name: Upload file to release
