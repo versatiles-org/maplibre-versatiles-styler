@@ -7,9 +7,8 @@
 	import { untrack } from 'svelte';
 	import { removeRecursively } from './utils';
 	import InputColor from './components/InputColor.svelte';
-	import InputNumber from './components/InputNumber.svelte';
 	import InputSelect from './components/InputSelect.svelte';
-	import InputCheckbox from './components/InputCheckbox.svelte';
+	import RecolorOptions from './components/RecolorOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
 
 	const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
@@ -167,107 +166,9 @@
 			{/each}
 		</SidebarSection>
 		<SidebarSection title="Modify all colors">
-			<InputCheckbox
-				label="Invert Brightness"
-				bind:value={
-					() => currentOptions.recolor.invertBrightness as boolean,
-					(v) => (currentOptions.recolor.invertBrightness = v)
-				}
-				defaultValue={(defaultOptions.recolor?.invertBrightness as boolean) ?? false}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Rotate Hue"
-				bind:value={
-					() => (currentOptions.recolor.rotate as number) ?? 0,
-					(v) => (currentOptions.recolor.rotate = v)
-				}
-				defaultValue={(defaultOptions.recolor?.rotate as number) ?? 0}
-				min={0}
-				max={360}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Saturate"
-				bind:value={
-					() => (currentOptions.recolor.saturate as number) ?? 0,
-					(v) => (currentOptions.recolor.saturate = v)
-				}
-				defaultValue={(defaultOptions.recolor?.saturate as number) ?? 0}
-				min={-1}
-				max={1}
-				scale={100}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Gamma"
-				bind:value={
-					() => (currentOptions.recolor.gamma as number) ?? 1,
-					(v) => (currentOptions.recolor.gamma = v)
-				}
-				defaultValue={(defaultOptions.recolor?.gamma as number) ?? 1}
-				min={0.1}
-				max={10}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Contrast"
-				bind:value={
-					() => (currentOptions.recolor.contrast as number) ?? 1,
-					(v) => (currentOptions.recolor.contrast = v)
-				}
-				defaultValue={(defaultOptions.recolor?.contrast as number) ?? 1}
-				min={0}
-				max={10}
-				scale={100}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Brightness"
-				bind:value={
-					() => (currentOptions.recolor.brightness as number) ?? 0,
-					(v) => (currentOptions.recolor.brightness = v)
-				}
-				defaultValue={(defaultOptions.recolor?.brightness as number) ?? 0}
-				min={-1}
-				max={1}
-				scale={100}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Tint"
-				bind:value={
-					() => (currentOptions.recolor.tint as number) ?? 0,
-					(v) => (currentOptions.recolor.tint = v)
-				}
-				defaultValue={(defaultOptions.recolor?.tint as number) ?? 0}
-				min={0}
-				max={1}
-				scale={100}
-				onchange={renderStyle}
-			/>
-			<InputColor
-				label="Tint Color"
-				bind:value={currentOptions.recolor.tintColor}
-				defaultValue={defaultOptions.recolor?.tintColor}
-				onchange={renderStyle}
-			/>
-			<InputNumber
-				label="Blend"
-				bind:value={
-					() => (currentOptions.recolor.blend as number) ?? 0,
-					(v) => (currentOptions.recolor.blend = v)
-				}
-				defaultValue={(defaultOptions.recolor?.blend as number) ?? 0}
-				min={0}
-				max={1}
-				scale={100}
-				onchange={renderStyle}
-			/>
-			<InputColor
-				label="Blend Color"
-				bind:value={currentOptions.recolor.blendColor}
-				defaultValue={defaultOptions.recolor?.blendColor}
+			<RecolorOptions
+				bind:recolor={currentOptions.recolor}
+				defaults={defaultOptions.recolor}
 				onchange={renderStyle}
 			/>
 		</SidebarSection>
