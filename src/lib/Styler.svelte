@@ -179,8 +179,8 @@
 			/>
 			<LanguageOptions
 				bind:language={
-					() => ((currentOptions as Record<string, unknown>).language as string) ?? '',
-					(v: string) => ((currentOptions as Record<string, unknown>).language = v)
+					() => (currentOptions.language as string) ?? '',
+					(v: string) => (currentOptions.language = v)
 				}
 				languages={languagesPromise}
 				onchange={renderStyle}
