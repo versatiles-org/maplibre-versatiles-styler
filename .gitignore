@@ -3,3 +3,5 @@ coverage/
 demo/maplibre-versatiles-styler.*
 dist/
 node_modules/
+playwright-report/
+test-results/

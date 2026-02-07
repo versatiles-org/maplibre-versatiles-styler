@@ -9,7 +9,13 @@ export default [
 	...ts.configs.recommended,
 	...svelte.configs['flat/recommended'],
 	{
-		ignores: ['dist/**/*.*', 'demo/**/*.*', 'node_modules/**/*.*'],
+		ignores: [
+			'dist/**/*.*',
+			'demo/**/*.*',
+			'e2e/**/*.*',
+			'node_modules/**/*.*',
+			'playwright.config.ts',
+		],
 	},
 	{
 		files: ['src/**/*.ts'],
