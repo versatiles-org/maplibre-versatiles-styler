@@ -7,7 +7,8 @@
 	import { untrack } from 'svelte';
 	import { removeRecursively } from './utils';
 	import ColorOptions from './components/ColorOptions.svelte';
-	import InputSelect from './components/InputSelect.svelte';
+	import FontOptions from './components/FontOptions.svelte';
+	import LanguageOptions from './components/LanguageOptions.svelte';
 	import RecolorOptions from './components/RecolorOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
 
@@ -170,40 +171,20 @@
 			/>
 		</SidebarSection>
 		<SidebarSection title="Select Options">
-			{#await fontsPromise then fontNames}
-				<InputSelect
-					label="Font Regular"
-					bind:value={
-						() => (currentOptions.fonts.regular as string) ?? '',
-						(v) => (currentOptions.fonts.regular = v)
-					}
-					defaultValue={(defaultOptions.fonts?.regular as string) ?? ''}
-					options={fontNames}
-					onchange={renderStyle}
-				/>
-				<InputSelect
-					label="Font Bold"
-					bind:value={
-						() => (currentOptions.fonts.bold as string) ?? '',
-						(v) => (currentOptions.fonts.bold = v)
-					}
-					defaultValue={(defaultOptions.fonts?.bold as string) ?? ''}
-					options={fontNames}
-					onchange={renderStyle}
-				/>
-			{/await}
-			{#await languagesPromise then languages}
-				<InputSelect
-					label="Language"
-					bind:value={
-						() => ((currentOptions as Record<string, unknown>).language as string) ?? '',
-						(v: string) => ((currentOptions as Record<string, unknown>).language = v)
-					}
-					defaultValue=""
-					options={languages}
-					onchange={renderStyle}
-				/>
-			{/await}
+			<FontOptions
+				bind:fonts={currentOptions.fonts}
+				defaults={defaultOptions.fonts}
+				fontNames={fontsPromise}
+				onchange={renderStyle}
+			/>
+			<LanguageOptions
+				bind:language={
+					() => ((currentOptions as Record<string, unknown>).language as string) ?? '',
+					(v: string) => ((currentOptions as Record<string, unknown>).language = v)
+				}
+				languages={languagesPromise}
+				onchange={renderStyle}
+			/>
 		</SidebarSection>
 		<SidebarSection title="Export">
 			<div class="entry button-container">
