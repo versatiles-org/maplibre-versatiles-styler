@@ -4,4 +4,5 @@ demo/maplibre-versatiles-styler.*
 dist/
 node_modules/
 playwright-report/
+screenshots/
 test-results/

@@ -28,6 +28,7 @@
     "preview": "vite preview",
     "release": "npx vrt release-npm",
     "test-coverage": "vitest run --coverage",
+    "screenshots": "playwright test --config=playwright.screenshots.config.ts",
     "test-e2e": "playwright test",
     "test-unit": "vitest run",
     "test": "npm run test-unit",
