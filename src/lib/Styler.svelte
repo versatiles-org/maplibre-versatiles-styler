@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
-	import { styles } from '@versatiles/style';
-	import type { StyleBuilderOptions } from '@versatiles/style';
+	import { colorful, eclipse, graybeard, neutrino, shadow } from '@versatiles/style';
+	import type { StyleBuilderFunction, StyleBuilderOptions } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import { fetchJSON, fetchTileJSON } from './tile_json';
 	import { untrack } from 'svelte';
@@ -11,7 +11,11 @@
 	import InputSelect from './components/InputSelect.svelte';
 	import InputCheckbox from './components/InputCheckbox.svelte';
 
-	type StyleKeys = keyof typeof styles;
+	const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
+		string,
+		StyleBuilderFunction
+	>;
+	type VectorStyleKey = keyof typeof vectorStyles;
 	type EnforcedStyleBuilderOptions = StyleBuilderOptions & {
 		colors: NonNullable<StyleBuilderOptions['colors']>;
 		recolor: NonNullable<StyleBuilderOptions['recolor']>;
@@ -22,14 +26,14 @@
 	const uid = $props.id();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
-	let currentStyleKey = $state<StyleKeys>('colorful');
+	let currentStyleKey = $state<VectorStyleKey>('colorful');
 	let currentOptions = $state<EnforcedStyleBuilderOptions>({
 		colors: {},
 		recolor: {},
 		fonts: {},
 	});
 
-	let baseStyle = $derived(styles[currentStyleKey]);
+	let baseStyle = $derived(vectorStyles[currentStyleKey]);
 	let defaultOptions = $derived(baseStyle.getOptions());
 
 	let fontsPromise = $derived(
@@ -47,9 +51,9 @@
 		fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)).then((tileJSON) => tileJSON.languages())
 	);
 
-	function setBaseStyle(key: StyleKeys) {
+	function setBaseStyle(key: VectorStyleKey) {
 		currentStyleKey = key;
-		const defaults = styles[key].getOptions();
+		const defaults = vectorStyles[key].getOptions();
 		currentOptions = {
 			baseUrl: origin,
 			colors: { ...defaults.colors },
@@ -64,7 +68,7 @@
 	}
 
 	function getStyle(): StyleSpecification {
-		return styles[currentStyleKey]({
+		return vectorStyles[currentStyleKey]({
 			...currentOptions,
 			baseUrl: origin,
 		});
@@ -149,13 +153,13 @@
 		<details open>
 			<summary>Select a base style</summary>
 			<div class="maplibregl-list style-list">
-				{#each Object.keys(styles) as key (key)}
+				{#each Object.keys(vectorStyles) as key (key)}
 					<label>
 						<input
 							type="radio"
 							value={key}
 							checked={currentStyleKey === key}
-							onclick={() => setBaseStyle(key as StyleKeys)}
+							onclick={() => setBaseStyle(key as VectorStyleKey)}
 						/>
 						<span>{key}</span>
 					</label>
