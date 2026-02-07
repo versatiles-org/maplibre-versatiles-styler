@@ -6,7 +6,7 @@
 	import { fetchJSON, fetchTileJSON } from './tile_json';
 	import { untrack } from 'svelte';
 	import { removeRecursively } from './utils';
-	import InputColor from './components/InputColor.svelte';
+	import ColorOptions from './components/ColorOptions.svelte';
 	import InputSelect from './components/InputSelect.svelte';
 	import RecolorOptions from './components/RecolorOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
@@ -156,14 +156,11 @@
 			{/each}
 		</SidebarSection>
 		<SidebarSection title="Edit individual colors">
-			{#each Object.keys(defaultOptions.colors ?? {}) as key (key)}
-				<InputColor
-					label={key}
-					bind:value={currentOptions.colors[key]}
-					defaultValue={(defaultOptions.colors ?? {})[key]}
-					onchange={renderStyle}
-				/>
-			{/each}
+			<ColorOptions
+				bind:colors={currentOptions.colors}
+				defaults={defaultOptions.colors}
+				onchange={renderStyle}
+			/>
 		</SidebarSection>
 		<SidebarSection title="Modify all colors">
 			<RecolorOptions
