@@ -1,5 +1,6 @@
-package*.json
+.claude/
 demo/maplibre-gl/
+package*.json
 playwright-report/
 README.md
 test-results/
