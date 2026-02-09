@@ -253,7 +253,7 @@
 			</SidebarSection>
 		{/if}
 		{#if isSatellite}
-			<SidebarSection title="Satellite options" open>
+			<SidebarSection title="Satellite options">
 				<SatelliteOptions
 					bind:options={currentSatelliteOptions}
 					defaults={defaultSatelliteOptions}
