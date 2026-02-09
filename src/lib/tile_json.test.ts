@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchJSON, fetchTileJSON } from './tile_json';
+import { fetchJSON, fetchTileJSON, fetchTileSources } from './tile_json';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -44,6 +44,44 @@ describe('fetchTileJSON', () => {
 		expect(langs).toHaveProperty('local', '');
 		expect(Object.values(langs)).toContain('en');
 		expect(Object.values(langs)).toContain('de');
+	});
+});
+
+describe('fetchTileSources', () => {
+	it('returns a Set of sources from /tiles/index.json', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(JSON.stringify(['osm', 'satellite', 'hillshade-vectors']), { status: 200 })
+		);
+
+		const sources = await fetchTileSources('https://example.com');
+		expect(sources).toEqual(new Set(['osm', 'satellite', 'hillshade-vectors']));
+		expect(fetch).toHaveBeenCalledWith(new URL('/tiles/index.json', 'https://example.com'));
+	});
+
+	it('returns only osm when satellite is absent', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(JSON.stringify(['osm']), { status: 200 })
+		);
+
+		const sources = await fetchTileSources('https://example.com');
+		expect(sources.has('osm')).toBe(true);
+		expect(sources.has('satellite')).toBe(false);
+	});
+
+	it('falls back to osm+satellite on fetch error', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response('', { status: 500, statusText: 'Internal Server Error' })
+		);
+
+		const sources = await fetchTileSources('https://example.com');
+		expect(sources).toEqual(new Set(['osm', 'satellite']));
+	});
+
+	it('falls back to osm+satellite on network failure', async () => {
+		vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+
+		const sources = await fetchTileSources('https://example.com');
+		expect(sources).toEqual(new Set(['osm', 'satellite']));
 	});
 });
 
