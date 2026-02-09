@@ -51,3 +51,12 @@ export function fetchJSON(url: string | URL): Promise<unknown> {
 export async function fetchTileJSON(url: string | URL): Promise<TileJSON> {
 	return new TileJSON((await fetchJSON(url)) as TileJSONSpecification);
 }
+
+export async function fetchTileSources(origin: string): Promise<Set<string>> {
+	try {
+		const sources = (await fetchJSON(new URL('/tiles/index.json', origin))) as string[];
+		return new Set(sources);
+	} catch {
+		return new Set(['osm', 'satellite']);
+	}
+}

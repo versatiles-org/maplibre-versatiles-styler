@@ -2,6 +2,7 @@
 	import type { SatelliteStyleOptions } from '@versatiles/style';
 	import InputCheckbox from './InputCheckbox.svelte';
 	import InputNumber from './InputNumber.svelte';
+	import { untrack } from 'svelte';
 
 	type SatelliteStyleDefaults = {
 		overlay: boolean;
@@ -16,20 +17,32 @@
 	let {
 		options = $bindable(),
 		defaults,
+		overlayAvailable = true,
 		onchange,
 	}: {
 		options: SatelliteStyleOptions;
 		defaults: SatelliteStyleDefaults;
+		overlayAvailable?: boolean;
 		onchange?: () => void;
 	} = $props();
+
+	untrack(() => {
+		if (!overlayAvailable) {
+			options.overlay = false;
+		}
+	});
 </script>
 
-<InputCheckbox
-	label="Overlay"
-	bind:value={() => (options.overlay as boolean) ?? defaults.overlay, (v) => (options.overlay = v)}
-	defaultValue={defaults.overlay}
-	{onchange}
-/>
+{#if overlayAvailable}
+	<InputCheckbox
+		label="Overlay"
+		bind:value={
+			() => (options.overlay as boolean) ?? defaults.overlay, (v) => (options.overlay = v)
+		}
+		defaultValue={defaults.overlay}
+		{onchange}
+	/>
+{/if}
 <InputNumber
 	label="Opacity"
 	bind:value={

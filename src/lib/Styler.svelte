@@ -7,7 +7,7 @@
 		SatelliteStyleOptions,
 	} from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
-	import { fetchJSON, fetchTileJSON } from './tile_json';
+	import { fetchJSON, fetchTileJSON, fetchTileSources } from './tile_json';
 	import { onDestroy, untrack } from 'svelte';
 	import { removeRecursively } from './utils';
 	import { HashManager } from './hash';
@@ -30,7 +30,6 @@
 		fonts: NonNullable<StyleBuilderOptions['fonts']>;
 	};
 
-	const styleKeys: StyleKey[] = [...(Object.keys(vectorStyles) as VectorStyleKey[]), 'satellite'];
 	const defaultSatelliteOptions = {
 		overlay: true,
 		rasterOpacity: 1,
@@ -45,6 +44,13 @@
 	const uid = $props.id();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
+	let hasOsm = $state(true);
+	let hasSatellite = $state(true);
+	let styleKeys: StyleKey[] = $derived([
+		...(hasOsm ? (Object.keys(vectorStyles) as VectorStyleKey[]) : []),
+		...(hasSatellite ? (['satellite'] as const) : []),
+	]);
+	let overlayAvailable = $derived(hasOsm && hasSatellite);
 	let currentStyleKey = $state<StyleKey>('colorful');
 	let isSatellite = $derived(currentStyleKey === 'satellite');
 	let currentVectorOptions = $state<EnforcedStyleBuilderOptions>({
@@ -69,7 +75,11 @@
 	);
 
 	let languagesPromise = $derived(
-		fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)).then((tileJSON) => tileJSON.languages())
+		hasOsm
+			? fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)).then((tileJSON) =>
+					tileJSON.languages()
+				)
+			: Promise.resolve({ local: '' })
 	);
 
 	function setBaseStyle(key: StyleKey) {
@@ -152,6 +162,26 @@
 	}
 
 	$effect(() => {
+		const currentOrigin = origin;
+		fetchTileSources(currentOrigin).then((sources) => {
+			hasOsm = sources.has('osm');
+			hasSatellite = sources.has('satellite');
+		});
+	});
+
+	$effect(() => {
+		if (!overlayAvailable) {
+			currentSatelliteOptions.overlay = false;
+		}
+	});
+
+	$effect(() => {
+		if (styleKeys.length > 0 && !styleKeys.includes(currentStyleKey)) {
+			setBaseStyle(styleKeys[0]);
+		}
+	});
+
+	$effect(() => {
 		// Track all reactive dependencies and render
 		void currentStyleKey;
 		void currentVectorOptions;
@@ -227,6 +257,7 @@
 				<SatelliteOptions
 					bind:options={currentSatelliteOptions}
 					defaults={defaultSatelliteOptions}
+					{overlayAvailable}
 					onchange={renderStyle}
 				/>
 			</SidebarSection>
