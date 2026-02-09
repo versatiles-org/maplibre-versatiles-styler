@@ -262,7 +262,7 @@
 				/>
 			</SidebarSection>
 		{/if}
-		<SidebarSection title="Select Options">
+		<SidebarSection title="Other options">
 			{#if !isSatellite && defaultOptions}
 				<FontOptions
 					bind:fonts={currentVectorOptions.fonts}

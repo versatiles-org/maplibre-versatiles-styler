@@ -31,7 +31,7 @@ test('all 6 details sections are present with correct titles', async ({ page }) 
 		'Select a base style',
 		'Edit individual colors',
 		'Modify all colors',
-		'Select Options',
+		'Other options',
 		'Export',
 	];
 	for (let i = 0; i < expectedTitles.length; i++) {

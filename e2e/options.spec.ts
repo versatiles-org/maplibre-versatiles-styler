@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test('font selects load and show options', async ({ page }) => {
 	const optionsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Select Options"))'
+		'.maplibregl-versatiles-styler details:has(summary:text("Other options"))'
 	);
 	await optionsDetails.locator('summary').click();
 
@@ -21,7 +21,7 @@ test('font selects load and show options', async ({ page }) => {
 
 test('changing font updates map style text-font', async ({ page }) => {
 	const optionsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Select Options"))'
+		'.maplibregl-versatiles-styler details:has(summary:text("Other options"))'
 	);
 	await optionsDetails.locator('summary').click();
 
@@ -62,7 +62,7 @@ test('changing font updates map style text-font', async ({ page }) => {
 
 test('language select loads with entries', async ({ page }) => {
 	const optionsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Select Options"))'
+		'.maplibregl-versatiles-styler details:has(summary:text("Other options"))'
 	);
 	await optionsDetails.locator('summary').click();
 
