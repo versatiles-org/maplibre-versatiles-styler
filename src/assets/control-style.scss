@@ -257,6 +257,13 @@
 			position: relative;
 			overflow: hidden;
 
+			&.satellite {
+				margin-top: 0.3em;
+				padding-top: 0.3em;
+				border-top: 1px solid var(--border-color);
+				color: color-mix(in srgb, var(--primary-color) 50%, var(--fg-color) 50%);
+			}
+
 			input {
 				position: absolute;
 				left: -9999px;

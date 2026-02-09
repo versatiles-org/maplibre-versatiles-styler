@@ -225,7 +225,7 @@
 		</SidebarSection>
 		<SidebarSection title="Select a base style" open listClass="style-list">
 			{#each styleKeys as key (key)}
-				<label>
+				<label class:satellite={key === 'satellite'}>
 					<input
 						type="radio"
 						value={key}
