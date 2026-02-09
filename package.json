@@ -1,6 +1,6 @@
 {
   "name": "maplibre-versatiles-styler",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "dist/maplibre-versatiles-styler.umd.cjs",
   "module": "dist/maplibre-versatiles-styler.js",
