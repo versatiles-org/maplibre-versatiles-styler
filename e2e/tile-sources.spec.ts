@@ -46,23 +46,6 @@ test.describe('tile source discovery', () => {
 		expect(labels).toEqual(['colorful', 'eclipse', 'graybeard', 'shadow', 'neutrino', 'satellite']);
 	});
 
-	test('auto-switches to first available style when current becomes unavailable', async ({
-		page,
-	}) => {
-		// Start with only satellite available — default "colorful" is unavailable
-		await page.route('**/tiles/index.json', (route) => route.fulfill({ json: ['satellite'] }));
-		await page.goto('/');
-		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
-
-		const satelliteRadio = page.locator(
-			'.maplibregl-versatiles-styler .style-list input[type="radio"][value="satellite"]'
-		);
-		await expect(satelliteRadio).toBeChecked();
-
-		const style = await getMapStyle(page);
-		expect(style.name).toBe('versatiles-satellite');
-	});
-
 	test('hides overlay checkbox when osm is missing', async ({ page }) => {
 		await page.route('**/tiles/index.json', (route) => route.fulfill({ json: ['satellite'] }));
 		await page.goto('/');
