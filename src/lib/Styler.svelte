@@ -44,8 +44,8 @@
 	const uid = $props.id();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
-	let hasOsm = $state(true);
-	let hasSatellite = $state(true);
+	let hasOsm = $state(false);
+	let hasSatellite = $state(false);
 	let styleKeys: StyleKey[] = $derived([
 		...(hasOsm ? (Object.keys(vectorStyles) as VectorStyleKey[]) : []),
 		...(hasSatellite ? (['satellite'] as const) : []),
