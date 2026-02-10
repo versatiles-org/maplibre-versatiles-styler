@@ -98,14 +98,13 @@
 		}
 	}
 
-	function renderStyle() {
-		const style = getStyle();
-		map.setStyle(style);
+	async function renderStyle() {
+		map.setStyle(await getStyle());
 	}
 
-	function getStyle(): StyleSpecification {
+	async function getStyle(): Promise<StyleSpecification> {
 		if (isSatellite) {
-			return satellite({ ...currentSatelliteOptions, baseUrl: origin });
+			return await satellite({ ...currentSatelliteOptions, baseUrl: origin });
 		}
 		return vectorStyles[currentStyleKey as VectorStyleKey]({
 			...currentVectorOptions,
@@ -126,8 +125,8 @@
 		) as StyleBuilderOptions;
 	}
 
-	function downloadStyle() {
-		const json = JSON.stringify(getStyle(), null, 2);
+	async function downloadStyle() {
+		const json = JSON.stringify(await getStyle(), null, 2);
 		const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(json);
 		const a = document.createElement('a');
 		a.setAttribute('href', dataStr);
