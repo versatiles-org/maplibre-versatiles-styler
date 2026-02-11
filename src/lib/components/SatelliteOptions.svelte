@@ -2,7 +2,6 @@
 	import type { SatelliteStyleOptions } from '@versatiles/style';
 	import InputCheckbox from './InputCheckbox.svelte';
 	import InputNumber from './InputNumber.svelte';
-	import { untrack } from 'svelte';
 
 	type SatelliteStyleDefaults = {
 		overlay: boolean;
@@ -25,12 +24,6 @@
 		overlayAvailable?: boolean;
 		onchange?: () => void;
 	} = $props();
-
-	untrack(() => {
-		if (!overlayAvailable) {
-			options.overlay = false;
-		}
-	});
 </script>
 
 {#if overlayAvailable}

@@ -46,6 +46,7 @@
 	let paneOpen = $state(untrack(() => config.open ?? false));
 	let hasOsm = $state(false);
 	let hasSatellite = $state(false);
+	let sourcesLoaded = $state(false);
 	let styleKeys: StyleKey[] = $derived([
 		...(hasOsm ? (Object.keys(vectorStyles) as VectorStyleKey[]) : []),
 		...(hasSatellite ? (['satellite'] as const) : []),
@@ -165,11 +166,12 @@
 		fetchTileSources(currentOrigin).then((sources) => {
 			hasOsm = sources.has('osm');
 			hasSatellite = sources.has('satellite');
+			sourcesLoaded = true;
 		});
 	});
 
 	$effect(() => {
-		if (!overlayAvailable) {
+		if (sourcesLoaded && !overlayAvailable) {
 			currentSatelliteOptions.overlay = false;
 		}
 	});
