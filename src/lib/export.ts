@@ -19,7 +19,9 @@ export async function copyStyleCode(
 ): Promise<void> {
 	let optionsString = minimalOptions ? JSON.stringify(minimalOptions, null, 2) : '';
 	optionsString = optionsString.replace(/\s\s"([^"]+)": /g, '  $1: ');
-	const code = `const style = VersaTilesStyle.${styleKey}(${optionsString});`;
+	const awaitPrefix = styleKey === 'satellite' ? 'await ' : '';
+	const call = `${awaitPrefix}${styleKey}(${optionsString})`;
+	const code = `import { ${styleKey} } from '@versatiles/style';\nconst style = ${call};`;
 	await navigator.clipboard.writeText(code);
 	alert('Style code copied to clipboard');
 }
