@@ -1,4 +1,5 @@
 .claude/
+*.code-workspace
 CHANGELOG.md
 demo/maplibre-gl/
 package*.json
