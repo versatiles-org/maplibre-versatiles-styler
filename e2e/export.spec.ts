@@ -40,5 +40,6 @@ test('copy writes to clipboard', async ({ context, page }) => {
 	await copyButton.click();
 
 	const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-	expect(clipboardText).toContain('VersaTilesStyle.colorful(');
+	expect(clipboardText).toContain("import { colorful } from '@versatiles/style';");
+	expect(clipboardText).toContain('colorful(');
 });

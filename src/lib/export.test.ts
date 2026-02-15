@@ -69,7 +69,9 @@ describe('copyStyleCode', () => {
 
 		await copyStyleCode('colorful', { baseUrl: 'https://example.org' });
 
-		expect(writeText).toHaveBeenCalledWith(expect.stringContaining('VersaTilesStyle.colorful('));
+		const code = writeText.mock.calls[0][0] as string;
+		expect(code).toContain("import { colorful } from '@versatiles/style';");
+		expect(code).toContain('colorful(');
 	});
 
 	it('strips quotes from JSON keys', async () => {
@@ -92,7 +94,19 @@ describe('copyStyleCode', () => {
 		await copyStyleCode('colorful', undefined as never);
 
 		const code = writeText.mock.calls[0][0] as string;
-		expect(code).toBe('const style = VersaTilesStyle.colorful();');
+		expect(code).toBe("import { colorful } from '@versatiles/style';\nconst style = colorful();");
+	});
+
+	it('adds await for satellite style', async () => {
+		const writeText = vi.fn().mockResolvedValue(undefined);
+		Object.assign(navigator, { clipboard: { writeText } });
+		vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+		await copyStyleCode('satellite', { rasterOpacity: 0.5 });
+
+		const code = writeText.mock.calls[0][0] as string;
+		expect(code).toContain("import { satellite } from '@versatiles/style';");
+		expect(code).toContain('await satellite(');
 	});
 
 	it('shows alert after copying', async () => {
