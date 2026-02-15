@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Map as MLGLMap } from 'maplibre-gl';
 	import type { SatelliteStyleOptions } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import {
@@ -13,7 +14,6 @@
 	import { downloadStyle, copyStyleCode } from './export';
 	import { fetchJSON, fetchTileJSON, fetchTileSources } from './tile_json';
 	import { onDestroy, untrack } from 'svelte';
-	import { removeRecursively } from './utils';
 	import { HashManager } from './hash';
 	import ColorOptions from './components/ColorOptions.svelte';
 	import FontOptions from './components/FontOptions.svelte';
@@ -21,28 +21,6 @@
 	import RecolorOptions from './components/RecolorOptions.svelte';
 	import SatelliteOptions from './components/SatelliteOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
-
-	const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
-		string,
-		StyleBuilderFunction
-	>;
-	type VectorStyleKey = keyof typeof vectorStyles;
-	type StyleKey = VectorStyleKey | 'satellite';
-	type EnforcedStyleBuilderOptions = StyleBuilderOptions & {
-		colors: NonNullable<StyleBuilderOptions['colors']>;
-		recolor: NonNullable<StyleBuilderOptions['recolor']>;
-		fonts: NonNullable<StyleBuilderOptions['fonts']>;
-	};
-
-	const defaultSatelliteOptions = {
-		overlay: true,
-		rasterOpacity: 1,
-		rasterHueRotate: 0,
-		rasterBrightnessMin: 0,
-		rasterBrightnessMax: 1,
-		rasterSaturation: 0,
-		rasterContrast: 0,
-	};
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
@@ -104,41 +82,19 @@
 	}
 
 	async function renderStyle() {
-		map.setStyle(await getStyle());
+		map.setStyle(
+			await getStyle(currentStyleKey, currentVectorOptions, currentSatelliteOptions, origin)
+		);
 	}
 
-	async function getStyle(): Promise<StyleSpecification> {
-		if (isSatellite) {
-			return await satellite({ ...currentSatelliteOptions, baseUrl: origin });
-		}
-		return vectorStyles[currentStyleKey as VectorStyleKey]({
-			...currentVectorOptions,
-			baseUrl: origin,
-		});
-	}
-
-	function getMinimalOptions(): StyleBuilderOptions | SatelliteStyleOptions {
-		if (isSatellite) {
-			return removeRecursively(
-				JSON.parse(JSON.stringify(currentSatelliteOptions)),
-				defaultSatelliteOptions
-			) as SatelliteStyleOptions;
-		}
-		return removeRecursively(
-			JSON.parse(JSON.stringify(currentVectorOptions)),
-			baseStyle!.getOptions()
-		) as StyleBuilderOptions;
-	}
-
-	async function downloadStyle() {
-		const json = JSON.stringify(await getStyle(), null, 2);
-		const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(json);
-		const a = document.createElement('a');
-		a.setAttribute('href', dataStr);
-		a.setAttribute('download', 'style.json');
-		document.body.appendChild(a);
-		a.click();
-		a.remove();
+	async function handleDownload() {
+		const style = await getStyle(
+			currentStyleKey,
+			currentVectorOptions,
+			currentSatelliteOptions,
+			origin
+		);
+		downloadStyle(style);
 	}
 
 	async function handleCopyCode() {
