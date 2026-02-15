@@ -1,9 +1,11 @@
+[![NPM version](https://img.shields.io/npm/v/maplibre-versatiles-styler)](https://www.npmjs.com/package/maplibre-versatiles-styler)
+[![NPM downloads](https://img.shields.io/npm/dt/maplibre-versatiles-styler?label=npm%20downloads)](https://www.npmjs.com/package/maplibre-versatiles-styler)
+[![GitHub downloads](https://img.shields.io/github/downloads/versatiles-org/maplibre-versatiles-styler/total?label=github%20downloads)](https://github.com/versatiles-org/maplibre-versatiles-styler/releases/latest)
+[![Code coverage](https://codecov.io/gh/versatiles-org/maplibre-versatiles-styler/branch/main/graph/badge.svg?token=UnrhAAITs8)](https://codecov.io/gh/versatiles-org/maplibre-versatiles-styler)
+[![CI status](https://img.shields.io/github/actions/workflow/status/versatiles-org/maplibre-versatiles-styler/ci.yml)](https://github.com/versatiles-org/maplibre-versatiles-styler/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 # MapLibre VersaTiles Styler
-[![NPM Version](https://img.shields.io/npm/v/maplibre-versatiles-styler)](https://www.npmjs.com/package/maplibre-versatiles-styler)
-[![Code Coverage](https://codecov.io/gh/versatiles-org/maplibre-versatiles-styler/branch/main/graph/badge.svg?token=UnrhAAITs8)](https://codecov.io/gh/versatiles-org/maplibre-versatiles-styler)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/versatiles-org/maplibre-versatiles-styler/ci.yml)](https://github.com/versatiles-org/maplibre-versatiles-styler/actions/workflows/ci.yml)
-[![NPM Downloads](https://img.shields.io/npm/dt/maplibre-versatiles-styler?label=npm%20downloads)](https://www.npmjs.com/package/maplibre-versatiles-styler)
-[![GitHub Downloads](https://img.shields.io/github/downloads/versatiles-org/maplibre-versatiles-styler/total?label=github%20downloads)](https://github.com/versatiles-org/maplibre-versatiles-styler/releases/latest)
 
 A lightweight MapLibre GL JS control that allows users to explore and modify **VersaTiles map styles** directly inside the map.
 It provides a sidebar with editable color palettes, recoloring tools, style options such as font and language selection, and an export function.
