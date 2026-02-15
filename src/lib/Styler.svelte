@@ -1,12 +1,16 @@
 <script lang="ts">
-	import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
-	import { colorful, eclipse, graybeard, neutrino, shadow, satellite } from '@versatiles/style';
-	import type {
-		StyleBuilderFunction,
-		StyleBuilderOptions,
-		SatelliteStyleOptions,
-	} from '@versatiles/style';
+	import type { SatelliteStyleOptions } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
+	import {
+		vectorStyles,
+		defaultSatelliteOptions,
+		getStyle,
+		getMinimalOptions,
+		type VectorStyleKey,
+		type StyleKey,
+		type EnforcedStyleBuilderOptions,
+	} from './style_config';
+	import { downloadStyle, copyStyleCode } from './export';
 	import { fetchJSON, fetchTileJSON, fetchTileSources } from './tile_json';
 	import { onDestroy, untrack } from 'svelte';
 	import { removeRecursively } from './utils';
@@ -137,13 +141,13 @@
 		a.remove();
 	}
 
-	async function copyStyleCode() {
-		const minimalOptions = getMinimalOptions();
-		let optionsString = minimalOptions ? JSON.stringify(minimalOptions, null, 2) : '';
-		optionsString = optionsString.replace(/\s\s"([^"]+)": /g, '  $1: ');
-		const code = `const style = VersaTilesStyle.${currentStyleKey}(${optionsString});`;
-		await navigator.clipboard.writeText(code);
-		alert('Style code copied to clipboard');
+	async function handleCopyCode() {
+		const minimal = getMinimalOptions(
+			currentStyleKey,
+			currentVectorOptions,
+			currentSatelliteOptions
+		);
+		await copyStyleCode(currentStyleKey, minimal);
 	}
 
 	function handleOriginChange() {
@@ -294,8 +298,8 @@
 		</SidebarSection>
 		<SidebarSection title="Export">
 			<div class="entry button-container">
-				<button onclick={downloadStyle}>Download style.json</button>
-				<button onclick={copyStyleCode}>Copy style code</button>
+				<button onclick={handleDownload}>Download style.json</button>
+				<button onclick={handleCopyCode}>Copy style code</button>
 			</div>
 		</SidebarSection>
 		<p class="github-link">
