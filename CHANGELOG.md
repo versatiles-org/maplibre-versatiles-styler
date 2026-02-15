@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-02-15
+
+### Bug Fixes
+
+- update dependencies in package.json
+- add *.code-workspace to .prettierignore
+- update README.md with additional badges for NPM version, downloads, and GitHub workflow status
+- update README.md to correct badge placements and improve visibility
+- update pre-push hook and package.json scripts for improved testing workflow
+- update CI workflow to use consistent script naming for test coverage and E2E tests
+- update CI workflow to run unit tests instead of all tests
+
+### Code Refactoring
+
+- move downloadStyle and copyStyleCode functions to export
+- move style configuration to style_config
+- update copyStyleCode to import style dynamically and handle await for satellite styles
+
+### Tests
+
+- update clipboard copy tests to include import statements and await for satellite style
+
 ## [1.1.3] - 2026-02-11
 
 ### Bug Fixes
