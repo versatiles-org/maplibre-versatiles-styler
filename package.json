@@ -26,13 +26,13 @@
     "prepack": "npm run build",
     "prepare": "husky",
     "preview": "vite preview",
-    "release": "npx vrt release-npm",
+    "release": "vrt release-npm",
     "screenshots": "playwright test --config=playwright.screenshots.config.ts",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test": "npm run test:unit && npm run test:e2e",
-    "upgrade": "npm-check-updates -u && rm -f package-lock.json && rm -rf node_modules; npm i"
+    "upgrade": "vrt deps-upgrade"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
