@@ -18,7 +18,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "rm -rf dist && vite build",
-    "check": "npm run format && npm run lint && npm run build && npm run test",
+    "check": "npm run format && npm run typecheck && npm run lint && npm run build && npm run test",
     "dev": "vite",
     "format:check": "prettier --check .",
     "format": "prettier --write --log-level warn .",
@@ -32,6 +32,7 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test": "npm run test:unit && npm run test:e2e",
+    "typecheck": "tsc --noEmit",
     "upgrade": "vrt deps-upgrade"
   },
   "devDependencies": {
