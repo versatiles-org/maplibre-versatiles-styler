@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-03-01
+
+### Bug Fixes
+
+- update release and upgrade scripts for consistency
+- update check script to include type checking
+- update devDependencies to include @eslint/js and remove unused packages
+- refactor Svelte mock implementation and update type for title variable
+- update npm audit command to omit dev dependencies
+
+### Build System
+
+- **deps:** bump actions/upload-artifact in the action group
+
+### Chores
+
+- update devDependencies to latest versions
+
+### Other Changes
+
+- Merge branch 'main' into dependabot/github_actions/action-674967a53d
+- Merge pull request #10 from versatiles-org/dependabot/github_actions/action-674967a53d
+
 ## [1.1.4] - 2026-02-15
 
 ### Bug Fixes
