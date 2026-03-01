@@ -24,7 +24,7 @@ class TileJSON {
 					if (code === '') {
 						return ['local', ''];
 					} else {
-						let title = '';
+						let title: string;
 						try {
 							title = new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? '';
 						} catch {
