@@ -4,12 +4,14 @@ import { VersaTilesStylerControl } from './control';
 import type { VersaTilesStylerConfig } from './types';
 
 // Mock Svelte mount/unmount
-const mountMock = vi.fn(() => ({}));
-const unmountMock = vi.fn();
+const { mountMock, unmountMock } = vi.hoisted(() => ({
+	mountMock: vi.fn((_component: any, _options: any) => ({})),
+	unmountMock: vi.fn((_component: any) => {}),
+}));
 
 vi.mock('svelte', () => ({
-	mount: (...args: any[]) => mountMock(...args),
-	unmount: (...args: any[]) => unmountMock(...args),
+	mount: mountMock,
+	unmount: unmountMock,
 }));
 
 vi.mock('./Styler.svelte', () => ({
