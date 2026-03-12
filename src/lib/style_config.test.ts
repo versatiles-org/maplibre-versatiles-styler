@@ -32,6 +32,7 @@ describe('defaultSatelliteOptions', () => {
 			rasterBrightnessMax: 1,
 			rasterSaturation: 0,
 			rasterContrast: 0,
+			terrain: false,
 		});
 	});
 });

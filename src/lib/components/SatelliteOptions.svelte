@@ -5,6 +5,7 @@
 
 	type SatelliteStyleDefaults = {
 		overlay: boolean;
+		terrain: boolean;
 		rasterOpacity: number;
 		rasterHueRotate: number;
 		rasterBrightnessMin: number;
@@ -17,11 +18,13 @@
 		options = $bindable(),
 		defaults,
 		overlayAvailable = true,
+		elevationAvailable = false,
 		onchange,
 	}: {
 		options: SatelliteStyleOptions;
 		defaults: SatelliteStyleDefaults;
 		overlayAvailable?: boolean;
+		elevationAvailable?: boolean;
 		onchange?: () => void;
 	} = $props();
 </script>
@@ -33,6 +36,16 @@
 			() => (options.overlay as boolean) ?? defaults.overlay, (v) => (options.overlay = v)
 		}
 		defaultValue={defaults.overlay}
+		{onchange}
+	/>
+{/if}
+{#if elevationAvailable}
+	<InputCheckbox
+		label="Terrain"
+		bind:value={
+			() => (options.terrain as boolean) ?? defaults.terrain, (v) => (options.terrain = v)
+		}
+		defaultValue={defaults.terrain}
 		{onchange}
 	/>
 {/if}

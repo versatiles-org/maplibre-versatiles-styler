@@ -28,6 +28,7 @@
 	let paneOpen = $state(untrack(() => config.open ?? false));
 	let hasOsm = $state(false);
 	let hasSatellite = $state(false);
+	let hasElevation = $state(false);
 	let sourcesLoaded = $state(false);
 	let styleKeys: StyleKey[] = $derived([
 		...(hasOsm ? (Object.keys(vectorStyles) as VectorStyleKey[]) : []),
@@ -126,6 +127,7 @@
 		fetchTileSources(currentOrigin).then((sources) => {
 			hasOsm = sources.has('osm');
 			hasSatellite = sources.has('satellite');
+			hasElevation = sources.has('elevation');
 			sourcesLoaded = true;
 		});
 	});
@@ -219,6 +221,7 @@
 					bind:options={currentSatelliteOptions}
 					defaults={defaultSatelliteOptions}
 					{overlayAvailable}
+					elevationAvailable={hasElevation}
 					onchange={renderStyle}
 				/>
 			</SidebarSection>
