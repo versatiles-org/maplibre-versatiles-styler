@@ -119,6 +119,20 @@
 		);
 	}
 
+	function updateHash() {
+		hashManager?.setConfig(
+			getMinimalOptions(currentStyleKey, currentVectorOptions, currentSatelliteOptions) as Record<
+				string,
+				unknown
+			>
+		);
+	}
+
+	function renderAndUpdateHash() {
+		renderStyle();
+		updateHash();
+	}
+
 	async function handleDownload() {
 		const style = await getStyle(
 			currentStyleKey,
@@ -150,7 +164,7 @@
 				fonts: {},
 			};
 		}
-		renderStyle();
+		renderAndUpdateHash();
 	}
 
 	$effect(() => {
@@ -181,13 +195,7 @@
 		void currentVectorOptions;
 		void currentSatelliteOptions;
 		void origin;
-		renderStyle();
-		hashManager?.setConfig(
-			getMinimalOptions(currentStyleKey, currentVectorOptions, currentSatelliteOptions) as Record<
-				string,
-				unknown
-			>
-		);
+		renderAndUpdateHash();
 	});
 
 	// Initialize hash management and style
@@ -241,14 +249,14 @@
 				<ColorOptions
 					bind:colors={currentVectorOptions.colors}
 					defaults={defaultOptions.colors}
-					onchange={renderStyle}
+					onchange={renderAndUpdateHash}
 				/>
 			</SidebarSection>
 			<SidebarSection title="Modify all colors">
 				<RecolorOptions
 					bind:recolor={currentVectorOptions.recolor}
 					defaults={defaultOptions.recolor}
-					onchange={renderStyle}
+					onchange={renderAndUpdateHash}
 				/>
 			</SidebarSection>
 		{/if}
@@ -259,7 +267,7 @@
 					defaults={defaultSatelliteOptions}
 					{overlayAvailable}
 					elevationAvailable={hasElevation}
-					onchange={renderStyle}
+					onchange={renderAndUpdateHash}
 				/>
 			</SidebarSection>
 		{/if}
@@ -269,7 +277,7 @@
 					bind:fonts={currentVectorOptions.fonts}
 					defaults={defaultOptions.fonts}
 					fontNames={fontsPromise}
-					onchange={renderStyle}
+					onchange={renderAndUpdateHash}
 				/>
 			{/if}
 			{#if isSatellite}
@@ -279,7 +287,7 @@
 						(v: string) => (currentSatelliteOptions.language = v)
 					}
 					languages={languagesPromise}
-					onchange={renderStyle}
+					onchange={renderAndUpdateHash}
 				/>
 			{:else}
 				<LanguageOptions
@@ -288,7 +296,7 @@
 						(v: string) => (currentVectorOptions.language = v)
 					}
 					languages={languagesPromise}
-					onchange={renderStyle}
+					onchange={renderAndUpdateHash}
 				/>
 			{/if}
 		</SidebarSection>
