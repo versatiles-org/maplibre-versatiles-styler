@@ -7,18 +7,21 @@
 		onchange,
 	}: {
 		label: string;
-		value: string;
+		value: string | undefined;
 		defaultValue: string;
 		options: Record<string, string>;
 		onchange?: () => void;
 	} = $props();
 
 	const uid = $props.id();
-	let isModified = $derived(value !== defaultValue);
+	let isModified = $derived(value !== undefined && value !== defaultValue);
+	$effect(() => {
+		if (value === undefined) value = defaultValue;
+	});
 
 	function handleChange(e: Event) {
 		const select = e.target as HTMLSelectElement;
-		value = select.value;
+		value = select.value ?? defaultValue;
 		onchange?.();
 	}
 
