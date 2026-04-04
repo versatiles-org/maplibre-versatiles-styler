@@ -3,7 +3,12 @@ import { getMapStyle } from './helpers';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/');
-	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
+	await page.locator('.maplibregl-versatiles-styler').waitFor({ state: 'attached' });
+	await page
+		.locator(
+			'.maplibregl-versatiles-styler details:has(summary:text("Select a base style")) label span:has-text("satellite")'
+		)
+		.waitFor({ state: 'attached' });
 });
 
 test('font selects load and show options', async ({ page }) => {
