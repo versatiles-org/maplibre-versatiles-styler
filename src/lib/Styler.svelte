@@ -66,51 +66,26 @@
 			: Promise.resolve({ local: '' })
 	);
 
-	function setBaseStyle(key: StyleKey) {
-		currentStyleKey = key;
-		hashManager?.setStyleKey(key);
-		if (key === 'satellite') {
-			currentSatelliteOptions = {};
-		} else {
-			const defaults = vectorStyles[key].getOptions();
-			currentVectorOptions = {
-				baseUrl: origin,
-				colors: { ...defaults.colors },
-				recolor: {},
-				fonts: {},
-			};
+	function setBaseStyle(key: StyleKey, hashConfig?: Record<string, unknown> | null) {
+		if (currentStyleKey !== key) {
+			currentStyleKey = key;
+			hashManager?.setStyleKey(key);
 		}
-	}
 
-	function applyHashConfig(key: StyleKey, hashConfig: Record<string, unknown> | null) {
-		currentStyleKey = key;
-		if (!hashConfig) {
-			if (key === 'satellite') {
-				currentSatelliteOptions = {};
-			} else {
-				const defaults = vectorStyles[key as VectorStyleKey].getOptions();
-				currentVectorOptions = {
-					baseUrl: origin,
-					colors: { ...defaults.colors },
-					recolor: {},
-					fonts: {},
-				};
-			}
-			return;
-		}
 		if (key === 'satellite') {
-			currentSatelliteOptions = hashConfig as SatelliteStyleOptions;
+			currentSatelliteOptions = (hashConfig as SatelliteStyleOptions) ?? {};
 		} else {
 			const defaults = vectorStyles[key as VectorStyleKey].getOptions();
-			const cfg = hashConfig as StyleBuilderOptions;
+			const cfg = hashConfig as StyleBuilderOptions | undefined;
 			currentVectorOptions = {
 				baseUrl: origin,
-				colors: { ...defaults.colors, ...cfg.colors },
-				recolor: { ...cfg.recolor },
-				fonts: { ...cfg.fonts },
-				language: cfg.language,
+				colors: { ...defaults.colors, ...cfg?.colors },
+				recolor: { ...cfg?.recolor },
+				fonts: { ...cfg?.fonts },
+				language: cfg?.language,
 			};
 		}
+		return;
 	}
 
 	async function renderStyle() {
@@ -153,17 +128,6 @@
 	}
 
 	function handleOriginChange() {
-		if (isSatellite) {
-			currentSatelliteOptions = {};
-		} else {
-			const defaults = baseStyle!.getOptions();
-			currentVectorOptions = {
-				baseUrl: origin,
-				colors: { ...defaults.colors },
-				recolor: {},
-				fonts: {},
-			};
-		}
 		renderAndUpdateHash();
 	}
 
@@ -202,9 +166,9 @@
 	let hashManager: HashManager | undefined;
 	untrack(() => {
 		if (config.hash !== false) {
-			hashManager = new HashManager(map, (key, cfg) => applyHashConfig(key as StyleKey, cfg));
+			hashManager = new HashManager(map, (key, cfg) => setBaseStyle(key as StyleKey, cfg));
 			const { styleKey, config: hashConfig } = hashManager.initialize();
-			applyHashConfig(styleKey as StyleKey, hashConfig);
+			setBaseStyle(styleKey as StyleKey, hashConfig);
 		} else {
 			setBaseStyle('colorful');
 		}
