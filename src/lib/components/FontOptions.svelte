@@ -18,15 +18,15 @@
 {#await fontNames then names}
 	<InputSelect
 		label="Font Regular"
-		bind:value={() => (fonts.regular as string) ?? '', (v) => (fonts.regular = v)}
-		defaultValue={(defaults?.regular as string) ?? ''}
+		bind:value={fonts.regular}
+		defaultValue={defaults?.regular ?? ''}
 		options={names}
 		{onchange}
 	/>
 	<InputSelect
 		label="Font Bold"
-		bind:value={() => (fonts.bold as string) ?? '', (v) => (fonts.bold = v)}
-		defaultValue={(defaults?.bold as string) ?? ''}
+		bind:value={fonts.bold}
+		defaultValue={defaults?.bold ?? ''}
 		options={names}
 		{onchange}
 	/>
