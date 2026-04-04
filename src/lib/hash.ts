@@ -11,28 +11,56 @@ const VALID_STYLE_KEYS = new Set([
 const DEFAULT_STYLE_KEY = 'colorful';
 const THROTTLE_MS = 300;
 
+function encodeConfig(obj: Record<string, unknown>): string {
+	const json = JSON.stringify(obj);
+	const bytes = new TextEncoder().encode(json);
+	let binary = '';
+	for (const b of bytes) binary += String.fromCharCode(b);
+	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function decodeConfig(str: string): Record<string, unknown> | null {
+	try {
+		const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+		const binary = atob(base64);
+		const bytes = new Uint8Array(binary.length);
+		for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+		const json = new TextDecoder().decode(bytes);
+		const result = JSON.parse(json);
+		if (result && typeof result === 'object' && !Array.isArray(result)) return result;
+		return null;
+	} catch {
+		return null;
+	}
+}
+
 export class HashManager {
 	private map: MLGLMap;
-	private onStyleChange: (key: string) => void;
+	private onStyleChange: (key: string, config: Record<string, unknown> | null) => void;
 	private currentStyleKey: string = DEFAULT_STYLE_KEY;
+	private currentConfigEncoded: string | null = null;
 	private updating = false;
 	private throttleTimer: ReturnType<typeof setTimeout> | null = null;
 
 	private boundOnMoveEnd: () => void;
 	private boundOnHashChange: () => void;
 
-	constructor(map: MLGLMap, onStyleChange: (key: string) => void) {
+	constructor(
+		map: MLGLMap,
+		onStyleChange: (key: string, config: Record<string, unknown> | null) => void
+	) {
 		this.map = map;
 		this.onStyleChange = onStyleChange;
 		this.boundOnMoveEnd = () => this.onMoveEnd();
 		this.boundOnHashChange = () => this.onHashChange();
 	}
 
-	initialize(): string {
+	initialize(): { styleKey: string; config: Record<string, unknown> | null } {
 		this.tryDisableMapHash();
 
-		const { mapView, styleKey } = this.parseHash();
+		const { mapView, styleKey, config } = this.parseHash();
 		this.currentStyleKey = styleKey;
+		this.currentConfigEncoded = config ? encodeConfig(config) : null;
 
 		if (mapView) {
 			this.map.jumpTo({
@@ -53,11 +81,19 @@ export class HashManager {
 			this.map.once('load', () => this.updateHash());
 		}
 
-		return this.currentStyleKey;
+		return { styleKey: this.currentStyleKey, config };
 	}
 
 	setStyleKey(key: string): void {
 		this.currentStyleKey = key;
+		this.currentConfigEncoded = null;
+		this.updateHash();
+	}
+
+	setConfig(config: Record<string, unknown>): void {
+		const encoded = Object.keys(config).length === 0 ? null : encodeConfig(config);
+		if (encoded === this.currentConfigEncoded) return;
+		this.currentConfigEncoded = encoded;
 		this.updateHash();
 	}
 
@@ -70,9 +106,13 @@ export class HashManager {
 		}
 	}
 
-	private parseHash(): { mapView: MapView | null; styleKey: string } {
+	private parseHash(): {
+		mapView: MapView | null;
+		styleKey: string;
+		config: Record<string, unknown> | null;
+	} {
 		const hash = window.location.hash.replace(/^#/, '');
-		if (!hash) return { mapView: null, styleKey: DEFAULT_STYLE_KEY };
+		if (!hash) return { mapView: null, styleKey: DEFAULT_STYLE_KEY, config: null };
 
 		const params = new Map<string, string>();
 		for (const segment of hash.split('&')) {
@@ -103,7 +143,13 @@ export class HashManager {
 			styleKey = styleStr;
 		}
 
-		return { mapView, styleKey };
+		let config: Record<string, unknown> | null = null;
+		const configStr = params.get('config');
+		if (configStr) {
+			config = decodeConfig(configStr);
+		}
+
+		return { mapView, styleKey, config };
 	}
 
 	private buildHash(): string {
@@ -128,6 +174,9 @@ export class HashManager {
 		const parts = [`map=${mapValue}`];
 		if (this.currentStyleKey !== DEFAULT_STYLE_KEY) {
 			parts.push(`style=${this.currentStyleKey}`);
+		}
+		if (this.currentConfigEncoded) {
+			parts.push(`config=${this.currentConfigEncoded}`);
 		}
 
 		return '#' + parts.join('&');
@@ -155,7 +204,7 @@ export class HashManager {
 		if (this.updating) return;
 		this.updating = true;
 
-		const { mapView, styleKey } = this.parseHash();
+		const { mapView, styleKey, config } = this.parseHash();
 
 		if (mapView) {
 			this.map.jumpTo({
@@ -166,9 +215,14 @@ export class HashManager {
 			});
 		}
 
-		if (styleKey !== this.currentStyleKey) {
+		const configEncoded = config ? encodeConfig(config) : null;
+		const styleChanged = styleKey !== this.currentStyleKey;
+		const configChanged = configEncoded !== this.currentConfigEncoded;
+
+		if (styleChanged || configChanged) {
 			this.currentStyleKey = styleKey;
-			this.onStyleChange(styleKey);
+			this.currentConfigEncoded = configEncoded;
+			this.onStyleChange(styleKey, config);
 		}
 
 		this.updating = false;

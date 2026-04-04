@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Map as MLGLMap } from 'maplibre-gl';
-	import type { SatelliteStyleOptions } from '@versatiles/style';
+	import type { SatelliteStyleOptions, StyleBuilderOptions } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import {
 		vectorStyles,
@@ -82,6 +82,37 @@
 		}
 	}
 
+	function applyHashConfig(key: StyleKey, hashConfig: Record<string, unknown> | null) {
+		currentStyleKey = key;
+		if (!hashConfig) {
+			if (key === 'satellite') {
+				currentSatelliteOptions = {};
+			} else {
+				const defaults = vectorStyles[key as VectorStyleKey].getOptions();
+				currentVectorOptions = {
+					baseUrl: origin,
+					colors: { ...defaults.colors },
+					recolor: {},
+					fonts: {},
+				};
+			}
+			return;
+		}
+		if (key === 'satellite') {
+			currentSatelliteOptions = hashConfig as SatelliteStyleOptions;
+		} else {
+			const defaults = vectorStyles[key as VectorStyleKey].getOptions();
+			const cfg = hashConfig as StyleBuilderOptions;
+			currentVectorOptions = {
+				baseUrl: origin,
+				colors: { ...defaults.colors, ...cfg.colors },
+				recolor: { ...cfg.recolor },
+				fonts: { ...cfg.fonts },
+				language: cfg.language,
+			};
+		}
+	}
+
 	async function renderStyle() {
 		map.setStyle(
 			await getStyle(currentStyleKey, currentVectorOptions, currentSatelliteOptions, origin)
@@ -151,15 +182,21 @@
 		void currentSatelliteOptions;
 		void origin;
 		renderStyle();
+		hashManager?.setConfig(
+			getMinimalOptions(currentStyleKey, currentVectorOptions, currentSatelliteOptions) as Record<
+				string,
+				unknown
+			>
+		);
 	});
 
 	// Initialize hash management and style
 	let hashManager: HashManager | undefined;
 	untrack(() => {
 		if (config.hash !== false) {
-			hashManager = new HashManager(map, (key) => setBaseStyle(key as StyleKey));
-			const initialStyle = hashManager.initialize();
-			setBaseStyle(initialStyle as StyleKey);
+			hashManager = new HashManager(map, (key, cfg) => applyHashConfig(key as StyleKey, cfg));
+			const { styleKey, config: hashConfig } = hashManager.initialize();
+			applyHashConfig(styleKey as StyleKey, hashConfig);
 		} else {
 			setBaseStyle('colorful');
 		}

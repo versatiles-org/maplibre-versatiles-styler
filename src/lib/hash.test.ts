@@ -38,7 +38,7 @@ describe('HashManager', () => {
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 
-			expect(hm.initialize()).toBe('colorful');
+			expect(hm.initialize()).toEqual({ styleKey: 'colorful', config: null });
 		});
 
 		it('parses map and style from hash', () => {
@@ -46,7 +46,7 @@ describe('HashManager', () => {
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 
-			expect(hm.initialize()).toBe('eclipse');
+			expect(hm.initialize()).toEqual({ styleKey: 'eclipse', config: null });
 			expect(map.jumpTo).toHaveBeenCalledWith({
 				center: [-0.12, 51.5],
 				zoom: 10,
@@ -74,7 +74,7 @@ describe('HashManager', () => {
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 
-			expect(hm.initialize()).toBe('colorful');
+			expect(hm.initialize().styleKey).toBe('colorful');
 		});
 
 		it('does not call jumpTo when map values are invalid', () => {
@@ -135,6 +135,31 @@ describe('HashManager', () => {
 
 			expect(() => hm.initialize()).not.toThrow();
 		});
+
+		it('parses config from hash', () => {
+			// base64url of {"colors":{"land":"#ff0000"}}
+			const config = { colors: { land: '#ff0000' } };
+			const encoded = btoa(JSON.stringify(config))
+				.replace(/\+/g, '-')
+				.replace(/\//g, '_')
+				.replace(/=+$/, '');
+			window.location.hash = `#map=10/51.5/-0.12&style=eclipse&config=${encoded}`;
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+
+			const result = hm.initialize();
+			expect(result.styleKey).toBe('eclipse');
+			expect(result.config).toEqual(config);
+		});
+
+		it('returns null config for invalid base64', () => {
+			window.location.hash = '#map=10/51.5/-0.12&config=!!!invalid!!!';
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+
+			const result = hm.initialize();
+			expect(result.config).toBeNull();
+		});
 	});
 
 	describe('setStyleKey', () => {
@@ -166,6 +191,90 @@ describe('HashManager', () => {
 
 			const url = replaceStateSpy.mock.calls[0][2] as string;
 			expect(url).not.toContain('style=');
+		});
+	});
+
+	describe('setConfig', () => {
+		it('includes config in hash', () => {
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+			replaceStateSpy.mockClear();
+
+			hm.setConfig({ colors: { land: '#ff0000' } });
+			vi.advanceTimersByTime(300);
+
+			expect(replaceStateSpy).toHaveBeenCalledTimes(1);
+			const url = replaceStateSpy.mock.calls[0][2] as string;
+			expect(url).toContain('config=');
+		});
+
+		it('omits config when empty object', () => {
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+
+			hm.setConfig({ colors: { land: '#ff0000' } });
+			vi.advanceTimersByTime(300);
+			replaceStateSpy.mockClear();
+
+			hm.setConfig({});
+			vi.advanceTimersByTime(300);
+
+			const url = replaceStateSpy.mock.calls[0][2] as string;
+			expect(url).not.toContain('config=');
+		});
+
+		it('skips update when config is unchanged', () => {
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+
+			hm.setConfig({ colors: { land: '#ff0000' } });
+			vi.advanceTimersByTime(300);
+			replaceStateSpy.mockClear();
+
+			hm.setConfig({ colors: { land: '#ff0000' } });
+			vi.advanceTimersByTime(300);
+
+			expect(replaceStateSpy).not.toHaveBeenCalled();
+		});
+
+		it('config round-trips through hash', () => {
+			const config = { colors: { land: '#ff0000' }, recolor: { saturation: 0.5 } };
+			const encoded = btoa(JSON.stringify(config))
+				.replace(/\+/g, '-')
+				.replace(/\//g, '_')
+				.replace(/=+$/, '');
+			window.location.hash = `#map=10/51.5/-0.12&config=${encoded}`;
+
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+			const result = hm.initialize();
+			expect(result.config).toEqual(config);
+		});
+	});
+
+	describe('setStyleKey clears config', () => {
+		it('removes config from hash when style changes', () => {
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+
+			hm.setConfig({ colors: { land: '#ff0000' } });
+			vi.advanceTimersByTime(300);
+			replaceStateSpy.mockClear();
+
+			hm.setStyleKey('eclipse');
+			vi.advanceTimersByTime(300);
+
+			const url = replaceStateSpy.mock.calls[0][2] as string;
+			expect(url).toContain('style=eclipse');
+			expect(url).not.toContain('config=');
 		});
 	});
 
@@ -236,7 +345,7 @@ describe('HashManager', () => {
 			window.location.hash = '#map=10/51.5/-0.12&style=shadow';
 			window.dispatchEvent(new HashChangeEvent('hashchange'));
 
-			expect(onStyleChange).toHaveBeenCalledWith('shadow');
+			expect(onStyleChange).toHaveBeenCalledWith('shadow', null);
 			expect(map.jumpTo).toHaveBeenCalled();
 		});
 
@@ -252,6 +361,24 @@ describe('HashManager', () => {
 			window.dispatchEvent(new HashChangeEvent('hashchange'));
 
 			expect(onStyleChange).not.toHaveBeenCalled();
+		});
+
+		it('calls onStyleChange with config when config changes via hash', () => {
+			const onStyleChange = vi.fn();
+			const map = createMockMap();
+			const hm = new HashManager(map, onStyleChange);
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+
+			const config = { colors: { water: '#0000ff' } };
+			const encoded = btoa(JSON.stringify(config))
+				.replace(/\+/g, '-')
+				.replace(/\//g, '_')
+				.replace(/=+$/, '');
+			window.location.hash = `#map=10/51.5/-0.12&config=${encoded}`;
+			window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+			expect(onStyleChange).toHaveBeenCalledWith('colorful', config);
 		});
 	});
 
