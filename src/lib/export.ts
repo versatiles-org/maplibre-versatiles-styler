@@ -15,7 +15,7 @@ export function downloadStyle(style: StyleSpecification): void {
 
 export async function copyStyleCode(
 	styleKey: StyleKey,
-	minimalOptions: StyleBuilderOptions | SatelliteStyleOptions
+	minimalOptions: StyleBuilderOptions | SatelliteStyleOptions | undefined
 ): Promise<void> {
 	let optionsString = minimalOptions ? JSON.stringify(minimalOptions, null, 2) : '';
 	optionsString = optionsString.replace(/\s\s"([^"]+)": /g, '  $1: ');

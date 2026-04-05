@@ -51,7 +51,7 @@ export function getMinimalOptions(
 	styleKey: StyleKey,
 	vectorOptions: EnforcedStyleBuilderOptions,
 	satelliteOptions: SatelliteStyleOptions
-): Record<string, unknown> | undefined {
+): SatelliteStyleOptions | StyleBuilderOptions | undefined {
 	if (styleKey === 'satellite') {
 		return removeRecursively(deepClone(satelliteOptions), defaultSatelliteOptions);
 	}
