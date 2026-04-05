@@ -53,13 +53,7 @@ export function getMinimalOptions(
 	satelliteOptions: SatelliteStyleOptions
 ): Record<string, unknown> | undefined {
 	if (styleKey === 'satellite') {
-		return removeRecursively(
-			deepClone(satelliteOptions) as Record<string, unknown>,
-			defaultSatelliteOptions
-		);
+		return removeRecursively(deepClone(satelliteOptions), defaultSatelliteOptions);
 	}
-	return removeRecursively(
-		deepClone(vectorOptions) as unknown as Record<string, unknown>,
-		vectorStyles[styleKey].getOptions()
-	);
+	return removeRecursively(deepClone(vectorOptions), vectorStyles[styleKey].getOptions());
 }
