@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-04-05
+
+### Features
+
+- integrate svelte-check for improved type checking in development
+
+### Code Refactoring
+
+- improve hash configuration handling and enhance utility functions
+- enhance type safety for color options in ColorOptions component
+- simplify getMinimalOptions function by removing unnecessary type assertions
+- update return type of getMinimalOptions to improve type safety
+
+### Tests
+
+- add unit tests for HashManager and enhance removeRecursively tests
+
+### Chores
+
+- update @versatiles/style to version 5.10.2 in package.json and package-lock.json
+
 ## [1.2.0] - 2026-04-04
 
 ### Features
