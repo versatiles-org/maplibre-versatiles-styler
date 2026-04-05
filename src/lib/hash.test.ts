@@ -86,6 +86,15 @@ describe('HashManager', () => {
 			expect(map.jumpTo).not.toHaveBeenCalled();
 		});
 
+		it('ignores hash segments without an equals sign', () => {
+			window.location.hash = '#map=10/51.5/-0.12&flagonly&style=eclipse';
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+
+			// Should still parse the style param correctly despite the bare segment
+			expect(hm.initialize().styleKey).toBe('eclipse');
+		});
+
 		it('registers moveend and hashchange listeners', () => {
 			const map = createMockMap();
 			const addEventSpy = vi.spyOn(window, 'addEventListener');
@@ -159,6 +168,19 @@ describe('HashManager', () => {
 
 			const result = hm.initialize();
 			expect(result.config).toBeNull();
+		});
+
+		it('returns null config when decoded value is not a plain object', () => {
+			// Encode a JSON array — valid base64 but not a plain object
+			const encoded = btoa(JSON.stringify([1, 2, 3]))
+				.replace(/\+/g, '-')
+				.replace(/\//g, '_')
+				.replace(/=+$/, '');
+			window.location.hash = `#config=${encoded}`;
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+
+			expect(hm.initialize().config).toBeNull();
 		});
 	});
 
@@ -418,15 +440,20 @@ describe('HashManager', () => {
 			const hm = new HashManager(map, vi.fn());
 			hm.initialize();
 
-			// Trigger a pending update
 			hm.setStyleKey('eclipse');
-			// Destroy before timer fires
-			hm.destroy();
+			hm.destroy(); // cancel before timer fires
 			vi.advanceTimersByTime(300);
 
-			// Only the initial hash update from initialize should have fired
-			// The setStyleKey one should have been cleared
 			expect(replaceStateSpy).not.toHaveBeenCalled();
+		});
+
+		it('does not throw when destroyed with no pending timer', () => {
+			const map = createMockMap();
+			const hm = new HashManager(map, vi.fn());
+			hm.initialize();
+			vi.advanceTimersByTime(300); // let timer fire so throttleTimer is null
+
+			expect(() => hm.destroy()).not.toThrow();
 		});
 	});
 });

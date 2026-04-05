@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
 	vectorStyles,
 	defaultSatelliteOptions,
@@ -61,6 +61,19 @@ describe('getStyle', () => {
 		const style = await getStyle('colorful', baseOptions, {}, 'https://custom.example.org');
 		const json = JSON.stringify(style);
 		expect(json).toContain('custom.example.org');
+	});
+
+	it('returns a valid style for satellite', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			new Response(
+				JSON.stringify({ tiles: ['https://example.org/tiles/satellite/{z}/{x}/{y}.webp'] }),
+				{ status: 200 }
+			)
+		);
+		const style = await getStyle('satellite', baseOptions, {}, 'https://example.org');
+		expect(style).toBeDefined();
+		expect(typeof style).toBe('object');
+		vi.restoreAllMocks();
 	});
 });
 

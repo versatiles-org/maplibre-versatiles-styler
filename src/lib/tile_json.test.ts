@@ -119,20 +119,45 @@ describe('TileJSON.languages', () => {
 		expect(codes.filter((c) => c === 'fr').length).toBe(1);
 	});
 
-	it('falls back to raw code when Intl.DisplayNames throws', async () => {
+	it('falls back to empty string when Intl.DisplayNames.of() returns undefined', async () => {
 		const spec = {
 			tiles: ['https://example.com/{z}/{x}/{y}.pbf'],
-			vector_layers: [{ id: 'a', fields: { name_zz: 'String' } }],
+			vector_layers: [{ id: 'a', fields: { name_en: 'String' } }],
 		};
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
 			new Response(JSON.stringify(spec), { status: 200 })
 		);
+		const origDisplayNames = Intl.DisplayNames;
+		(Intl as { DisplayNames: unknown }).DisplayNames = class {
+			of() {
+				return undefined;
+			}
+		};
 
 		const tileJSON = await fetchTileJSON('https://example.com/tiles.json');
 		const langs = tileJSON.languages();
 
-		// 'zz' is not a valid language code, so Intl.DisplayNames should fail
-		// and the code falls back to using the raw code as title
-		expect(langs).toHaveProperty('zz', 'zz');
+		(Intl as { DisplayNames: unknown }).DisplayNames = origDisplayNames;
+
+		// .of() returned undefined → ?? '' fallback → title is '', entry key is ''
+		expect(Object.keys(langs)).toContain('');
+	});
+
+	it('falls back to raw code when Intl.DisplayNames throws', async () => {
+		const spec = {
+			tiles: ['https://example.com/{z}/{x}/{y}.pbf'],
+			vector_layers: [{ id: 'a', fields: { name_xx: 'String' } }],
+		};
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(JSON.stringify(spec), { status: 200 })
+		);
+		vi.spyOn(Intl, 'DisplayNames').mockImplementationOnce(() => {
+			throw new RangeError('invalid_argument');
+		});
+
+		const tileJSON = await fetchTileJSON('https://example.com/tiles.json');
+		const langs = tileJSON.languages();
+
+		expect(langs).toHaveProperty('xx', 'xx');
 	});
 });
