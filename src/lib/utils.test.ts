@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { removeRecursively } from './utils';
+import { deepClone, removeRecursively } from './utils';
 import { styles } from '@versatiles/style';
 
 describe('removeRecursively', () => {
@@ -37,7 +37,7 @@ describe('removeRecursively', () => {
 
 		for (const test of tests) {
 			const pathParts = test.path.split('.');
-			const obj = JSON.parse(JSON.stringify(defaultOptions));
+			const obj = deepClone(defaultOptions);
 			setNestedValue(obj, pathParts, test.value);
 			const result = removeRecursively(obj, defaultOptions);
 

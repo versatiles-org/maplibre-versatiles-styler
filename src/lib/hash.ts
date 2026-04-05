@@ -90,8 +90,8 @@ export class HashManager {
 		this.updateHash();
 	}
 
-	setConfig(config: Record<string, unknown>): void {
-		const encoded = Object.keys(config).length === 0 ? null : encodeConfig(config);
+	setConfig(config: Record<string, unknown> | undefined): void {
+		const encoded = config && Object.keys(config).length > 0 ? encodeConfig(config) : null;
 		if (encoded === this.currentConfigEncoded) return;
 		this.currentConfigEncoded = encoded;
 		this.updateHash();

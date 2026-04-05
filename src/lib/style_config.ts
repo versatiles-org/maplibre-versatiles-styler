@@ -5,7 +5,7 @@ import type {
 	StyleBuilderOptions,
 	SatelliteStyleOptions,
 } from '@versatiles/style';
-import { removeRecursively } from './utils';
+import { deepClone, removeRecursively } from './utils';
 
 export const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
 	string,
@@ -51,15 +51,15 @@ export function getMinimalOptions(
 	styleKey: StyleKey,
 	vectorOptions: EnforcedStyleBuilderOptions,
 	satelliteOptions: SatelliteStyleOptions
-): StyleBuilderOptions | SatelliteStyleOptions {
+): Record<string, unknown> | undefined {
 	if (styleKey === 'satellite') {
 		return removeRecursively(
-			JSON.parse(JSON.stringify(satelliteOptions)),
+			deepClone(satelliteOptions) as Record<string, unknown>,
 			defaultSatelliteOptions
-		) as SatelliteStyleOptions;
+		);
 	}
 	return removeRecursively(
-		JSON.parse(JSON.stringify(vectorOptions)),
+		deepClone(vectorOptions) as unknown as Record<string, unknown>,
 		vectorStyles[styleKey].getOptions()
-	) as StyleBuilderOptions;
+	);
 }

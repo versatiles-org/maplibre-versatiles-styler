@@ -96,10 +96,7 @@
 
 	function updateHash() {
 		hashManager?.setConfig(
-			getMinimalOptions(currentStyleKey, currentVectorOptions, currentSatelliteOptions) as Record<
-				string,
-				unknown
-			>
+			getMinimalOptions(currentStyleKey, currentVectorOptions, currentSatelliteOptions)
 		);
 	}
 
