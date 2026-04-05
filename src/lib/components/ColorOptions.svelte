@@ -1,6 +1,10 @@
 <script lang="ts">
-	import type { StyleBuilderOptions } from '@versatiles/style';
+	import type { Color, StyleBuilderOptions } from '@versatiles/style';
 	import InputColor from './InputColor.svelte';
+
+	interface Colors {
+		[key: string]: Color | string | undefined;
+	}
 
 	let {
 		colors = $bindable(),
@@ -16,8 +20,8 @@
 {#each Object.keys(defaults ?? {}) as key (key)}
 	<InputColor
 		label={key}
-		bind:value={colors[key]}
-		defaultValue={(defaults ?? {})[key]}
+		bind:value={(colors as Colors)[key]}
+		defaultValue={((defaults as Colors) ?? {})[key]}
 		{onchange}
 	/>
 {/each}
