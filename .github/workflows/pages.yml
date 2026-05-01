@@ -36,7 +36,7 @@ jobs:
           sed -i 's|../dist/maplibre-versatiles-styler.umd.cjs|./maplibre-versatiles-styler.umd.cjs|' demo/index.html
 
       - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./demo
 
