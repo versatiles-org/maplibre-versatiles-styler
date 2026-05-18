@@ -22,7 +22,7 @@
 	const uid = $props.id();
 </script>
 
-<div class="entry {containerClass}" class:disabled>
+<div class="entry {containerClass}" class:disabled class:modified={isModified}>
 	<label for={uid} title={hint}>{label}</label>
 	<div class="input">
 		{@render children(uid)}

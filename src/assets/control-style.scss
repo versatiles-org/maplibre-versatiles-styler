@@ -66,6 +66,25 @@
 				align-items: center;
 				justify-content: space-between;
 
+				.section-title {
+					margin-right: auto;
+				}
+
+				.section-reset {
+					border: none;
+					background: none;
+					cursor: pointer;
+					padding: 0 4px;
+					margin: 0;
+					font-size: 1em;
+					color: inherit;
+					opacity: 0.4;
+
+					&:hover {
+						opacity: 1;
+					}
+				}
+
 				&::-webkit-details-marker {
 					display: none;
 				}
@@ -273,6 +292,10 @@
 			select {
 				cursor: default;
 			}
+		}
+
+		.entry.modified label {
+			font-weight: 700;
 		}
 	}
 
