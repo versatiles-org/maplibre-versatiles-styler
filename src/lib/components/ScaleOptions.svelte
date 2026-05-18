@@ -20,6 +20,7 @@
 	min={0.5}
 	max={3}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -29,5 +30,6 @@
 	min={0.5}
 	max={3}
 	scale={100}
+	unit="%"
 	{onchange}
 />

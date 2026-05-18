@@ -70,6 +70,7 @@
 		min={0.5}
 		max={3}
 		scale={100}
+		unit="%"
 		{onchange}
 	/>
 	<InputNumber
@@ -81,6 +82,7 @@
 		min={0.5}
 		max={3}
 		scale={100}
+		unit="%"
 		{onchange}
 	/>
 {/if}
@@ -94,6 +96,7 @@
 	min={0}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -105,6 +108,7 @@
 	defaultValue={defaults.rasterHueRotate}
 	min={0}
 	max={360}
+	unit="°"
 	{onchange}
 />
 <InputNumber
@@ -117,6 +121,7 @@
 	min={0}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -129,6 +134,7 @@
 	min={0}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -141,6 +147,7 @@
 	min={-1}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -153,5 +160,6 @@
 	min={-1}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />

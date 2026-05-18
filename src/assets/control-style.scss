@@ -210,6 +210,14 @@
 				background: transparent;
 				outline: none;
 			}
+
+			.value {
+				flex-grow: 0;
+				flex-shrink: 0;
+				min-width: 3em;
+				text-align: right;
+				font-variant-numeric: tabular-nums;
+			}
 		}
 
 		.entry.text-container,

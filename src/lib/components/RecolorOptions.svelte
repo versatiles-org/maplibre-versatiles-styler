@@ -27,6 +27,7 @@
 	defaultValue={(defaults?.rotate as number) ?? 0}
 	min={0}
 	max={360}
+	unit="°"
 	{onchange}
 />
 <InputNumber
@@ -36,6 +37,7 @@
 	min={-1}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -53,6 +55,7 @@
 	min={0}
 	max={10}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -62,6 +65,7 @@
 	min={-1}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputNumber
@@ -71,6 +75,7 @@
 	min={0}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputColor
@@ -86,6 +91,7 @@
 	min={0}
 	max={1}
 	scale={100}
+	unit="%"
 	{onchange}
 />
 <InputColor

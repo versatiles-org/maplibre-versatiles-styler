@@ -8,6 +8,7 @@
 		min,
 		max,
 		scale = 1,
+		unit = '',
 		onchange,
 	}: {
 		label: string;
@@ -16,6 +17,7 @@
 		min: number;
 		max: number;
 		scale?: number;
+		unit?: string;
 		onchange?: () => void;
 	} = $props();
 
@@ -23,6 +25,7 @@
 	let scaledMin = $derived(min * scale);
 	let scaledMax = $derived(max * scale);
 	let scaledValue = $derived(clamp(value) * scale);
+	let displayValue = $derived(Math.round(scaledValue * 100) / 100 + unit);
 
 	function clamp(v: number): number {
 		if (v < min) return min;
@@ -53,5 +56,6 @@
 			value={scaledValue}
 			onchange={handleChange}
 		/>
+		<span class="value">{displayValue}</span>
 	{/snippet}
 </InputRow>
