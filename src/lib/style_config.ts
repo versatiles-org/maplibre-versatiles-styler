@@ -30,6 +30,8 @@ export const defaultSatelliteOptions = {
 	rasterSaturation: 0,
 	rasterContrast: 0,
 	terrain: false,
+	textScale: 1,
+	iconScale: 1,
 };
 
 export async function getStyle(

@@ -12,6 +12,8 @@
 		rasterBrightnessMax: number;
 		rasterSaturation: number;
 		rasterContrast: number;
+		textScale: number;
+		iconScale: number;
 	};
 
 	let {
@@ -46,6 +48,32 @@
 			() => (options.terrain as boolean) ?? defaults.terrain, (v) => (options.terrain = v)
 		}
 		defaultValue={defaults.terrain}
+		{onchange}
+	/>
+{/if}
+{#if overlayAvailable}
+	<InputNumber
+		label="Text Scale"
+		bind:value={
+			() => (options.textScale as number) ?? defaults.textScale,
+			(v) => (options.textScale = v)
+		}
+		defaultValue={defaults.textScale}
+		min={0.5}
+		max={3}
+		scale={100}
+		{onchange}
+	/>
+	<InputNumber
+		label="Icon Scale"
+		bind:value={
+			() => (options.iconScale as number) ?? defaults.iconScale,
+			(v) => (options.iconScale = v)
+		}
+		defaultValue={defaults.iconScale}
+		min={0.5}
+		max={3}
+		scale={100}
 		{onchange}
 	/>
 {/if}
