@@ -252,10 +252,7 @@
 					onchange={renderAndUpdateHash}
 				/>
 				{#if hasElevation}
-					<ElevationOptions
-						bind:options={currentVectorOptions}
-						onchange={renderAndUpdateHash}
-					/>
+					<ElevationOptions bind:options={currentVectorOptions} onchange={renderAndUpdateHash} />
 				{/if}
 			{/if}
 			{#if isSatellite}

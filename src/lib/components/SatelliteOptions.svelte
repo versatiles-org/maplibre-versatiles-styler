@@ -54,8 +54,7 @@
 	<InputCheckbox
 		label="Hillshade"
 		bind:value={
-			() => (options.hillshade as boolean) ?? defaults.hillshade,
-			(v) => (options.hillshade = v)
+			() => (options.hillshade as boolean) ?? defaults.hillshade, (v) => (options.hillshade = v)
 		}
 		defaultValue={defaults.hillshade}
 		{onchange}
@@ -65,8 +64,7 @@
 	<InputNumber
 		label="Text Scale"
 		bind:value={
-			() => (options.textScale as number) ?? defaults.textScale,
-			(v) => (options.textScale = v)
+			() => (options.textScale as number) ?? defaults.textScale, (v) => (options.textScale = v)
 		}
 		defaultValue={defaults.textScale}
 		min={0.5}
@@ -77,8 +75,7 @@
 	<InputNumber
 		label="Icon Scale"
 		bind:value={
-			() => (options.iconScale as number) ?? defaults.iconScale,
-			(v) => (options.iconScale = v)
+			() => (options.iconScale as number) ?? defaults.iconScale, (v) => (options.iconScale = v)
 		}
 		defaultValue={defaults.iconScale}
 		min={0.5}
