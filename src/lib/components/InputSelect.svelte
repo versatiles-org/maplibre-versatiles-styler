@@ -1,4 +1,6 @@
 <script lang="ts">
+	import InputRow from './InputRow.svelte';
+
 	let {
 		label,
 		value = $bindable(),
@@ -13,7 +15,6 @@
 		onchange?: () => void;
 	} = $props();
 
-	const uid = $props.id();
 	let isModified = $derived(value !== undefined && value !== defaultValue);
 	$effect(() => {
 		if (value === undefined) value = defaultValue;
@@ -31,14 +32,12 @@
 	}
 </script>
 
-<div class="entry select-container">
-	<label for={uid}>{label}</label>
-	<div class="input">
+<InputRow {label} containerClass="select-container" {isModified} onReset={reset}>
+	{#snippet children(uid)}
 		<select id={uid} {value} onchange={handleChange}>
 			{#each Object.entries(options) as [optLabel, optValue] (optValue)}
 				<option value={optValue}>{optLabel}</option>
 			{/each}
 		</select>
-		<button type="button" disabled={!isModified} onclick={reset}>&circlearrowleft;</button>
-	</div>
-</div>
+	{/snippet}
+</InputRow>

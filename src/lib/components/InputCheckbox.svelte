@@ -1,4 +1,6 @@
 <script lang="ts">
+	import InputRow from './InputRow.svelte';
+
 	let {
 		label,
 		value = $bindable(),
@@ -11,7 +13,6 @@
 		onchange?: () => void;
 	} = $props();
 
-	const uid = $props.id();
 	let isModified = $derived(value !== defaultValue);
 
 	function handleChange(e: Event) {
@@ -26,10 +27,8 @@
 	}
 </script>
 
-<div class="entry checkbox-container">
-	<label for={uid}>{label}</label>
-	<div class="input">
+<InputRow {label} containerClass="checkbox-container" {isModified} onReset={reset}>
+	{#snippet children(uid)}
 		<input id={uid} type="checkbox" checked={value} onchange={handleChange} />
-		<button type="button" disabled={!isModified} onclick={reset}>&circlearrowleft;</button>
-	</div>
-</div>
+	{/snippet}
+</InputRow>

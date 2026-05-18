@@ -1,4 +1,6 @@
 <script lang="ts">
+	import InputRow from './InputRow.svelte';
+
 	let {
 		label,
 		value = $bindable(),
@@ -17,7 +19,6 @@
 		onchange?: () => void;
 	} = $props();
 
-	const uid = $props.id();
 	let isModified = $derived(value !== defaultValue);
 	let scaledMin = $derived(min * scale);
 	let scaledMax = $derived(max * scale);
@@ -41,9 +42,8 @@
 	}
 </script>
 
-<div class="entry number-container">
-	<label for={uid}>{label}</label>
-	<div class="input">
+<InputRow {label} containerClass="number-container" {isModified} onReset={reset}>
+	{#snippet children(uid)}
 		<input
 			id={uid}
 			type="range"
@@ -53,6 +53,5 @@
 			value={scaledValue}
 			onchange={handleChange}
 		/>
-		<button type="button" disabled={!isModified} onclick={reset}>&circlearrowleft;</button>
-	</div>
-</div>
+	{/snippet}
+</InputRow>

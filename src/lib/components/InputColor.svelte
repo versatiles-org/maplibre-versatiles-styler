@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Color } from '@versatiles/style';
+	import InputRow from './InputRow.svelte';
 
 	let {
 		label,
@@ -13,7 +14,6 @@
 		onchange?: () => void;
 	} = $props();
 
-	const uid = $props.id();
 	let isModified = $derived(String(value) !== String(defaultValue));
 
 	function handleChange(e: Event) {
@@ -29,10 +29,8 @@
 	}
 </script>
 
-<div class="entry color-container">
-	<label for={uid}>{label}</label>
-	<div class="input">
+<InputRow {label} containerClass="color-container" {isModified} onReset={reset}>
+	{#snippet children(uid)}
 		<input id={uid} type="color" value={String(value)} onchange={handleChange} />
-		<button type="button" disabled={!isModified} onclick={reset}>&circlearrowleft;</button>
-	</div>
-</div>
+	{/snippet}
+</InputRow>
