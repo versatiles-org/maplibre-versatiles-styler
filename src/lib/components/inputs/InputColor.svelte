@@ -5,12 +5,14 @@
 	let {
 		label,
 		hint,
+		disabled = false,
 		value = $bindable(),
 		defaultValue,
 		onchange,
 	}: {
 		label: string;
 		hint?: string;
+		disabled?: boolean;
 		value: Color | string | undefined;
 		defaultValue: Color | string | undefined;
 		onchange?: () => void;
@@ -31,8 +33,8 @@
 	}
 </script>
 
-<InputRow {label} {hint} containerClass="color-container" {isModified} onReset={reset}>
+<InputRow {label} {hint} {disabled} containerClass="color-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
-		<input id={uid} type="color" value={String(value)} onchange={handleChange} />
+		<input id={uid} type="color" value={String(value)} {disabled} onchange={handleChange} />
 	{/snippet}
 </InputRow>

@@ -4,6 +4,7 @@
 	let {
 		label,
 		hint,
+		disabled = false,
 		value = $bindable(),
 		defaultValue,
 		options,
@@ -11,6 +12,7 @@
 	}: {
 		label: string;
 		hint?: string;
+		disabled?: boolean;
 		value: string | undefined;
 		defaultValue: string;
 		options: Record<string, string>;
@@ -34,9 +36,9 @@
 	}
 </script>
 
-<InputRow {label} {hint} containerClass="select-container" {isModified} onReset={reset}>
+<InputRow {label} {hint} {disabled} containerClass="select-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
-		<select id={uid} {value} onchange={handleChange}>
+		<select id={uid} {value} {disabled} onchange={handleChange}>
 			{#each Object.entries(options) as [optLabel, optValue] (optValue)}
 				<option value={optValue}>{optLabel}</option>
 			{/each}

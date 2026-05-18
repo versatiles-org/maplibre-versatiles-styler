@@ -264,6 +264,16 @@
 			line-height: 1.4;
 			opacity: 0.7;
 		}
+
+		.entry.disabled {
+			opacity: 0.45;
+
+			label,
+			input,
+			select {
+				cursor: default;
+			}
+		}
 	}
 
 	.range-container {

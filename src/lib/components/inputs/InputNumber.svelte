@@ -4,6 +4,7 @@
 	let {
 		label,
 		hint,
+		disabled = false,
 		value = $bindable(),
 		defaultValue,
 		min,
@@ -14,6 +15,7 @@
 	}: {
 		label: string;
 		hint?: string;
+		disabled?: boolean;
 		value: number;
 		defaultValue: number;
 		min: number;
@@ -47,7 +49,7 @@
 	}
 </script>
 
-<InputRow {label} {hint} containerClass="number-container" {isModified} onReset={reset}>
+<InputRow {label} {hint} {disabled} containerClass="number-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
 		<input
 			id={uid}
@@ -56,6 +58,7 @@
 			max={scaledMax}
 			step="1"
 			value={scaledValue}
+			{disabled}
 			onchange={handleChange}
 		/>
 		<span class="value">{displayValue}</span>

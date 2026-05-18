@@ -42,14 +42,14 @@
 	<FontOptions bind:fonts={options.fonts} defaults={defaults.fonts} {fontNames} {onchange} />
 	<ScaleOptions bind:options {defaults} {onchange} />
 </SidebarSection>
-{#if hasElevation}
-	<SidebarSection
-		title="Terrain & hillshade"
-		description="3D elevation features rendered from an elevation source."
-	>
-		<ElevationOptions bind:options {onchange} />
-	</SidebarSection>
-{/if}
+<SidebarSection
+	title="Terrain & hillshade"
+	description={hasElevation
+		? '3D elevation features rendered from an elevation source.'
+		: 'Unavailable — this server provides no elevation tiles.'}
+>
+	<ElevationOptions bind:options disabled={!hasElevation} {onchange} />
+</SidebarSection>
 <SidebarSection title="Labels" description="Language used for place names and labels.">
 	<LanguageOptions
 		bind:language={() => (options.language as string) ?? '', (v: string) => (options.language = v)}
