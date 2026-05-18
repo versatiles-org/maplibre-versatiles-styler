@@ -19,6 +19,7 @@
 	import FontOptions from './components/FontOptions.svelte';
 	import LanguageOptions from './components/LanguageOptions.svelte';
 	import RecolorOptions from './components/RecolorOptions.svelte';
+	import ScaleOptions from './components/ScaleOptions.svelte';
 	import SatelliteOptions from './components/SatelliteOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
 
@@ -83,6 +84,8 @@
 				recolor: { ...cfg?.recolor },
 				fonts: { ...cfg?.fonts },
 				language: cfg?.language,
+				textScale: cfg?.textScale,
+				iconScale: cfg?.iconScale,
 			};
 		}
 		return;
@@ -238,6 +241,11 @@
 					bind:fonts={currentVectorOptions.fonts}
 					defaults={defaultOptions.fonts}
 					fontNames={fontsPromise}
+					onchange={renderAndUpdateHash}
+				/>
+				<ScaleOptions
+					bind:options={currentVectorOptions}
+					defaults={defaultOptions}
 					onchange={renderAndUpdateHash}
 				/>
 			{/if}
