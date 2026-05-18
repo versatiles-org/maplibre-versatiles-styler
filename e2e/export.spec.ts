@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('download triggers with valid JSON', async ({ page }) => {
 	const exportDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Export"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
 	);
 	await exportDetails.locator('summary').click();
 
@@ -29,7 +29,7 @@ test('copy writes to clipboard', async ({ context, page }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
 	const exportDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Export"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
 	);
 	await exportDetails.locator('summary').click();
 

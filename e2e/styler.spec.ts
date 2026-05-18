@@ -22,26 +22,30 @@ test('toggle button opens and closes the pane', async ({ page }) => {
 	await expect(pane).toBeAttached();
 });
 
-test('all 6 details sections are present with correct titles', async ({ page }) => {
-	const summaries = page.locator('.maplibregl-versatiles-styler .maplibregl-pane details summary');
-	await expect(summaries).toHaveCount(6);
+test('all sidebar sections are present with correct titles', async ({ page }) => {
+	const titles = page.locator(
+		'.maplibregl-versatiles-styler .maplibregl-pane details summary .section-title'
+	);
 
 	const expectedTitles = [
-		'Select origin',
-		'Select a base style',
-		'Edit individual colors',
-		'Modify all colors',
-		'Other options',
+		'Origin',
+		'Base style',
+		'Color adjustments',
+		'Individual colors',
+		'Fonts & text size',
+		'Terrain & hillshade',
+		'Labels',
 		'Export',
 	];
+	await expect(titles).toHaveCount(expectedTitles.length);
 	for (let i = 0; i < expectedTitles.length; i++) {
-		await expect(summaries.nth(i)).toHaveText(expectedTitles[i]);
+		await expect(titles.nth(i)).toHaveText(expectedTitles[i]);
 	}
 });
 
 test('sections expand and collapse on click', async ({ page }) => {
 	const details = page.locator(
-		'.maplibregl-versatiles-styler .maplibregl-pane details:has(summary:text("Export"))'
+		'.maplibregl-versatiles-styler .maplibregl-pane details:has(summary:has-text("Export"))'
 	);
 
 	await expect(details).not.toHaveAttribute('open', '');

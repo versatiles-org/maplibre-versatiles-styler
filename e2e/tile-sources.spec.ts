@@ -46,22 +46,23 @@ test.describe('tile source discovery', () => {
 		expect(labels).toEqual(['colorful', 'eclipse', 'graybeard', 'shadow', 'neutrino', 'satellite']);
 	});
 
-	test('hides overlay checkbox when osm is missing', async ({ page }) => {
+	test('shows overlay disabled when osm is missing', async ({ page }) => {
 		await page.route('**/tiles/index.json', (route) => route.fulfill({ json: ['satellite'] }));
 		await page.goto('/');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 
-		// Satellite is the only style, open its options
-		const satDetails = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:text("Satellite options"))'
+		// Satellite is the only style; its Overlay section is shown but disabled
+		const overlayDetails = page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Overlay"))'
 		);
-		await expect(satDetails).toBeAttached();
+		await expect(overlayDetails).toBeAttached();
 
-		const overlayCheckbox = satDetails.locator('label:has-text("Overlay")');
-		await expect(overlayCheckbox).not.toBeAttached();
+		const overlayCheckbox = overlayDetails.locator('input[type="checkbox"]');
+		await expect(overlayCheckbox).toBeAttached();
+		await expect(overlayCheckbox).toBeDisabled();
 	});
 
-	test('shows overlay checkbox when both osm and satellite are available', async ({ page }) => {
+	test('shows overlay enabled when both osm and satellite are available', async ({ page }) => {
 		await page.route('**/tiles/index.json', (route) =>
 			route.fulfill({ json: ['osm', 'satellite'] })
 		);
@@ -72,13 +73,14 @@ test.describe('tile source discovery', () => {
 		const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
 		await styleList.locator('label:has(input[value="satellite"])').click();
 
-		const satDetails = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:text("Satellite options"))'
+		const overlayDetails = page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Overlay"))'
 		);
-		await expect(satDetails).toBeAttached();
+		await expect(overlayDetails).toBeAttached();
 
-		const overlayCheckbox = satDetails.locator('label:has-text("Overlay")');
+		const overlayCheckbox = overlayDetails.locator('input[type="checkbox"]');
 		await expect(overlayCheckbox).toBeAttached();
+		await expect(overlayCheckbox).toBeEnabled();
 	});
 
 	test('extra sources beyond osm/satellite are ignored in style list', async ({ page }) => {

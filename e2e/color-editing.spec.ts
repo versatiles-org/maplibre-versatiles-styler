@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test('color inputs render with values and reset buttons disabled', async ({ page }) => {
 	const colorsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Edit individual colors"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
 	);
 	await colorsDetails.locator('summary').click();
 
@@ -24,7 +24,7 @@ test('color inputs render with values and reset buttons disabled', async ({ page
 
 test('modifying a color updates the map style', async ({ page }) => {
 	const colorsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Edit individual colors"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
 	);
 	await colorsDetails.locator('summary').click();
 
@@ -54,7 +54,7 @@ test('modifying a color updates the map style', async ({ page }) => {
 
 test('reset restores default map style', async ({ page }) => {
 	const colorsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Edit individual colors"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
 	);
 	await colorsDetails.locator('summary').click();
 
@@ -82,9 +82,9 @@ test('reset restores default map style', async ({ page }) => {
 	expect(layerPaintsAfterReset).toEqual(layerPaintsBefore);
 });
 
-test('"Modify all colors" has 1 checkbox, 7 ranges, and 2 color pickers', async ({ page }) => {
+test('"Color adjustments" has 1 checkbox, 7 ranges, and 2 color pickers', async ({ page }) => {
 	const recolorDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Modify all colors"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
 	);
 	await recolorDetails.locator('summary').click();
 
@@ -100,7 +100,7 @@ test('"Modify all colors" has 1 checkbox, 7 ranges, and 2 color pickers', async 
 
 test('recolor slider changes map style', async ({ page }) => {
 	const recolorDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Modify all colors"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
 	);
 	await recolorDetails.locator('summary').click();
 

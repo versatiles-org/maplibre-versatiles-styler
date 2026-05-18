@@ -45,7 +45,7 @@ test('style change updates map style', async ({ page }) => {
 
 test('style change updates color inputs', async ({ page }) => {
 	const colorsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Edit individual colors"))'
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
 	);
 	await colorsDetails.locator('summary').click();
 

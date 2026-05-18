@@ -5,19 +5,17 @@ test.beforeEach(async ({ page }) => {
 	await page.goto('/');
 	await page.locator('.maplibregl-versatiles-styler').waitFor({ state: 'attached' });
 	await page
-		.locator(
-			'.maplibregl-versatiles-styler details:has(summary:text("Select a base style")) label span:has-text("satellite")'
-		)
+		.locator('.maplibregl-versatiles-styler .style-list label span:has-text("satellite")')
 		.waitFor({ state: 'attached' });
 });
 
 test('font selects load and show options', async ({ page }) => {
-	const optionsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Other options"))'
+	const fontsDetails = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Fonts & text size"))'
 	);
-	await optionsDetails.locator('summary').click();
+	await fontsDetails.locator('summary').click();
 
-	const fontRegularSelect = optionsDetails.locator('select').first();
+	const fontRegularSelect = fontsDetails.locator('select').first();
 	await expect(fontRegularSelect).toBeAttached({ timeout: 10_000 });
 
 	const options = fontRegularSelect.locator('option');
@@ -25,12 +23,12 @@ test('font selects load and show options', async ({ page }) => {
 });
 
 test('changing font updates map style text-font', async ({ page }) => {
-	const optionsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Other options"))'
+	const fontsDetails = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Fonts & text size"))'
 	);
-	await optionsDetails.locator('summary').click();
+	await fontsDetails.locator('summary').click();
 
-	const fontRegularSelect = optionsDetails.locator('select').first();
+	const fontRegularSelect = fontsDetails.locator('select').first();
 	await expect(fontRegularSelect).toBeAttached({ timeout: 10_000 });
 
 	const styleBefore = await getMapStyle(page);
@@ -66,15 +64,14 @@ test('changing font updates map style text-font', async ({ page }) => {
 });
 
 test('language select loads with entries', async ({ page }) => {
-	const optionsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:text("Other options"))'
+	const labelsDetails = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Labels"))'
 	);
-	await optionsDetails.locator('summary').click();
+	await labelsDetails.locator('summary').click();
 
-	const selects = optionsDetails.locator('select');
-	await expect(selects).toHaveCount(3, { timeout: 10_000 });
+	const languageSelect = labelsDetails.locator('select');
+	await expect(languageSelect).toHaveCount(1, { timeout: 10_000 });
 
-	const languageSelect = selects.nth(2);
 	const options = languageSelect.locator('option');
 	expect(await options.count()).toBeGreaterThan(1);
 });
