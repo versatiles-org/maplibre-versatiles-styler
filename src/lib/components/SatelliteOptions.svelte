@@ -6,6 +6,7 @@
 	type SatelliteStyleDefaults = {
 		overlay: boolean;
 		terrain: boolean;
+		hillshade: boolean;
 		rasterOpacity: number;
 		rasterHueRotate: number;
 		rasterBrightnessMin: number;
@@ -48,6 +49,15 @@
 			() => (options.terrain as boolean) ?? defaults.terrain, (v) => (options.terrain = v)
 		}
 		defaultValue={defaults.terrain}
+		{onchange}
+	/>
+	<InputCheckbox
+		label="Hillshade"
+		bind:value={
+			() => (options.hillshade as boolean) ?? defaults.hillshade,
+			(v) => (options.hillshade = v)
+		}
+		defaultValue={defaults.hillshade}
 		{onchange}
 	/>
 {/if}

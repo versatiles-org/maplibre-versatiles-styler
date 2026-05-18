@@ -16,6 +16,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from './hash';
 	import ColorOptions from './components/ColorOptions.svelte';
+	import ElevationOptions from './components/ElevationOptions.svelte';
 	import FontOptions from './components/FontOptions.svelte';
 	import LanguageOptions from './components/LanguageOptions.svelte';
 	import RecolorOptions from './components/RecolorOptions.svelte';
@@ -86,6 +87,8 @@
 				language: cfg?.language,
 				textScale: cfg?.textScale,
 				iconScale: cfg?.iconScale,
+				terrain: cfg?.terrain,
+				hillshade: cfg?.hillshade,
 			};
 		}
 		return;
@@ -248,6 +251,12 @@
 					defaults={defaultOptions}
 					onchange={renderAndUpdateHash}
 				/>
+				{#if hasElevation}
+					<ElevationOptions
+						bind:options={currentVectorOptions}
+						onchange={renderAndUpdateHash}
+					/>
+				{/if}
 			{/if}
 			{#if isSatellite}
 				<LanguageOptions

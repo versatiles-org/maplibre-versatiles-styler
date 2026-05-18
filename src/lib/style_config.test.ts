@@ -33,6 +33,7 @@ describe('defaultSatelliteOptions', () => {
 			rasterSaturation: 0,
 			rasterContrast: 0,
 			terrain: false,
+			hillshade: false,
 			textScale: 1,
 			iconScale: 1,
 		});
