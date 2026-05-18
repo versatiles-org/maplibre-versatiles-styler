@@ -76,7 +76,7 @@
 			currentVectorOptions = {
 				baseUrl: origin,
 				colors: { ...defaults.colors, ...cfg?.colors },
-				recolor: { ...cfg?.recolor },
+				recolor: { ...defaults.recolor, ...cfg?.recolor },
 				fonts: { ...cfg?.fonts },
 				language: cfg?.language,
 				textScale: cfg?.textScale,

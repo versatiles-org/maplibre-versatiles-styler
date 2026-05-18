@@ -26,7 +26,7 @@
 	} = $props();
 
 	function resetColorAdjustments() {
-		options.recolor = {};
+		options.recolor = { ...defaults.recolor };
 		onchange?.();
 	}
 	function resetIndividualColors() {
