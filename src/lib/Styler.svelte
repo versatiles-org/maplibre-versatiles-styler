@@ -89,9 +89,17 @@
 	}
 
 	async function renderStyle() {
-		map.setStyle(
-			await getStyle(currentStyleKey, currentVectorOptions, currentSatelliteOptions, origin)
+		const style = await getStyle(
+			currentStyleKey,
+			currentVectorOptions,
+			currentSatelliteOptions,
+			origin
 		);
+		// `diff: false` forces a full style reload. With the default diff,
+		// MapLibre applies the rebuilt style to its model (map.getStyle() is
+		// correct) but can leave already-rendered tiles showing the previous
+		// paint until the next interaction.
+		map.setStyle(style, { diff: false });
 	}
 
 	function updateHash() {
