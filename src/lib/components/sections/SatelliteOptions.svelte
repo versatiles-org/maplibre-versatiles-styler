@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { SatelliteStyleOptions } from '@versatiles/style';
-	import InputCheckbox from './InputCheckbox.svelte';
-	import InputNumber from './InputNumber.svelte';
+	import InputCheckbox from '../inputs/InputCheckbox.svelte';
+	import InputNumber from '../inputs/InputNumber.svelte';
 
 	type SatelliteStyleDefaults = {
 		overlay: boolean;

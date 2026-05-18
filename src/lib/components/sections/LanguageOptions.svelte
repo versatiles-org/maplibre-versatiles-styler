@@ -1,5 +1,5 @@
 <script lang="ts">
-	import InputSelect from './InputSelect.svelte';
+	import InputSelect from '../inputs/InputSelect.svelte';
 
 	let {
 		language = $bindable(),

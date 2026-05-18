@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { StyleBuilderOptions } from '@versatiles/style';
-	import InputNumber from './InputNumber.svelte';
+	import InputNumber from '../inputs/InputNumber.svelte';
 
 	let {
 		options = $bindable(),

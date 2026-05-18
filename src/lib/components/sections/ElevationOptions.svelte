@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { StyleBuilderOptions } from '@versatiles/style';
-	import InputCheckbox from './InputCheckbox.svelte';
+	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 
 	let {
 		options = $bindable(),

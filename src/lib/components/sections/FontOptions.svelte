@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { StyleBuilderOptions } from '@versatiles/style';
-	import InputSelect from './InputSelect.svelte';
+	import InputSelect from '../inputs/InputSelect.svelte';
 
 	let {
 		fonts = $bindable(),

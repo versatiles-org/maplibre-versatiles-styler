@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Color, StyleBuilderOptions } from '@versatiles/style';
-	import InputColor from './InputColor.svelte';
+	import InputColor from '../inputs/InputColor.svelte';
 
 	interface Colors {
 		[key: string]: Color | string | undefined;

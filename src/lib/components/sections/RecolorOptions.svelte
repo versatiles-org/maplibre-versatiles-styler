@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { StyleBuilderOptions } from '@versatiles/style';
-	import InputCheckbox from './InputCheckbox.svelte';
-	import InputColor from './InputColor.svelte';
-	import InputNumber from './InputNumber.svelte';
+	import InputCheckbox from '../inputs/InputCheckbox.svelte';
+	import InputColor from '../inputs/InputColor.svelte';
+	import InputNumber from '../inputs/InputNumber.svelte';
 
 	let {
 		recolor = $bindable(),

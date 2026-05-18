@@ -4,7 +4,6 @@
 	import type { VersaTilesStylerConfig } from './types';
 	import {
 		vectorStyles,
-		defaultSatelliteOptions,
 		getStyle,
 		getMinimalOptions,
 		type VectorStyleKey,
@@ -15,14 +14,9 @@
 	import { fetchJSON, fetchTileJSON, fetchTileSources } from './tile_json';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from './hash';
-	import ColorOptions from './components/ColorOptions.svelte';
-	import ElevationOptions from './components/ElevationOptions.svelte';
-	import FontOptions from './components/FontOptions.svelte';
-	import LanguageOptions from './components/LanguageOptions.svelte';
-	import RecolorOptions from './components/RecolorOptions.svelte';
-	import ScaleOptions from './components/ScaleOptions.svelte';
-	import SatelliteOptions from './components/SatelliteOptions.svelte';
 	import SidebarSection from './components/SidebarSection.svelte';
+	import VectorStylePanel from './components/VectorStylePanel.svelte';
+	import SatelliteStylePanel from './components/SatelliteStylePanel.svelte';
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
@@ -211,70 +205,24 @@
 				</label>
 			{/each}
 		</SidebarSection>
-		{#if !isSatellite && defaultOptions}
-			<SidebarSection title="Edit individual colors">
-				<ColorOptions
-					bind:colors={currentVectorOptions.colors}
-					defaults={defaultOptions.colors}
-					onchange={renderAndUpdateHash}
-				/>
-			</SidebarSection>
-			<SidebarSection title="Modify all colors">
-				<RecolorOptions
-					bind:recolor={currentVectorOptions.recolor}
-					defaults={defaultOptions.recolor}
-					onchange={renderAndUpdateHash}
-				/>
-			</SidebarSection>
-		{/if}
 		{#if isSatellite}
-			<SidebarSection title="Satellite options">
-				<SatelliteOptions
-					bind:options={currentSatelliteOptions}
-					defaults={defaultSatelliteOptions}
-					{overlayAvailable}
-					elevationAvailable={hasElevation}
-					onchange={renderAndUpdateHash}
-				/>
-			</SidebarSection>
+			<SatelliteStylePanel
+				bind:options={currentSatelliteOptions}
+				{overlayAvailable}
+				elevationAvailable={hasElevation}
+				languages={languagesPromise}
+				onchange={renderAndUpdateHash}
+			/>
+		{:else if defaultOptions}
+			<VectorStylePanel
+				bind:options={currentVectorOptions}
+				defaults={defaultOptions}
+				{hasElevation}
+				fontNames={fontsPromise}
+				languages={languagesPromise}
+				onchange={renderAndUpdateHash}
+			/>
 		{/if}
-		<SidebarSection title="Other options">
-			{#if !isSatellite && defaultOptions}
-				<FontOptions
-					bind:fonts={currentVectorOptions.fonts}
-					defaults={defaultOptions.fonts}
-					fontNames={fontsPromise}
-					onchange={renderAndUpdateHash}
-				/>
-				<ScaleOptions
-					bind:options={currentVectorOptions}
-					defaults={defaultOptions}
-					onchange={renderAndUpdateHash}
-				/>
-				{#if hasElevation}
-					<ElevationOptions bind:options={currentVectorOptions} onchange={renderAndUpdateHash} />
-				{/if}
-			{/if}
-			{#if isSatellite}
-				<LanguageOptions
-					bind:language={
-						() => (currentSatelliteOptions.language as string) ?? '',
-						(v: string) => (currentSatelliteOptions.language = v)
-					}
-					languages={languagesPromise}
-					onchange={renderAndUpdateHash}
-				/>
-			{:else}
-				<LanguageOptions
-					bind:language={
-						() => (currentVectorOptions.language as string) ?? '',
-						(v: string) => (currentVectorOptions.language = v)
-					}
-					languages={languagesPromise}
-					onchange={renderAndUpdateHash}
-				/>
-			{/if}
-		</SidebarSection>
 		<SidebarSection title="Export">
 			<div class="entry button-container">
 				<button onclick={handleDownload}>Download style.json</button>
