@@ -3,12 +3,14 @@
 
 	let {
 		label,
+		hint,
 		containerClass,
 		isModified,
 		onReset,
 		children,
 	}: {
 		label: string;
+		hint?: string;
 		containerClass: string;
 		isModified: boolean;
 		onReset: () => void;
@@ -19,7 +21,7 @@
 </script>
 
 <div class="entry {containerClass}">
-	<label for={uid}>{label}</label>
+	<label for={uid} title={hint}>{label}</label>
 	<div class="input">
 		{@render children(uid)}
 		<button type="button" disabled={!isModified} onclick={onReset}>&circlearrowleft;</button>

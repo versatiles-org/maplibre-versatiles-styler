@@ -184,7 +184,7 @@
 </div>
 {#if paneOpen}
 	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
-		<SidebarSection title="Select origin">
+		<SidebarSection title="Origin">
 			<div class="entry text-container">
 				<label for="{uid}-origin">Origin</label>
 				<div class="input">
@@ -192,7 +192,7 @@
 				</div>
 			</div>
 		</SidebarSection>
-		<SidebarSection title="Select a base style" open listClass="style-list">
+		<SidebarSection title="Base style" open listClass="style-list">
 			{#each styleKeys as key (key)}
 				<label class:satellite={key === 'satellite'}>
 					<input

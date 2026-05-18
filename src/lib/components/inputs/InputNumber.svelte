@@ -3,6 +3,7 @@
 
 	let {
 		label,
+		hint,
 		value = $bindable(),
 		defaultValue,
 		min,
@@ -12,6 +13,7 @@
 		onchange,
 	}: {
 		label: string;
+		hint?: string;
 		value: number;
 		defaultValue: number;
 		min: number;
@@ -45,7 +47,7 @@
 	}
 </script>
 
-<InputRow {label} containerClass="number-container" {isModified} onReset={reset}>
+<InputRow {label} {hint} containerClass="number-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
 		<input
 			id={uid}

@@ -17,12 +17,14 @@
 
 <InputCheckbox
 	label="Invert Brightness"
+	hint="Flip each color between light and dark while keeping its hue."
 	bind:value={() => recolor.invertBrightness as boolean, (v) => (recolor.invertBrightness = v)}
 	defaultValue={(defaults?.invertBrightness as boolean) ?? false}
 	{onchange}
 />
 <InputNumber
 	label="Rotate Hue"
+	hint="Shift every color around the hue wheel."
 	bind:value={() => (recolor.rotate as number) ?? 0, (v) => (recolor.rotate = v)}
 	defaultValue={(defaults?.rotate as number) ?? 0}
 	min={0}
@@ -32,6 +34,7 @@
 />
 <InputNumber
 	label="Saturate"
+	hint="Negative values fade colors toward grey; positive values intensify them."
 	bind:value={() => (recolor.saturate as number) ?? 0, (v) => (recolor.saturate = v)}
 	defaultValue={(defaults?.saturate as number) ?? 0}
 	min={-1}
@@ -42,6 +45,7 @@
 />
 <InputNumber
 	label="Gamma"
+	hint="Non-linear brightness curve. 1 means no change."
 	bind:value={() => (recolor.gamma as number) ?? 1, (v) => (recolor.gamma = v)}
 	defaultValue={(defaults?.gamma as number) ?? 1}
 	min={0.1}
@@ -50,6 +54,7 @@
 />
 <InputNumber
 	label="Contrast"
+	hint="Push colors away from mid-grey. 100% means no change."
 	bind:value={() => (recolor.contrast as number) ?? 1, (v) => (recolor.contrast = v)}
 	defaultValue={(defaults?.contrast as number) ?? 1}
 	min={0}
@@ -60,6 +65,7 @@
 />
 <InputNumber
 	label="Brightness"
+	hint="Lighten or darken every color."
 	bind:value={() => (recolor.brightness as number) ?? 0, (v) => (recolor.brightness = v)}
 	defaultValue={(defaults?.brightness as number) ?? 0}
 	min={-1}
@@ -70,6 +76,7 @@
 />
 <InputNumber
 	label="Tint"
+	hint="Blend every color toward the tint color."
 	bind:value={() => (recolor.tint as number) ?? 0, (v) => (recolor.tint = v)}
 	defaultValue={(defaults?.tint as number) ?? 0}
 	min={0}
@@ -86,6 +93,7 @@
 />
 <InputNumber
 	label="Blend"
+	hint="Blend every color toward the blend color."
 	bind:value={() => (recolor.blend as number) ?? 0, (v) => (recolor.blend = v)}
 	defaultValue={(defaults?.blend as number) ?? 0}
 	min={0}

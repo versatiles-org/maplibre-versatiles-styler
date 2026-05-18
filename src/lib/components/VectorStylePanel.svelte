@@ -26,10 +26,16 @@
 	} = $props();
 </script>
 
-<SidebarSection title="Color adjustments">
+<SidebarSection
+	title="Color adjustments"
+	description="Transformations applied to every color in the style."
+>
 	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} {onchange} />
 </SidebarSection>
-<SidebarSection title="Individual colors">
+<SidebarSection
+	title="Individual colors"
+	description="Override the color of individual map features."
+>
 	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} {onchange} />
 </SidebarSection>
 <SidebarSection title="Fonts & text size">
@@ -37,11 +43,14 @@
 	<ScaleOptions bind:options {defaults} {onchange} />
 </SidebarSection>
 {#if hasElevation}
-	<SidebarSection title="Terrain & hillshade">
+	<SidebarSection
+		title="Terrain & hillshade"
+		description="3D elevation features rendered from an elevation source."
+	>
 		<ElevationOptions bind:options {onchange} />
 	</SidebarSection>
 {/if}
-<SidebarSection title="Labels">
+<SidebarSection title="Labels" description="Language used for place names and labels.">
 	<LanguageOptions
 		bind:language={() => (options.language as string) ?? '', (v: string) => (options.language = v)}
 		{languages}

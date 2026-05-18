@@ -3,11 +3,13 @@
 
 	let {
 		label,
+		hint,
 		value = $bindable(),
 		defaultValue,
 		onchange,
 	}: {
 		label: string;
+		hint?: string;
 		value: boolean;
 		defaultValue: boolean;
 		onchange?: () => void;
@@ -27,7 +29,7 @@
 	}
 </script>
 
-<InputRow {label} containerClass="checkbox-container" {isModified} onReset={reset}>
+<InputRow {label} {hint} containerClass="checkbox-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
 		<input id={uid} type="checkbox" checked={value} onchange={handleChange} />
 	{/snippet}
