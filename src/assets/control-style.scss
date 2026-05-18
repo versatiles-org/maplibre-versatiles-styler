@@ -251,6 +251,12 @@
 		.entry.active {
 			font-weight: bold;
 		}
+
+		.nested {
+			padding-left: 0.8em;
+			margin-left: 0.1em;
+			border-left: 2px solid var(--border-color);
+		}
 	}
 
 	.range-container {

@@ -1,91 +1,27 @@
 <script lang="ts">
 	import type { SatelliteStyleOptions } from '@versatiles/style';
-	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
 
-	type SatelliteStyleDefaults = {
-		overlay: boolean;
-		terrain: boolean;
-		hillshade: boolean;
+	type RasterDefaults = {
 		rasterOpacity: number;
 		rasterHueRotate: number;
 		rasterBrightnessMin: number;
 		rasterBrightnessMax: number;
 		rasterSaturation: number;
 		rasterContrast: number;
-		textScale: number;
-		iconScale: number;
 	};
 
 	let {
 		options = $bindable(),
 		defaults,
-		overlayAvailable = true,
-		elevationAvailable = false,
 		onchange,
 	}: {
 		options: SatelliteStyleOptions;
-		defaults: SatelliteStyleDefaults;
-		overlayAvailable?: boolean;
-		elevationAvailable?: boolean;
+		defaults: RasterDefaults;
 		onchange?: () => void;
 	} = $props();
 </script>
 
-{#if overlayAvailable}
-	<InputCheckbox
-		label="Overlay"
-		bind:value={
-			() => (options.overlay as boolean) ?? defaults.overlay, (v) => (options.overlay = v)
-		}
-		defaultValue={defaults.overlay}
-		{onchange}
-	/>
-{/if}
-{#if elevationAvailable}
-	<InputCheckbox
-		label="Terrain"
-		bind:value={
-			() => (options.terrain as boolean) ?? defaults.terrain, (v) => (options.terrain = v)
-		}
-		defaultValue={defaults.terrain}
-		{onchange}
-	/>
-	<InputCheckbox
-		label="Hillshade"
-		bind:value={
-			() => (options.hillshade as boolean) ?? defaults.hillshade, (v) => (options.hillshade = v)
-		}
-		defaultValue={defaults.hillshade}
-		{onchange}
-	/>
-{/if}
-{#if overlayAvailable}
-	<InputNumber
-		label="Text Scale"
-		bind:value={
-			() => (options.textScale as number) ?? defaults.textScale, (v) => (options.textScale = v)
-		}
-		defaultValue={defaults.textScale}
-		min={0.5}
-		max={3}
-		scale={100}
-		unit="%"
-		{onchange}
-	/>
-	<InputNumber
-		label="Icon Scale"
-		bind:value={
-			() => (options.iconScale as number) ?? defaults.iconScale, (v) => (options.iconScale = v)
-		}
-		defaultValue={defaults.iconScale}
-		min={0.5}
-		max={3}
-		scale={100}
-		unit="%"
-		{onchange}
-	/>
-{/if}
 <InputNumber
 	label="Opacity"
 	bind:value={

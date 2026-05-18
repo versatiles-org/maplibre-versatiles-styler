@@ -26,18 +26,22 @@
 	} = $props();
 </script>
 
-<SidebarSection title="Edit individual colors">
-	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} {onchange} />
-</SidebarSection>
-<SidebarSection title="Modify all colors">
+<SidebarSection title="Color adjustments">
 	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} {onchange} />
 </SidebarSection>
-<SidebarSection title="Other options">
+<SidebarSection title="Individual colors">
+	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} {onchange} />
+</SidebarSection>
+<SidebarSection title="Fonts & text size">
 	<FontOptions bind:fonts={options.fonts} defaults={defaults.fonts} {fontNames} {onchange} />
 	<ScaleOptions bind:options {defaults} {onchange} />
-	{#if hasElevation}
+</SidebarSection>
+{#if hasElevation}
+	<SidebarSection title="Terrain & hillshade">
 		<ElevationOptions bind:options {onchange} />
-	{/if}
+	</SidebarSection>
+{/if}
+<SidebarSection title="Labels">
 	<LanguageOptions
 		bind:language={() => (options.language as string) ?? '', (v: string) => (options.language = v)}
 		{languages}

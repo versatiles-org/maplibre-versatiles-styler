@@ -2,7 +2,9 @@
 	import type { SatelliteStyleOptions } from '@versatiles/style';
 	import { defaultSatelliteOptions } from '../style_config';
 	import SidebarSection from './SidebarSection.svelte';
-	import SatelliteOptions from './sections/SatelliteOptions.svelte';
+	import RasterOptions from './sections/RasterOptions.svelte';
+	import OverlayOptions from './sections/OverlayOptions.svelte';
+	import ElevationOptions from './sections/ElevationOptions.svelte';
 	import LanguageOptions from './sections/LanguageOptions.svelte';
 
 	let {
@@ -20,16 +22,20 @@
 	} = $props();
 </script>
 
-<SidebarSection title="Satellite options">
-	<SatelliteOptions
-		bind:options
-		defaults={defaultSatelliteOptions}
-		{overlayAvailable}
-		{elevationAvailable}
-		{onchange}
-	/>
+<SidebarSection title="Satellite imagery">
+	<RasterOptions bind:options defaults={defaultSatelliteOptions} {onchange} />
 </SidebarSection>
-<SidebarSection title="Other options">
+{#if overlayAvailable}
+	<SidebarSection title="Overlay">
+		<OverlayOptions bind:options defaults={defaultSatelliteOptions} {onchange} />
+	</SidebarSection>
+{/if}
+{#if elevationAvailable}
+	<SidebarSection title="Terrain & hillshade">
+		<ElevationOptions bind:options {onchange} />
+	</SidebarSection>
+{/if}
+<SidebarSection title="Labels">
 	<LanguageOptions
 		bind:language={() => (options.language as string) ?? '', (v: string) => (options.language = v)}
 		{languages}
