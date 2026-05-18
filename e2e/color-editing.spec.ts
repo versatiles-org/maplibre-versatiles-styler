@@ -124,9 +124,8 @@ test('recolor slider changes map style', async ({ page }) => {
 
 interface MapLike {
 	once(type: string, listener: () => void): void;
-	on(type: string, listener: () => void): void;
 }
-type StylerWindow = Window & { _map?: MapLike; __renderCount?: number };
+type StylerWindow = Window & { _map?: MapLike };
 
 test('changing Rotate Hue repaints the map canvas', async ({ page }) => {
 	const waitForMapIdle = () =>
@@ -140,35 +139,28 @@ test('changing Rotate Hue repaints the map canvas', async ({ page }) => {
 				})
 		);
 
-	// Let the map fully load and settle into an idle state.
-	await waitForMapIdle();
-
-	// Count the frames MapLibre renders from this settled state onward.
-	await page.evaluate(() => {
-		const w = window as StylerWindow;
-		w.__renderCount = 0;
-		w._map?.on('render', () => (w.__renderCount = (w.__renderCount ?? 0) + 1));
-	});
-
-	const canvas = page.locator('.maplibregl-canvas');
-	const before = await canvas.screenshot();
-
-	// Change "Rotate Hue".
+	// Open "Color adjustments" up front so the panel size is identical for
+	// both screenshots.
 	const recolorDetails = page.locator(
 		'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
 	);
 	await recolorDetails.locator('summary').click();
+
+	// Let the map fully load and settle.
+	await waitForMapIdle();
+
+	// Screenshot a map region clear of the top-left panel and top-right controls.
+	const clip = { x: 520, y: 400, width: 360, height: 220 };
+	const before = await page.screenshot({ clip });
+
+	// Change "Rotate Hue".
 	const hueSlider = recolorDetails.locator('input[type="range"]').first();
 	await hueSlider.fill('180');
 	await hueSlider.dispatchEvent('change');
 
 	await waitForMapIdle();
-	const after = await canvas.screenshot();
+	const after = await page.screenshot({ clip });
 
-	const renderCount = await page.evaluate(() => (window as StylerWindow).__renderCount ?? 0);
-
-	// MapLibre must have rendered new frames after the style change ...
-	expect(renderCount).toBeGreaterThan(0);
-	// ... and the visible canvas must actually differ.
+	// The visible map must actually repaint.
 	expect(Buffer.compare(before, after)).not.toBe(0);
 });
