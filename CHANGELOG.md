@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-05-24
+
+### Features
+
+- add ScaleOptions component for text and icon scaling
+- add textScale and iconScale options to SatelliteOptions component
+- add ElevationOptions component and support for terrain and hillshade in satellite options
+- refactor input components to use InputRow for consistent layout and behavior
+- add unit support to InputNumber and update related components for consistent display
+- implement new input components and refactor existing options for improved styling and functionality
+- add RasterOptions and OverlayOptions components for enhanced satellite styling
+- enhance SidebarSection with descriptions for better context and usability
+- add disabled state to input components for improved usability
+- add reset functionality to SidebarSection and enhance styling for improved usability
+- enhance styling and layout of maplibregl components for improved usability
+- add test for Rotate Hue functionality and verify canvas repainting
+
+### Bug Fixes
+
+- ensure default recolor options are applied in VectorStylePanel and Styler
+- update maplibre-gl version to 5.24.0 in index.html
+- ensure full style reload in renderStyle function to prevent rendering issues
+
+### Code Refactoring
+
+- streamline binding syntax for options in ElevationOptions and SatelliteOptions components
+- update summary text selectors for consistency and clarity in tests
+- simplify StylerWindow type and enhance Rotate Hue test for clarity
+
+### Build System
+
+- **deps-dev:** bump the npm group with 13 updates
+- **deps:** bump actions/upload-pages-artifact in the action group
+
+### Chores
+
+- update devDependencies to latest versions
+
 ## [1.2.1] - 2026-04-05
 
 ### Features
