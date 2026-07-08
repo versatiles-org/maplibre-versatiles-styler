@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-07-08
+
+### Bug Fixes
+
+- implement landcover fix and integrate into style processing ... as a temporary solution!
+
+### Build System
+
+- **deps-dev:** bump the npm group with 12 updates
+- **deps:** bump the action group with 2 updates
+- **deps-dev:** bump the npm group with 16 updates
+
+### Chores
+
+- update devDependencies to latest versions
+
 ## [1.3.1] - 2026-05-24
 
 ### Features
