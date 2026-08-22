@@ -47,6 +47,41 @@ describe('fetchTileJSON', () => {
 	});
 });
 
+describe('TileJSON.hasLandcover', () => {
+	async function hasLandcover(spec: unknown): Promise<boolean> {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(JSON.stringify(spec), { status: 200 })
+		);
+		return (await fetchTileJSON('https://example.com/tiles.json')).hasLandcover();
+	}
+
+	const tiles = ['https://example.com/{z}/{x}/{y}.pbf'];
+
+	it('detects a `land` layer reaching below the plain Shortbread zooms', async () => {
+		expect(
+			await hasLandcover({ tiles, vector_layers: [{ id: 'land', fields: {}, minzoom: 0 }] })
+		).toBe(true);
+	});
+
+	it('rejects a plain Shortbread `land` layer', async () => {
+		expect(
+			await hasLandcover({ tiles, vector_layers: [{ id: 'land', fields: {}, minzoom: 10 }] })
+		).toBe(false);
+		// z7 is where OSM `forest` starts, so it is not landcover either
+		expect(
+			await hasLandcover({ tiles, vector_layers: [{ id: 'land', fields: {}, minzoom: 7 }] })
+		).toBe(false);
+	});
+
+	it('treats missing metadata as "no landcover"', async () => {
+		expect(await hasLandcover({ tiles, vector_layers: [{ id: 'land', fields: {} }] })).toBe(false);
+		expect(
+			await hasLandcover({ tiles, vector_layers: [{ id: 'water_polygons', fields: {} }] })
+		).toBe(false);
+		expect(await hasLandcover({ tiles })).toBe(false);
+	});
+});
+
 describe('fetchTileSources', () => {
 	it('returns a Set of sources from /tiles/index.json', async () => {
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(

@@ -1,9 +1,28 @@
 import type { TileJSONSpecification } from '@versatiles/style';
 
+/**
+ * Zoom at which the earliest OSM `kind` of the `land` layer (`forest`) appears in plain
+ * Shortbread. A `land` layer that starts below this carries the low-zoom landcover extension.
+ * See https://docs.versatiles.org/compendium/specification_shortbread_landcover.html
+ */
+const SHORTBREAD_LAND_MINZOOM = 7;
+
 class TileJSON {
 	spec: TileJSONSpecification;
 	constructor(spec: TileJSONSpecification) {
 		this.spec = spec;
+	}
+
+	/**
+	 * Whether the tiles merge landcover into the `land` layer, which is what
+	 * `experimental.landcover` needs to render anything below the OSM zoom levels.
+	 * Unknown or missing metadata counts as "no landcover".
+	 */
+	hasLandcover(): boolean {
+		if (!('vector_layers' in this.spec)) return false;
+		const land = this.spec.vector_layers.find((layer) => layer.id === 'land');
+		if (!land) return false;
+		return (land.minzoom ?? SHORTBREAD_LAND_MINZOOM) < SHORTBREAD_LAND_MINZOOM;
 	}
 
 	languages(): Record<string, string> {

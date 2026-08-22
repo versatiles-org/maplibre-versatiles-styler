@@ -6,7 +6,6 @@ import type {
 	SatelliteStyleOptions,
 } from '@versatiles/style';
 import { deepClone, removeRecursively } from './utils';
-import { applyLandcoverFix } from './landcover_fix';
 
 export const vectorStyles = { colorful, eclipse, graybeard, shadow, neutrino } satisfies Record<
 	string,
@@ -45,12 +44,10 @@ export async function getStyle(
 	if (styleKey === 'satellite') {
 		return await satellite({ ...satelliteOptions, baseUrl: origin });
 	}
-	return applyLandcoverFix(
-		vectorStyles[styleKey]({
-			...vectorOptions,
-			baseUrl: origin,
-		})
-	);
+	return vectorStyles[styleKey]({
+		...vectorOptions,
+		baseUrl: origin,
+	});
 }
 
 export function getMinimalOptions(

@@ -54,13 +54,27 @@
 		)
 	);
 
+	// One TileJSON fetch feeds both the language list and landcover detection.
+	let tileJSONPromise = $derived(
+		hasOsm ? fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)) : null
+	);
+
 	let languagesPromise = $derived(
-		hasOsm
-			? fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)).then((tileJSON) =>
-					tileJSON.languages()
-				)
+		tileJSONPromise
+			? tileJSONPromise.then((tileJSON) => tileJSON.languages())
 			: Promise.resolve({ local: '' })
 	);
+
+	/**
+	 * Whether the tiles carry the low-zoom landcover extension. Stays `false` until the
+	 * TileJSON says otherwise, so an unreachable or unknown tileset renders the plain
+	 * Shortbread zoom ramps rather than fills that have no data behind them.
+	 */
+	let hasLandcover = $state(false);
+
+	function experimentalOptions(): NonNullable<StyleBuilderOptions['experimental']> {
+		return hasLandcover ? { landcover: true } : {};
+	}
 
 	function setBaseStyle(key: StyleKey, hashConfig?: Record<string, unknown> | null) {
 		if (currentStyleKey !== key) {
@@ -83,6 +97,7 @@
 				iconScale: cfg?.iconScale,
 				terrain: cfg?.terrain,
 				hillshade: cfg?.hillshade,
+				experimental: experimentalOptions(),
 			};
 		}
 		return;
@@ -143,6 +158,36 @@
 			hasSatellite = sources.has('satellite');
 			hasElevation = sources.has('elevation');
 			sourcesLoaded = true;
+		});
+	});
+
+	$effect(() => {
+		const promise = tileJSONPromise;
+		if (!promise) {
+			hasLandcover = false;
+			return;
+		}
+		let outdated = false;
+		promise.then(
+			(tileJSON) => {
+				if (!outdated) hasLandcover = tileJSON.hasLandcover();
+			},
+			() => {
+				if (!outdated) hasLandcover = false;
+			}
+		);
+		return () => (outdated = true);
+	});
+
+	// `experimental.landcover` describes the tileset, not a user choice, so it is
+	// re-applied whenever detection finishes or the origin changes.
+	$effect(() => {
+		const experimental = experimentalOptions();
+		if (isSatellite) return;
+		untrack(() => {
+			const current = currentVectorOptions.experimental?.landcover ?? false;
+			if (current === (experimental.landcover ?? false)) return;
+			currentVectorOptions.experimental = experimental;
 		});
 	});
 
