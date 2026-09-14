@@ -7,6 +7,8 @@
 	import FontOptions from './sections/FontOptions.svelte';
 	import LayoutOptions from './sections/LayoutOptions.svelte';
 	import ElevationOptions from './sections/ElevationOptions.svelte';
+	import LayerOptions from './sections/LayerOptions.svelte';
+	import InputCheckbox from './inputs/InputCheckbox.svelte';
 	import LanguageOptions from './sections/LanguageOptions.svelte';
 
 	let {
@@ -32,6 +34,10 @@
 	function resetTypography() {
 		options.text.fonts = structuredClone(defaults.text.fonts);
 		options.layout = structuredClone(defaults.layout);
+	}
+	function resetLayers() {
+		options.layers = structuredClone(defaults.layers);
+		options.features.buildings = defaults.features.buildings;
 	}
 	function resetElevation() {
 		options.features.terrain = defaults.features.terrain;
@@ -66,6 +72,26 @@
 		language={options.text.language}
 	/>
 	<LayoutOptions bind:layout={options.layout} defaults={defaults.layout} />
+</SidebarSection>
+<SidebarSection
+	title="Layers"
+	description="Show, hide or fade groups of map features."
+	onReset={resetLayers}
+>
+	<InputCheckbox
+		label="3D buildings"
+		hint="Extrude buildings by their height when the map is tilted."
+		bind:value={
+			() => options.features.buildings === 'extruded',
+			(v) => (options.features.buildings = v ? 'extruded' : 'flat')
+		}
+		defaultValue={defaults.features.buildings === 'extruded'}
+	/>
+	<LayerOptions
+		bind:layers={options.layers}
+		defaults={defaults.layers}
+		layerGroups={osm.layerGroups}
+	/>
 </SidebarSection>
 <SidebarSection
 	title="Terrain & hillshade"

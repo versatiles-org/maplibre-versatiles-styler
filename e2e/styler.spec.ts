@@ -33,6 +33,7 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 		'Color adjustments',
 		'Individual colors',
 		'Fonts & text size',
+		'Layers',
 		'Terrain & hillshade',
 		'Labels',
 		'Export',

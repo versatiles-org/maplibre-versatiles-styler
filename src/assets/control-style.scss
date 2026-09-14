@@ -225,6 +225,10 @@
 				}
 			}
 
+			&.visibility-container input[type='range'] {
+				max-width: 7em;
+			}
+
 			input[type='checkbox'] {
 				flex: 0 0 auto;
 				width: 1.1em;
