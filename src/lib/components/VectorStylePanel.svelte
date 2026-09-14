@@ -39,6 +39,7 @@
 	}
 	function resetLabels() {
 		options.text.language = defaults.text.language;
+		options.text.languageStrict = defaults.text.languageStrict;
 	}
 </script>
 
@@ -74,5 +75,9 @@
 	description="Language used for place names and labels."
 	onReset={resetLabels}
 >
-	<LanguageOptions bind:language={options.text.language} {languages} />
+	<LanguageOptions
+		bind:language={options.text.language}
+		bind:languageStrict={options.text.languageStrict}
+		{languages}
+	/>
 </SidebarSection>

@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 });
 
-test('download triggers with valid JSON', async ({ page }) => {
+test('download triggers with a self-contained style', async ({ page }) => {
 	const exportDetails = page.locator(
 		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
 	);
@@ -22,24 +22,30 @@ test('download triggers with valid JSON', async ({ page }) => {
 
 	expect(json.version).toBe(8);
 	expect(json.layers).toBeDefined();
-	expect(json.sources).toBeDefined();
+	// Sources are inlined: absolute tile URLs, no TileJSON reference left.
+	const source = json.sources['versatiles-shortbread'];
+	expect(source.url).toBeUndefined();
+	expect(source.tiles[0]).toMatch(/^https:\/\//);
 });
 
-test('copy writes to clipboard', async ({ context, page }) => {
+test('copy writes a v6 snippet to the clipboard', async ({ context, page }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
+	await styleList.locator('label:has(input[value="gray-dark"])').click();
 
 	const exportDetails = page.locator(
 		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
 	);
 	await exportDetails.locator('summary').click();
 
-	const copyButton = exportDetails.locator('button', { hasText: 'Copy style code' });
-
 	page.once('dialog', (dialog) => dialog.dismiss());
-
-	await copyButton.click();
+	await exportDetails.locator('button', { hasText: 'Copy style code' }).click();
 
 	const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-	expect(clipboardText).toContain("import { colorful } from '@versatiles/style';");
-	expect(clipboardText).toContain('colorful(');
+	expect(clipboardText).toContain("import { osm, inlineSources } from '@versatiles/style';");
+	expect(clipboardText).toContain('await inlineSources(osm({');
+	expect(clipboardText).toContain('theme: "gray-dark"');
+	// the demo's origin
+	expect(clipboardText).toContain('base: "https://tiles.versatiles.org"');
 });

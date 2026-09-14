@@ -1,20 +1,22 @@
 <script lang="ts">
-	import type { ResolvedOsm } from '@versatiles/style';
+	import type { ResolvedColors } from '@versatiles/style';
+	import { colorGroups } from '../../color_groups';
 	import InputColor from '../inputs/InputColor.svelte';
-
-	type Colors = ResolvedOsm['colors'];
 
 	let {
 		colors = $bindable(),
 		defaults,
 	}: {
-		colors: Colors;
-		defaults: Colors;
+		colors: ResolvedColors;
+		defaults: ResolvedColors;
 	} = $props();
 
-	let keys = $derived(Object.keys(defaults) as (keyof Colors & string)[]);
+	let groups = $derived(colorGroups(Object.keys(defaults) as (keyof ResolvedColors & string)[]));
 </script>
 
-{#each keys as key (key)}
-	<InputColor label={key} bind:value={colors[key]} defaultValue={defaults[key]} />
+{#each groups as group (group.title)}
+	<p class="subsection-title">{group.title}</p>
+	{#each group.colors as { key, label } (key)}
+		<InputColor {label} hint={key} bind:value={colors[key]} defaultValue={defaults[key]} />
+	{/each}
 {/each}

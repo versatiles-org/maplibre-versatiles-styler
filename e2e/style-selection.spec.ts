@@ -15,15 +15,35 @@ test('"colorful" is selected by default', async ({ page }) => {
 	expect(style.name).toBe('versatiles-colorful');
 });
 
+test('lists every theme with its dark variant next to it', async ({ page }) => {
+	const radios = page.locator('.maplibregl-versatiles-styler .style-list input[type="radio"]');
+	await expect(radios.last()).toHaveValue('satellite');
+	const values = await radios.evaluateAll((inputs) =>
+		inputs.map((input) => (input as HTMLInputElement).value)
+	);
+	expect(values).toEqual([
+		'colorful',
+		'colorful-dark',
+		'natural',
+		'natural-dark',
+		'muted',
+		'muted-dark',
+		'gray',
+		'gray-dark',
+		'toner',
+		'toner-dark',
+		'satellite',
+	]);
+});
+
 test('clicking another style changes selection', async ({ page }) => {
 	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
 	const colorfulRadio = styleList.locator('input[type="radio"][value="colorful"]');
-	const neutrinoLabel = styleList.locator('label:has(input[value="neutrino"])');
-	const neutrinoRadio = styleList.locator('input[type="radio"][value="neutrino"]');
+	const mutedRadio = styleList.locator('input[type="radio"][value="muted"]');
 
 	await expect(colorfulRadio).toBeChecked();
-	await neutrinoLabel.click();
-	await expect(neutrinoRadio).toBeChecked();
+	await styleList.locator('label:has(input[value="muted"])').click();
+	await expect(mutedRadio).toBeChecked();
 	await expect(colorfulRadio).not.toBeChecked();
 });
 
@@ -32,15 +52,14 @@ test('style change updates map style', async ({ page }) => {
 	expect(styleBefore.name).toBe('versatiles-colorful');
 
 	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-	await styleList.locator('label:has(input[value="neutrino"])').click();
+	await styleList.locator('label:has(input[value="toner-dark"])').click();
 
+	await expect.poll(async () => (await getMapStyle(page)).name).toBe('versatiles-toner-dark');
 	const styleAfter = await getMapStyle(page);
-	expect(styleAfter.name).toBe('versatiles-neutrino');
 
-	// Layer IDs should differ between styles
-	const layerIdsBefore = styleBefore.layers.map((l) => l.id);
-	const layerIdsAfter = styleAfter.layers.map((l) => l.id);
-	expect(layerIdsBefore).not.toEqual(layerIdsAfter);
+	// All themes share their layers; the paint differs.
+	const paint = (style: typeof styleBefore) => style.layers.map((l) => JSON.stringify(l.paint));
+	expect(paint(styleAfter)).not.toEqual(paint(styleBefore));
 });
 
 test('style change updates color inputs', async ({ page }) => {
@@ -53,8 +72,17 @@ test('style change updates color inputs', async ({ page }) => {
 	const colorfulValue = await firstColorInput.inputValue();
 
 	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-	await styleList.locator('label:has(input[value="neutrino"])').click();
+	await styleList.locator('label:has(input[value="colorful-dark"])').click();
 
-	const neutrinoValue = await firstColorInput.inputValue();
-	expect(colorfulValue).not.toEqual(neutrinoValue);
+	await expect(firstColorInput).not.toHaveValue(colorfulValue);
+});
+
+test('individual colors are grouped', async ({ page }) => {
+	const colorsDetails = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
+	);
+	await colorsDetails.locator('summary').click();
+
+	const groups = await colorsDetails.locator('.subsection-title').allTextContents();
+	expect(groups).toEqual(expect.arrayContaining(['Base', 'Nature', 'Road', 'Label']));
 });

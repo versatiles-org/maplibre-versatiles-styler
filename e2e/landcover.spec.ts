@@ -21,23 +21,21 @@ async function landForestOpacity(page: import('@playwright/test').Page) {
 }
 
 test.describe('landcover detection', () => {
-	test('flattens the low-zoom fills when the tiles carry landcover', async ({ page }) => {
-		await page.route('**/tiles/index.json', (route) => route.fulfill({ json: ['osm'] }));
+	test('shows the fills from zoom 0 when the tiles carry landcover', async ({ page }) => {
 		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(0) }));
 		await page.goto('/');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 
-		// `forest` peaks at 0.1, so the ramp collapses to a constant
-		await expect.poll(() => landForestOpacity(page)).toBe(0.1);
+		// No zoom ramp: the fill is there from the lowest zoom on.
+		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
 	});
 
 	test('carries the detected flag into the exported style code', async ({ context, page }) => {
 		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-		await page.route('**/tiles/index.json', (route) => route.fulfill({ json: ['osm'] }));
 		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(0) }));
 		await page.goto('/');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
-		await expect.poll(() => landForestOpacity(page)).toBe(0.1);
+		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
 
 		const exportDetails = page.locator(
 			'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
@@ -50,19 +48,13 @@ test.describe('landcover detection', () => {
 		expect(clipboardText).toContain('landcover: true');
 	});
 
-	test('keeps the plain Shortbread ramps when the tiles do not', async ({ page }) => {
-		await page.route('**/tiles/index.json', (route) => route.fulfill({ json: ['osm'] }));
+	test('keeps the plain Shortbread zoom ramps when the tiles do not', async ({ page }) => {
 		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(10) }));
 		await page.goto('/');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 
 		await expect
 			.poll(() => landForestOpacity(page))
-			.toEqual({
-				stops: [
-					[7, 0],
-					[8, 0.1],
-				],
-			});
+			.toEqual(expect.arrayContaining(['interpolate', ['zoom']]));
 	});
 });

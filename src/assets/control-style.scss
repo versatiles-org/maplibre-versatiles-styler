@@ -280,6 +280,19 @@
 			border-left: 2px solid var(--border-color);
 		}
 
+		.subsection-title {
+			margin: 0.9em 0 0.2em;
+			font-size: 0.85em;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			opacity: 0.6;
+
+			&:first-of-type {
+				margin-top: 0.2em;
+			}
+		}
+
 		.section-description {
 			margin: 0 0 0.7em;
 			font-size: 0.9em;
@@ -307,6 +320,11 @@
 	}
 
 	.maplibregl-list.style-list {
+		// Themes come in light/dark pairs: light in the left column, its dark theme next to it.
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		column-gap: 0.3em;
+
 		label {
 			display: flex;
 			cursor: pointer;
@@ -315,6 +333,7 @@
 			overflow: hidden;
 
 			&.satellite {
+				grid-column: 1 / -1;
 				margin-top: 0.3em;
 				padding-top: 0.3em;
 				border-top: 1px solid var(--border-color);

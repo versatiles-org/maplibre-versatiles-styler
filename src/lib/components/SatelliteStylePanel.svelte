@@ -32,6 +32,7 @@
 	function resetLabels() {
 		if (options.osmOverlay && defaults.osmOverlay) {
 			options.osmOverlay.text.language = defaults.osmOverlay.text.language;
+			options.osmOverlay.text.languageStrict = defaults.osmOverlay.text.languageStrict;
 		}
 	}
 </script>
@@ -67,8 +68,12 @@
 	onReset={resetLabels}
 >
 	{#if options.osmOverlay}
-		<LanguageOptions bind:language={options.osmOverlay.text.language} {languages} />
+		<LanguageOptions
+			bind:language={options.osmOverlay.text.language}
+			bind:languageStrict={options.osmOverlay.text.languageStrict}
+			{languages}
+		/>
 	{:else}
-		<LanguageOptions language="local" {languages} disabled />
+		<LanguageOptions language="local" languageStrict={false} {languages} disabled />
 	{/if}
 </SidebarSection>
