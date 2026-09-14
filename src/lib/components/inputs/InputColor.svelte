@@ -13,17 +13,28 @@
 		label: string;
 		hint?: string;
 		disabled?: boolean;
-		value: Color | string | undefined;
-		defaultValue: Color | string | undefined;
+		value: string;
+		defaultValue: string;
 		onchange?: () => void;
 	} = $props();
 
-	let isModified = $derived(String(value) !== String(defaultValue));
+	/** `#rrggbbaa`, lowercase, for comparing colours however they are spelled. */
+	function normalize(color: string): string {
+		try {
+			return Color.parse(color).asHex().toLowerCase();
+		} catch {
+			return color;
+		}
+	}
+
+	let normalized = $derived(normalize(value));
+	let isModified = $derived(normalized !== normalize(defaultValue));
+	// `<input type="color">` only takes `#rrggbb`; the alpha channel is kept from the current value.
+	let inputValue = $derived(normalized.slice(0, 7));
 
 	function handleChange(e: Event) {
 		const input = e.target as HTMLInputElement;
-		input.style.backgroundColor = input.value;
-		value = Color.parse(input.value);
+		value = input.value + normalized.slice(7);
 		onchange?.();
 	}
 
@@ -35,6 +46,6 @@
 
 <InputRow {label} {hint} {disabled} containerClass="color-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
-		<input id={uid} type="color" value={String(value)} {disabled} onchange={handleChange} />
+		<input id={uid} type="color" value={inputValue} {disabled} onchange={handleChange} />
 	{/snippet}
 </InputRow>

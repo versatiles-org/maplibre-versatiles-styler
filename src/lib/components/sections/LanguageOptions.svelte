@@ -4,14 +4,18 @@
 	let {
 		language = $bindable(),
 		languages,
-		onchange,
+		disabled = false,
 	}: {
 		language: string;
-		languages: Promise<Record<string, string>>;
-		onchange?: () => void;
+		languages: Record<string, string>;
+		disabled?: boolean;
 	} = $props();
 </script>
 
-{#await languages then langs}
-	<InputSelect label="Language" bind:value={language} defaultValue="" options={langs} {onchange} />
-{/await}
+<InputSelect
+	label="Language"
+	bind:value={language}
+	defaultValue="local"
+	options={languages}
+	{disabled}
+/>

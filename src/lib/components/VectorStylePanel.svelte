@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { StyleBuilderOptions } from '@versatiles/style';
-	import type { EnforcedStyleBuilderOptions } from '../style_config';
+	import type { FontFaceInfo } from '@versatiles/style';
+	import type { VectorState } from '../style_config';
 	import SidebarSection from './SidebarSection.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
 	import RecolorOptions from './sections/RecolorOptions.svelte';
 	import FontOptions from './sections/FontOptions.svelte';
-	import ScaleOptions from './sections/ScaleOptions.svelte';
+	import LayoutOptions from './sections/LayoutOptions.svelte';
 	import ElevationOptions from './sections/ElevationOptions.svelte';
 	import LanguageOptions from './sections/LanguageOptions.svelte';
 
@@ -13,40 +13,32 @@
 		options = $bindable(),
 		defaults,
 		hasElevation,
-		fontNames,
+		fontFaces,
 		languages,
-		onchange,
 	}: {
-		options: EnforcedStyleBuilderOptions;
-		defaults: StyleBuilderOptions;
+		options: VectorState;
+		defaults: VectorState;
 		hasElevation: boolean;
-		fontNames: Promise<Record<string, string>>;
-		languages: Promise<Record<string, string>>;
-		onchange?: () => void;
+		fontFaces: Promise<FontFaceInfo[] | undefined>;
+		languages: Record<string, string>;
 	} = $props();
 
 	function resetColorAdjustments() {
-		options.recolor = { ...defaults.recolor };
-		onchange?.();
+		options.recolor = structuredClone(defaults.recolor);
 	}
 	function resetIndividualColors() {
-		options.colors = { ...defaults.colors };
-		onchange?.();
+		options.colors = structuredClone(defaults.colors);
 	}
 	function resetTypography() {
-		options.fonts = {};
-		options.textScale = undefined;
-		options.iconScale = undefined;
-		onchange?.();
+		options.text.fonts = structuredClone(defaults.text.fonts);
+		options.layout = structuredClone(defaults.layout);
 	}
 	function resetElevation() {
-		options.terrain = undefined;
-		options.hillshade = undefined;
-		onchange?.();
+		options.features.terrain = defaults.features.terrain;
+		options.features.hillshade = defaults.features.hillshade;
 	}
 	function resetLabels() {
-		options.language = undefined;
-		onchange?.();
+		options.text.language = defaults.text.language;
 	}
 </script>
 
@@ -55,18 +47,18 @@
 	description="Transformations applied to every color in the style."
 	onReset={resetColorAdjustments}
 >
-	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} {onchange} />
+	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} />
 </SidebarSection>
 <SidebarSection
 	title="Individual colors"
 	description="Override the color of individual map features."
 	onReset={resetIndividualColors}
 >
-	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} {onchange} />
+	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} />
 </SidebarSection>
 <SidebarSection title="Fonts & text size" onReset={resetTypography}>
-	<FontOptions bind:fonts={options.fonts} defaults={defaults.fonts} {fontNames} {onchange} />
-	<ScaleOptions bind:options {defaults} {onchange} />
+	<FontOptions bind:fonts={options.text.fonts} defaults={defaults.text.fonts} {fontFaces} />
+	<LayoutOptions bind:layout={options.layout} defaults={defaults.layout} />
 </SidebarSection>
 <SidebarSection
 	title="Terrain & hillshade"
@@ -75,16 +67,12 @@
 		: 'Unavailable — this server provides no elevation tiles.'}
 	onReset={hasElevation ? resetElevation : undefined}
 >
-	<ElevationOptions bind:options disabled={!hasElevation} {onchange} />
+	<ElevationOptions bind:features={options.features} disabled={!hasElevation} />
 </SidebarSection>
 <SidebarSection
 	title="Labels"
 	description="Language used for place names and labels."
 	onReset={resetLabels}
 >
-	<LanguageOptions
-		bind:language={() => (options.language as string) ?? '', (v: string) => (options.language = v)}
-		{languages}
-		{onchange}
-	/>
+	<LanguageOptions bind:language={options.text.language} {languages} />
 </SidebarSection>

@@ -1,17 +1,27 @@
 <script lang="ts">
-	import type { Map as MLGLMap } from 'maplibre-gl';
-	import type { SatelliteStyleOptions, StyleBuilderOptions } from '@versatiles/style';
+	import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
+	import { osm } from '@versatiles/style';
+	import type { Palette } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
 	import {
-		vectorStyles,
-		getStyle,
-		getMinimalOptions,
-		type VectorStyleKey,
+		PALETTES,
+		DEFAULT_STYLE_KEY,
+		vectorDefaults,
+		satelliteDefaults,
+		vectorStateFromConfig,
+		satelliteStateFromConfig,
+		buildVectorStyle,
+		buildSatelliteStyle,
+		minimalConfig,
+		styleCode,
 		type StyleKey,
-		type EnforcedStyleBuilderOptions,
+		type StyleSources,
+		type VectorState,
+		type SatelliteState,
 	} from './style_config';
 	import { downloadStyle, copyStyleCode } from './export';
-	import { fetchJSON, fetchTileJSON, fetchTileSources } from './tile_json';
+	import { loadOrigin, type LoadedTileJSON } from './sources';
+	import { languageOptions } from './languages';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from './hash';
 	import SidebarSection from './components/SidebarSection.svelte';
@@ -22,205 +32,154 @@
 	const uid = $props.id();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
-	let hasOsm = $state(false);
-	let hasSatellite = $state(false);
-	let hasElevation = $state(false);
-	let sourcesLoaded = $state(false);
-	let styleKeys: StyleKey[] = $derived([
-		...(hasOsm ? (Object.keys(vectorStyles) as VectorStyleKey[]) : []),
-		...(hasSatellite ? (['satellite'] as const) : []),
-	]);
-	let overlayAvailable = $derived(hasOsm && hasSatellite);
-	let currentStyleKey = $state<StyleKey>('colorful');
-	let isSatellite = $derived(currentStyleKey === 'satellite');
-	let currentVectorOptions = $state<EnforcedStyleBuilderOptions>({
-		colors: {},
-		recolor: {},
-		fonts: {},
+
+	// ── Sources ──────────────────────────────────────────────────────────────────
+	// All TileJSONs of an origin load in parallel. `undefined` while loading, `null` when the
+	// server does not provide the source.
+
+	let sources = $derived(loadOrigin(origin));
+	let osmTileJSON = $state<LoadedTileJSON | undefined>();
+	let satelliteTileJSON = $state<LoadedTileJSON | undefined>();
+	let elevationTileJSON = $state<LoadedTileJSON | undefined>();
+
+	$effect(() => {
+		const current = sources;
+		osmTileJSON = satelliteTileJSON = elevationTileJSON = undefined;
+		let outdated = false;
+		current.osm.then((tj) => !outdated && (osmTileJSON = tj));
+		current.satellite.then((tj) => !outdated && (satelliteTileJSON = tj));
+		current.elevation.then((tj) => !outdated && (elevationTileJSON = tj));
+		return () => (outdated = true);
 	});
-	let currentSatelliteOptions = $state<SatelliteStyleOptions>({});
 
-	let baseStyle = $derived(isSatellite ? null : vectorStyles[currentStyleKey as VectorStyleKey]);
-	let defaultOptions = $derived(baseStyle ? baseStyle.getOptions() : null);
+	// Vector themes are listed until the OSM TileJSON turns out to be missing; satellite once it loaded.
+	let styleKeys: StyleKey[] = $derived([
+		...(osmTileJSON === null ? [] : PALETTES),
+		...(satelliteTileJSON ? (['satellite'] as const) : []),
+	]);
+	let overlayAvailable = $derived(osmTileJSON !== null);
+	let hasElevation = $derived(Boolean(elevationTileJSON));
+	let languages = $derived(languageOptions(osmTileJSON ? osm.languages(osmTileJSON) : []));
 
-	let fontsPromise = $derived(
-		fetchJSON(new URL('/assets/glyphs/index.json', origin)).then((fonts) =>
-			Object.fromEntries(
-				(fonts as string[]).map((f) => {
-					const title = f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-					return [title, f];
-				})
-			)
-		)
+	// ── Options ──────────────────────────────────────────────────────────────────
+
+	let currentStyleKey = $state<StyleKey>(DEFAULT_STYLE_KEY);
+	let isSatellite = $derived(currentStyleKey === 'satellite');
+	let vectorState = $state<VectorState>(vectorDefaults('colorful'));
+	let satelliteState = $state<SatelliteState>(satelliteDefaults());
+	let currentVectorDefaults = $derived(
+		isSatellite ? null : vectorDefaults(currentStyleKey as Palette)
 	);
-
-	// One TileJSON fetch feeds both the language list and landcover detection.
-	let tileJSONPromise = $derived(
-		hasOsm ? fetchTileJSON(new URL('/tiles/osm/tiles.json', origin)) : null
-	);
-
-	let languagesPromise = $derived(
-		tileJSONPromise
-			? tileJSONPromise.then((tileJSON) => tileJSON.languages())
-			: Promise.resolve({ local: '' })
-	);
-
-	/**
-	 * Whether the tiles carry the low-zoom landcover extension. Stays `false` until the
-	 * TileJSON says otherwise, so an unreachable or unknown tileset renders the plain
-	 * Shortbread zoom ramps rather than fills that have no data behind them.
-	 */
-	let hasLandcover = $state(false);
-
-	function experimentalOptions(): NonNullable<StyleBuilderOptions['experimental']> {
-		return hasLandcover ? { landcover: true } : {};
-	}
 
 	function setBaseStyle(key: StyleKey, hashConfig?: Record<string, unknown> | null) {
 		if (currentStyleKey !== key) {
 			currentStyleKey = key;
 			hashManager?.setStyleKey(key);
 		}
-
 		if (key === 'satellite') {
-			currentSatelliteOptions = (hashConfig as SatelliteStyleOptions) ?? {};
+			satelliteState = satelliteStateFromConfig(hashConfig);
 		} else {
-			const defaults = vectorStyles[key as VectorStyleKey].getOptions();
-			const cfg = hashConfig as StyleBuilderOptions | undefined;
-			currentVectorOptions = {
-				baseUrl: origin,
-				colors: { ...defaults.colors, ...cfg?.colors },
-				recolor: { ...defaults.recolor, ...cfg?.recolor },
-				fonts: { ...cfg?.fonts },
-				language: cfg?.language,
-				textScale: cfg?.textScale,
-				iconScale: cfg?.iconScale,
-				terrain: cfg?.terrain,
-				hillshade: cfg?.hillshade,
-				experimental: experimentalOptions(),
-			};
+			vectorState = vectorStateFromConfig(key, hashConfig);
 		}
-		return;
 	}
 
-	async function renderStyle() {
-		const style = await getStyle(
-			currentStyleKey,
-			currentVectorOptions,
-			currentSatelliteOptions,
-			origin
-		);
-		// `diff: false` forces a full style reload. With the default diff,
-		// MapLibre applies the rebuilt style to its model (map.getStyle() is
-		// correct) but can leave already-rendered tiles showing the previous
-		// paint until the next interaction.
-		map.setStyle(style, { diff: false });
+	// ── Rendering ────────────────────────────────────────────────────────────────
+
+	/**
+	 * The style for the current options, or `undefined` while a TileJSON it needs is still loading.
+	 * Sources are only read when the options need them, so a source that arrives later and changes
+	 * nothing does not rebuild — and reload — the style.
+	 */
+	function currentStyle(): StyleSpecification | undefined {
+		if (currentStyleKey === 'satellite') {
+			const state = $state.snapshot(satelliteState) as SatelliteState;
+			const satellite = satelliteTileJSON;
+			if (!satellite) return undefined;
+			const stateSources = styleSources(state.osmOverlay !== false, state.features);
+			if (!stateSources) return undefined;
+			return buildSatelliteStyle(state, origin, { ...stateSources, satellite });
+		}
+		const state = $state.snapshot(vectorState) as VectorState;
+		const stateSources = styleSources(true, state.features);
+		if (!stateSources?.osm) return undefined;
+		return buildVectorStyle(currentStyleKey, state, origin, stateSources);
 	}
 
-	function updateHash() {
-		hashManager?.setConfig(
-			getMinimalOptions(currentStyleKey, currentVectorOptions, currentSatelliteOptions)
-		);
+	function styleSources(
+		needsOsm: boolean,
+		features: VectorState['features'] | SatelliteState['features']
+	): StyleSources | undefined {
+		const result: StyleSources = {};
+		if (needsOsm) {
+			if (osmTileJSON === undefined) return undefined;
+			if (osmTileJSON) result.osm = osmTileJSON;
+		}
+		if (features.terrain !== false || features.hillshade !== false) {
+			if (elevationTileJSON === undefined) return undefined;
+			if (elevationTileJSON) result.elevation = elevationTileJSON;
+		}
+		return result;
 	}
 
-	function renderAndUpdateHash() {
-		renderStyle();
-		updateHash();
-	}
+	$effect(() => {
+		const style = currentStyle();
+		if (!style) return;
+		untrack(() => {
+			// `diff: false` forces a full style reload. With the default diff,
+			// MapLibre applies the rebuilt style to its model (map.getStyle() is
+			// correct) but can leave already-rendered tiles showing the previous
+			// paint until the next interaction.
+			map.setStyle(style, { diff: false });
+			hashManager?.setConfig(minimalConfig(currentStyleKey, vectorState, satelliteState));
+		});
+	});
 
-	async function handleDownload() {
-		const style = await getStyle(
-			currentStyleKey,
-			currentVectorOptions,
-			currentSatelliteOptions,
-			origin
-		);
-		downloadStyle(style);
+	// Switch away from a style only once its source is known to be missing, not while it loads.
+	$effect(() => {
+		const tileJSON = currentStyleKey === 'satellite' ? satelliteTileJSON : osmTileJSON;
+		if (tileJSON === null && styleKeys.length > 0) {
+			const fallback = styleKeys[0];
+			untrack(() => setBaseStyle(fallback));
+		}
+	});
+
+	// ── Export ───────────────────────────────────────────────────────────────────
+
+	function handleDownload() {
+		const style = currentStyle();
+		if (style) downloadStyle(style);
 	}
 
 	async function handleCopyCode() {
-		const minimal = getMinimalOptions(
-			currentStyleKey,
-			currentVectorOptions,
-			currentSatelliteOptions
+		const loaded: StyleSources = {
+			osm: osmTileJSON ?? undefined,
+			satellite: satelliteTileJSON ?? undefined,
+			elevation: elevationTileJSON ?? undefined,
+		};
+		await copyStyleCode(
+			styleCode(
+				currentStyleKey,
+				$state.snapshot(vectorState) as VectorState,
+				$state.snapshot(satelliteState) as SatelliteState,
+				origin,
+				loaded
+			)
 		);
-		await copyStyleCode(currentStyleKey, minimal);
 	}
 
-	function handleOriginChange() {
-		renderAndUpdateHash();
+	function handleOriginChange(e: Event) {
+		origin = (e.target as HTMLInputElement).value;
 	}
-
-	$effect(() => {
-		const currentOrigin = origin;
-		fetchTileSources(currentOrigin).then((sources) => {
-			hasOsm = sources.has('osm');
-			hasSatellite = sources.has('satellite');
-			hasElevation = sources.has('elevation');
-			sourcesLoaded = true;
-		});
-	});
-
-	$effect(() => {
-		const promise = tileJSONPromise;
-		if (!promise) {
-			hasLandcover = false;
-			return;
-		}
-		let outdated = false;
-		promise.then(
-			(tileJSON) => {
-				if (!outdated) hasLandcover = tileJSON.hasLandcover();
-			},
-			() => {
-				if (!outdated) hasLandcover = false;
-			}
-		);
-		return () => (outdated = true);
-	});
-
-	// `experimental.landcover` describes the tileset, not a user choice, so it is
-	// re-applied whenever detection finishes or the origin changes.
-	$effect(() => {
-		const experimental = experimentalOptions();
-		if (isSatellite) return;
-		untrack(() => {
-			const current = currentVectorOptions.experimental?.landcover ?? false;
-			if (current === (experimental.landcover ?? false)) return;
-			currentVectorOptions.experimental = experimental;
-		});
-	});
-
-	$effect(() => {
-		if (sourcesLoaded && !overlayAvailable) {
-			currentSatelliteOptions.overlay = false;
-		}
-	});
-
-	$effect(() => {
-		if (styleKeys.length > 0 && !styleKeys.includes(currentStyleKey)) {
-			setBaseStyle(styleKeys[0]);
-		}
-	});
-
-	$effect(() => {
-		// Track all reactive dependencies and render
-		void currentStyleKey;
-		void currentVectorOptions;
-		void currentSatelliteOptions;
-		void origin;
-		renderAndUpdateHash();
-	});
 
 	// Initialize hash management and style
 	let hashManager: HashManager | undefined;
 	untrack(() => {
 		if (config.hash !== false) {
-			hashManager = new HashManager(map, (key, cfg) => setBaseStyle(key as StyleKey, cfg));
+			hashManager = new HashManager(map, (key, cfg) => setBaseStyle(key, cfg));
 			const { styleKey, config: hashConfig } = hashManager.initialize();
-			setBaseStyle(styleKey as StyleKey, hashConfig);
+			setBaseStyle(styleKey, hashConfig);
 		} else {
-			setBaseStyle('colorful');
+			setBaseStyle(DEFAULT_STYLE_KEY);
 		}
 	});
 
@@ -241,7 +200,7 @@
 			<div class="entry text-container">
 				<label for="{uid}-origin">Origin</label>
 				<div class="input">
-					<input id="{uid}-origin" type="text" bind:value={origin} onchange={handleOriginChange} />
+					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
 				</div>
 			</div>
 		</SidebarSection>
@@ -260,20 +219,18 @@
 		</SidebarSection>
 		{#if isSatellite}
 			<SatelliteStylePanel
-				bind:options={currentSatelliteOptions}
+				bind:options={satelliteState}
 				{overlayAvailable}
 				elevationAvailable={hasElevation}
-				languages={languagesPromise}
-				onchange={renderAndUpdateHash}
+				{languages}
 			/>
-		{:else if defaultOptions}
+		{:else if currentVectorDefaults}
 			<VectorStylePanel
-				bind:options={currentVectorOptions}
-				defaults={defaultOptions}
+				bind:options={vectorState}
+				defaults={currentVectorDefaults}
 				{hasElevation}
-				fontNames={fontsPromise}
-				languages={languagesPromise}
-				onchange={renderAndUpdateHash}
+				fontFaces={sources.fontFaces()}
+				{languages}
 			/>
 		{/if}
 		<SidebarSection title="Export">

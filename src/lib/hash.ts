@@ -1,14 +1,6 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
+import { DEFAULT_STYLE_KEY, toStyleKey, type StyleKey } from './style_config';
 
-const VALID_STYLE_KEYS = new Set([
-	'colorful',
-	'eclipse',
-	'graybeard',
-	'shadow',
-	'neutrino',
-	'satellite',
-]);
-const DEFAULT_STYLE_KEY = 'colorful';
 const THROTTLE_MS = 300;
 
 function encodeConfig(obj: Record<string, unknown>): string {
@@ -36,8 +28,8 @@ function decodeConfig(str: string): Record<string, unknown> | null {
 
 export class HashManager {
 	private map: MLGLMap;
-	private onStyleChange: (key: string, config: Record<string, unknown> | null) => void;
-	private currentStyleKey: string = DEFAULT_STYLE_KEY;
+	private onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void;
+	private currentStyleKey: StyleKey = DEFAULT_STYLE_KEY;
 	private currentConfigEncoded: string | null = null;
 	private updating = false;
 	private throttleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -47,7 +39,7 @@ export class HashManager {
 
 	constructor(
 		map: MLGLMap,
-		onStyleChange: (key: string, config: Record<string, unknown> | null) => void
+		onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void
 	) {
 		this.map = map;
 		this.onStyleChange = onStyleChange;
@@ -55,7 +47,7 @@ export class HashManager {
 		this.boundOnHashChange = () => this.onHashChange();
 	}
 
-	initialize(): { styleKey: string; config: Record<string, unknown> | null } {
+	initialize(): { styleKey: StyleKey; config: Record<string, unknown> | null } {
 		this.tryDisableMapHash();
 
 		const { mapView, styleKey, config } = this.parseHash();
@@ -84,7 +76,7 @@ export class HashManager {
 		return { styleKey: this.currentStyleKey, config };
 	}
 
-	setStyleKey(key: string): void {
+	setStyleKey(key: StyleKey): void {
 		this.currentStyleKey = key;
 		this.currentConfigEncoded = null;
 		this.updateHash();
@@ -108,7 +100,7 @@ export class HashManager {
 
 	private parseHash(): {
 		mapView: MapView | null;
-		styleKey: string;
+		styleKey: StyleKey;
 		config: Record<string, unknown> | null;
 	} {
 		const hash = window.location.hash.replace(/^#/, '');
@@ -137,11 +129,8 @@ export class HashManager {
 			}
 		}
 
-		let styleKey = DEFAULT_STYLE_KEY;
-		const styleStr = params.get('style');
-		if (styleStr && VALID_STYLE_KEYS.has(styleStr)) {
-			styleKey = styleStr;
-		}
+		// v5 style keys from links shared before v6 map to their closest theme.
+		const styleKey = toStyleKey(params.get('style')) ?? DEFAULT_STYLE_KEY;
 
 		let config: Record<string, unknown> | null = null;
 		const configStr = params.get('config');

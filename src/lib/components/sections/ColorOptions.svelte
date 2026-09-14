@@ -1,27 +1,20 @@
 <script lang="ts">
-	import type { Color, StyleBuilderOptions } from '@versatiles/style';
+	import type { ResolvedOsm } from '@versatiles/style';
 	import InputColor from '../inputs/InputColor.svelte';
 
-	interface Colors {
-		[key: string]: Color | string | undefined;
-	}
+	type Colors = ResolvedOsm['colors'];
 
 	let {
 		colors = $bindable(),
 		defaults,
-		onchange,
 	}: {
-		colors: NonNullable<StyleBuilderOptions['colors']>;
-		defaults: StyleBuilderOptions['colors'];
-		onchange?: () => void;
+		colors: Colors;
+		defaults: Colors;
 	} = $props();
+
+	let keys = $derived(Object.keys(defaults) as (keyof Colors & string)[]);
 </script>
 
-{#each Object.keys(defaults ?? {}) as key (key)}
-	<InputColor
-		label={key}
-		bind:value={(colors as Colors)[key]}
-		defaultValue={((defaults as Colors) ?? {})[key]}
-		{onchange}
-	/>
+{#each keys as key (key)}
+	<InputColor label={key} bind:value={colors[key]} defaultValue={defaults[key]} />
 {/each}

@@ -1,28 +1,30 @@
 <script lang="ts">
-	import type { SatelliteStyleOptions } from '@versatiles/style';
+	import type { ResolvedOsmOverlay } from '@versatiles/style';
+	import { satelliteDefaults } from '../../style_config';
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
-	import ScaleOptions from './ScaleOptions.svelte';
+	import LayoutOptions from './LayoutOptions.svelte';
 
 	let {
-		options = $bindable(),
-		defaults,
+		overlay = $bindable(),
 		disabled = false,
-		onchange,
 	}: {
-		options: SatelliteStyleOptions;
-		defaults: { overlay: boolean; textScale: number; iconScale: number };
+		overlay: false | ResolvedOsmOverlay;
 		disabled?: boolean;
-		onchange?: () => void;
 	} = $props();
+
+	const defaults = satelliteDefaults().osmOverlay as ResolvedOsmOverlay;
 </script>
 
 <InputCheckbox
 	label="Overlay"
 	{disabled}
-	bind:value={() => (options.overlay as boolean) ?? defaults.overlay, (v) => (options.overlay = v)}
-	defaultValue={defaults.overlay}
-	{onchange}
+	bind:value={() => overlay !== false, (v) => (overlay = v ? structuredClone(defaults) : false)}
+	defaultValue={true}
 />
 <div class="nested">
-	<ScaleOptions bind:options {defaults} {disabled} {onchange} />
+	{#if overlay}
+		<LayoutOptions bind:layout={overlay.layout} defaults={defaults.layout} {disabled} />
+	{:else}
+		<LayoutOptions layout={structuredClone(defaults.layout)} defaults={defaults.layout} disabled />
+	{/if}
 </div>

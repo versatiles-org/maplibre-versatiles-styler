@@ -1,127 +1,250 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { osm, satellite } from '@versatiles/style';
+import type { TileJSONSpecification } from '@versatiles/style';
 import {
-	vectorStyles,
-	defaultSatelliteOptions,
-	getStyle,
-	getMinimalOptions,
-	type EnforcedStyleBuilderOptions,
+	PALETTES,
+	toStyleKey,
+	vectorDefaults,
+	satelliteDefaults,
+	vectorStateFromConfig,
+	satelliteStateFromConfig,
+	buildVectorStyle,
+	buildSatelliteStyle,
+	minimalConfig,
+	styleCode,
+	type StyleSources,
 } from './style_config';
 
-describe('vectorStyles', () => {
-	it('contains all expected style keys', () => {
-		expect(Object.keys(vectorStyles).sort()).toEqual(
-			['colorful', 'eclipse', 'graybeard', 'neutrino', 'shadow'].sort()
+const ORIGIN = 'https://tiles.example.org';
+
+function tileJSON(name: string, extra: Partial<TileJSONSpecification> = {}): TileJSONSpecification {
+	return {
+		tilejson: '3.0.0',
+		tiles: [`${ORIGIN}/tiles/${name}/{z}/{x}/{y}`],
+		minzoom: 0,
+		maxzoom: 14,
+		...extra,
+	} as TileJSONSpecification;
+}
+
+const osmTileJSON = tileJSON('osm', {
+	vector_layers: [{ id: 'land', fields: { kind: 'String' }, minzoom: 10, maxzoom: 14 }],
+} as Partial<TileJSONSpecification>);
+const landcoverTileJSON = tileJSON('osm', {
+	vector_layers: [{ id: 'land', fields: { kind: 'String' }, minzoom: 0, maxzoom: 14 }],
+} as Partial<TileJSONSpecification>);
+const satelliteTileJSON = tileJSON('satellite');
+const elevationTileJSON = tileJSON('elevation');
+
+const allSources: StyleSources = {
+	osm: osmTileJSON,
+	satellite: satelliteTileJSON,
+	elevation: elevationTileJSON,
+};
+
+afterEach(() => {
+	vi.restoreAllMocks();
+});
+
+describe('toStyleKey', () => {
+	it('accepts every theme and satellite', () => {
+		for (const key of [...PALETTES, 'satellite']) expect(toStyleKey(key)).toBe(key);
+	});
+
+	it('maps v5 style keys to their themes', () => {
+		expect(toStyleKey('colorful')).toBe('colorful');
+		expect(toStyleKey('eclipse')).toBe('colorful-dark');
+		expect(toStyleKey('graybeard')).toBe('gray');
+		expect(toStyleKey('neutrino')).toBe('muted');
+		expect(toStyleKey('shadow')).toBe('gray-dark');
+	});
+
+	it('rejects anything else', () => {
+		expect(toStyleKey('nonexistent')).toBeUndefined();
+		expect(toStyleKey('toString')).toBeUndefined();
+		expect(toStyleKey(null)).toBeUndefined();
+		expect(toStyleKey(undefined)).toBeUndefined();
+	});
+});
+
+describe('defaults', () => {
+	it('vector defaults are the resolved options of the theme, without theme and urls', () => {
+		const defaults = vectorDefaults('gray-dark');
+		const { theme: _theme, urls: _urls, ...resolved } = osm.resolveOptions({ theme: 'gray-dark' });
+		expect(defaults).toEqual(resolved);
+		expect(defaults).not.toHaveProperty('theme');
+		expect(defaults).not.toHaveProperty('urls');
+	});
+
+	it('themes have their own colours', () => {
+		expect(vectorDefaults('colorful').colors).not.toEqual(vectorDefaults('colorful-dark').colors);
+	});
+
+	it('satellite defaults are the resolved options without urls', () => {
+		const { urls: _urls, ...resolved } = satellite.resolveOptions();
+		expect(satelliteDefaults()).toEqual(resolved);
+	});
+});
+
+describe('state from hash config', () => {
+	it('applies valid options on top of the theme', () => {
+		const state = vectorStateFromConfig('muted', { colors: { water: '#ff0000' } });
+		expect(state.colors.water).toBe('#ff0000');
+		expect(state.colors.land).toBe(vectorDefaults('muted').colors.land);
+	});
+
+	it('falls back to the theme defaults for v5 options', () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const state = vectorStateFromConfig('gray', { textScale: 2, fonts: { regular: 'x' } });
+		expect(state).toEqual(vectorDefaults('gray'));
+		expect(console.warn).toHaveBeenCalled();
+	});
+
+	it('never takes theme, urls or landcover from the config', () => {
+		const state = vectorStateFromConfig('gray', {
+			theme: 'toner',
+			urls: { base: 'https://evil.example' },
+			features: { landcover: true },
+		});
+		expect(state.colors).toEqual(vectorDefaults('gray').colors);
+		expect(state).not.toHaveProperty('urls');
+		expect(state.features.landcover).toBe(false);
+	});
+
+	it('falls back to satellite defaults for v5 options', () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		expect(satelliteStateFromConfig({ rasterOpacity: 0.5 })).toEqual(satelliteDefaults());
+		expect(satelliteStateFromConfig({ raster: { opacity: 0.5 } }).raster.opacity).toBe(0.5);
+		expect(satelliteStateFromConfig(null)).toEqual(satelliteDefaults());
+	});
+});
+
+describe('buildVectorStyle', () => {
+	it('builds the theme with inlined sources — no TileJSON url left for MapLibre', () => {
+		const style = buildVectorStyle('muted', vectorDefaults('muted'), ORIGIN, allSources);
+		expect(style.name).toBe('versatiles-muted');
+		const source = style.sources['versatiles-shortbread'] as { url?: string; tiles?: string[] };
+		expect(source.url).toBeUndefined();
+		expect(source.tiles).toEqual(osmTileJSON.tiles);
+	});
+
+	it('resolves glyphs and sprites against the origin', () => {
+		const style = buildVectorStyle('colorful', vectorDefaults('colorful'), ORIGIN, allSources);
+		expect(style.glyphs).toContain(ORIGIN);
+		expect(JSON.stringify(style.sprite)).toContain(ORIGIN);
+	});
+
+	it('sets landcover from the tileset, whatever the state says', () => {
+		const state = vectorDefaults('colorful');
+		const plain = buildVectorStyle('colorful', state, ORIGIN, { osm: osmTileJSON });
+		const landcover = buildVectorStyle('colorful', state, ORIGIN, { osm: landcoverTileJSON });
+		expect(JSON.stringify(plain)).not.toEqual(JSON.stringify(landcover));
+		expect(landcover).toEqual(
+			osm({
+				...state,
+				features: { ...state.features, landcover: true },
+				urls: { base: ORIGIN, osm: landcoverTileJSON },
+			})
 		);
 	});
 
-	it('each style is a function with getOptions', () => {
-		for (const style of Object.values(vectorStyles)) {
-			expect(typeof style).toBe('function');
-			expect(typeof style.getOptions).toBe('function');
-		}
+	it('leaves terrain and hillshade out while there is no elevation source', () => {
+		const state = vectorDefaults('colorful');
+		state.features.terrain = { exaggeration: 1 };
+		const without = buildVectorStyle('colorful', state, ORIGIN, { osm: osmTileJSON });
+		const withElevation = buildVectorStyle('colorful', state, ORIGIN, allSources);
+		expect(without.terrain).toBeUndefined();
+		expect(withElevation.terrain).toBeDefined();
+		expect(withElevation.sources.elevation).not.toHaveProperty('url');
 	});
 });
 
-describe('defaultSatelliteOptions', () => {
-	it('has expected default values', () => {
-		expect(defaultSatelliteOptions).toEqual({
-			overlay: true,
-			rasterOpacity: 1,
-			rasterHueRotate: 0,
-			rasterBrightnessMin: 0,
-			rasterBrightnessMax: 1,
-			rasterSaturation: 0,
-			rasterContrast: 0,
-			terrain: false,
-			hillshade: false,
-			textScale: 1,
-			iconScale: 1,
+describe('buildSatelliteStyle', () => {
+	it('builds imagery with the overlay and inlined sources', () => {
+		const style = buildSatelliteStyle(satelliteDefaults(), ORIGIN, allSources);
+		const raster = style.sources.satellite as { url?: string; tiles?: string[] };
+		expect(raster.url).toBeUndefined();
+		expect(raster.tiles).toEqual(satelliteTileJSON.tiles);
+		expect(style.sources['versatiles-shortbread']).toBeDefined();
+	});
+
+	it('drops the overlay when there is no OSM source', () => {
+		const style = buildSatelliteStyle(satelliteDefaults(), ORIGIN, {
+			satellite: satelliteTileJSON,
 		});
+		expect(style.sources['versatiles-shortbread']).toBeUndefined();
 	});
 });
 
-describe('getStyle', () => {
-	const baseOptions: EnforcedStyleBuilderOptions = {
-		colors: {},
-		recolor: {},
-		fonts: {},
-	};
-
-	it('returns a valid style for each vector style key', () => {
-		for (const key of Object.keys(vectorStyles) as (keyof typeof vectorStyles)[]) {
-			const style = getStyle(key, baseOptions, {}, 'https://example.org');
-			expect(style).toBeDefined();
-			expect(typeof style).toBe('object');
-		}
-	});
-
-	it('always returns a promise', () => {
-		const result = getStyle('colorful', baseOptions, {}, 'https://example.org');
-		expect(result).toBeInstanceOf(Promise);
-	});
-
-	it('applies baseUrl from origin parameter', async () => {
-		const style = await getStyle('colorful', baseOptions, {}, 'https://custom.example.org');
-		const json = JSON.stringify(style);
-		expect(json).toContain('custom.example.org');
-	});
-
-	it('returns a valid style for satellite', async () => {
-		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-			new Response(
-				JSON.stringify({ tiles: ['https://example.org/tiles/satellite/{z}/{x}/{y}.webp'] }),
-				{ status: 200 }
-			)
+describe('minimalConfig', () => {
+	it('is empty for defaults', () => {
+		expect(minimalConfig('colorful', vectorDefaults('colorful'), satelliteDefaults())).toEqual({});
+		expect(minimalConfig('gray-dark', vectorDefaults('gray-dark'), satelliteDefaults())).toEqual(
+			{}
 		);
-		const style = await getStyle('satellite', baseOptions, {}, 'https://example.org');
-		expect(style).toBeDefined();
-		expect(typeof style).toBe('object');
-		vi.restoreAllMocks();
+		expect(minimalConfig('satellite', vectorDefaults('colorful'), satelliteDefaults())).toEqual({});
+	});
+
+	it('keeps changes, without theme, urls or landcover', () => {
+		const state = vectorDefaults('muted');
+		state.colors.water = '#ff0000';
+		state.layout.scale = { labels: 2, icons: 2 };
+		state.features.landcover = true;
+		expect(minimalConfig('muted', state, satelliteDefaults())).toEqual({
+			colors: { water: '#ff0000' },
+			layout: { scale: 2 },
+		});
+	});
+
+	it('round-trips through the hash config', () => {
+		const state = vectorDefaults('natural-dark');
+		state.recolor.tint = { color: '#00ff00', amount: 0 };
+		state.text.language = 'user';
+		state.features.hillshade = { ...state.features.hillshade, exaggeration: 0.1 } as never;
+		state.layers.labels.water.rivers = false;
+		const config = minimalConfig('natural-dark', state, satelliteDefaults());
+		const restored = vectorStateFromConfig('natural-dark', config);
+		expect(buildVectorStyle('natural-dark', restored, ORIGIN, allSources)).toEqual(
+			buildVectorStyle('natural-dark', state, ORIGIN, allSources)
+		);
+	});
+
+	it('minimises satellite options', () => {
+		const state = satelliteDefaults();
+		state.raster.opacity = 0.5;
+		state.osmOverlay = false;
+		expect(minimalConfig('satellite', vectorDefaults('colorful'), state)).toEqual({
+			raster: { opacity: 0.5 },
+			osmOverlay: false,
+		});
 	});
 });
 
-describe('getMinimalOptions', () => {
-	it('returns undefined-equivalent for default vector options', () => {
-		const defaults = vectorStyles.colorful.getOptions();
-		const options: EnforcedStyleBuilderOptions = {
-			colors: { ...defaults.colors },
-			recolor: {},
-			fonts: {},
-		};
-		const result = getMinimalOptions('colorful', options, {});
-		// When options match defaults, removeRecursively returns undefined
-		expect(result).toBeUndefined();
+describe('styleCode', () => {
+	it('emits a runnable snippet with the origin as base', () => {
+		const state = vectorDefaults('toner');
+		state.colors.water = '#ff0000';
+		const code = styleCode('toner', state, satelliteDefaults(), ORIGIN, allSources);
+		expect(code).toContain("import { osm, inlineSources } from '@versatiles/style';");
+		expect(code).toContain('theme: "toner"');
+		expect(code).toContain('water: "#ff0000"');
+		expect(code).toContain(`base: "${ORIGIN}"`);
+		// never the loaded TileJSON
+		expect(code).not.toContain('/{z}/{x}/{y}');
 	});
 
-	it('returns changed properties for modified vector options', () => {
-		const defaults = vectorStyles.colorful.getOptions();
-		const options: EnforcedStyleBuilderOptions = {
-			colors: { ...defaults.colors, water: '#ff0000' },
-			recolor: {},
-			fonts: {},
-		};
-		const result = getMinimalOptions('colorful', options, {});
-		expect(result).toBeDefined();
-		expect((result as { colors: { water: string } }).colors.water).toBe('#ff0000');
-	});
-
-	it('returns undefined-equivalent for default satellite options', () => {
-		const result = getMinimalOptions('satellite', {} as EnforcedStyleBuilderOptions, {
-			overlay: true,
-			rasterOpacity: 1,
-			rasterHueRotate: 0,
-			rasterBrightnessMin: 0,
-			rasterBrightnessMax: 1,
-			rasterSaturation: 0,
-			rasterContrast: 0,
+	it('carries the detected landcover flag', () => {
+		const code = styleCode('colorful', vectorDefaults('colorful'), satelliteDefaults(), ORIGIN, {
+			osm: landcoverTileJSON,
 		});
-		expect(result).toBeUndefined();
+		expect(code).toContain('landcover: true');
 	});
 
-	it('returns changed properties for modified satellite options', () => {
-		const result = getMinimalOptions('satellite', {} as EnforcedStyleBuilderOptions, {
-			rasterOpacity: 0.5,
-		});
-		expect(result).toEqual({ rasterOpacity: 0.5 });
+	it('emits a satellite snippet', () => {
+		const state = satelliteDefaults();
+		state.raster.opacity = 0.5;
+		const code = styleCode('satellite', vectorDefaults('colorful'), state, ORIGIN, allSources);
+		expect(code).toContain("import { satellite, inlineSources } from '@versatiles/style';");
+		expect(code).toContain('opacity: 0.5');
 	});
 });

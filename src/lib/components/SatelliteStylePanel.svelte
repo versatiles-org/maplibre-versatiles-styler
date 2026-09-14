@@ -1,6 +1,5 @@
 <script lang="ts">
-	import type { SatelliteStyleOptions } from '@versatiles/style';
-	import { defaultSatelliteOptions } from '../style_config';
+	import { satelliteDefaults, type SatelliteState } from '../style_config';
 	import SidebarSection from './SidebarSection.svelte';
 	import RasterOptions from './sections/RasterOptions.svelte';
 	import OverlayOptions from './sections/OverlayOptions.svelte';
@@ -12,38 +11,28 @@
 		overlayAvailable,
 		elevationAvailable,
 		languages,
-		onchange,
 	}: {
-		options: SatelliteStyleOptions;
+		options: SatelliteState;
 		overlayAvailable: boolean;
 		elevationAvailable: boolean;
-		languages: Promise<Record<string, string>>;
-		onchange?: () => void;
+		languages: Record<string, string>;
 	} = $props();
 
+	const defaults = satelliteDefaults();
+
 	function resetImagery() {
-		options.rasterOpacity = undefined;
-		options.rasterHueRotate = undefined;
-		options.rasterBrightnessMin = undefined;
-		options.rasterBrightnessMax = undefined;
-		options.rasterSaturation = undefined;
-		options.rasterContrast = undefined;
-		onchange?.();
+		options.raster = structuredClone(defaults.raster);
 	}
 	function resetOverlay() {
-		options.overlay = undefined;
-		options.textScale = undefined;
-		options.iconScale = undefined;
-		onchange?.();
+		options.osmOverlay = structuredClone(defaults.osmOverlay);
 	}
 	function resetElevation() {
-		options.terrain = undefined;
-		options.hillshade = undefined;
-		onchange?.();
+		options.features = structuredClone(defaults.features);
 	}
 	function resetLabels() {
-		options.language = undefined;
-		onchange?.();
+		if (options.osmOverlay && defaults.osmOverlay) {
+			options.osmOverlay.text.language = defaults.osmOverlay.text.language;
+		}
 	}
 </script>
 
@@ -52,7 +41,7 @@
 	description="Adjust how the raster satellite layer is displayed."
 	onReset={resetImagery}
 >
-	<RasterOptions bind:options defaults={defaultSatelliteOptions} {onchange} />
+	<RasterOptions bind:raster={options.raster} defaults={defaults.raster} />
 </SidebarSection>
 <SidebarSection
 	title="Overlay"
@@ -61,12 +50,7 @@
 		: 'Unavailable — needs both a vector (OSM) and a satellite source.'}
 	onReset={overlayAvailable ? resetOverlay : undefined}
 >
-	<OverlayOptions
-		bind:options
-		defaults={defaultSatelliteOptions}
-		disabled={!overlayAvailable}
-		{onchange}
-	/>
+	<OverlayOptions bind:overlay={options.osmOverlay} disabled={!overlayAvailable} />
 </SidebarSection>
 <SidebarSection
 	title="Terrain & hillshade"
@@ -75,16 +59,16 @@
 		: 'Unavailable — this server provides no elevation tiles.'}
 	onReset={elevationAvailable ? resetElevation : undefined}
 >
-	<ElevationOptions bind:options disabled={!elevationAvailable} {onchange} />
+	<ElevationOptions bind:features={options.features} disabled={!elevationAvailable} />
 </SidebarSection>
 <SidebarSection
 	title="Labels"
 	description="Language used for place names and labels."
 	onReset={resetLabels}
 >
-	<LanguageOptions
-		bind:language={() => (options.language as string) ?? '', (v: string) => (options.language = v)}
-		{languages}
-		{onchange}
-	/>
+	{#if options.osmOverlay}
+		<LanguageOptions bind:language={options.osmOverlay.text.language} {languages} />
+	{:else}
+		<LanguageOptions language="local" {languages} disabled />
+	{/if}
 </SidebarSection>

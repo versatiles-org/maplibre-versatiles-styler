@@ -1,101 +1,66 @@
 <script lang="ts">
-	import type { SatelliteStyleOptions } from '@versatiles/style';
+	import type { ResolvedSatelliteRaster } from '@versatiles/style';
 	import InputNumber from '../inputs/InputNumber.svelte';
 
-	type RasterDefaults = {
-		rasterOpacity: number;
-		rasterHueRotate: number;
-		rasterBrightnessMin: number;
-		rasterBrightnessMax: number;
-		rasterSaturation: number;
-		rasterContrast: number;
-	};
-
 	let {
-		options = $bindable(),
+		raster = $bindable(),
 		defaults,
-		onchange,
 	}: {
-		options: SatelliteStyleOptions;
-		defaults: RasterDefaults;
-		onchange?: () => void;
+		raster: ResolvedSatelliteRaster;
+		defaults: ResolvedSatelliteRaster;
 	} = $props();
 </script>
 
 <InputNumber
 	label="Opacity"
-	bind:value={
-		() => (options.rasterOpacity as number) ?? defaults.rasterOpacity,
-		(v) => (options.rasterOpacity = v)
-	}
-	defaultValue={defaults.rasterOpacity}
+	bind:value={raster.opacity}
+	defaultValue={defaults.opacity}
 	min={0}
 	max={1}
 	scale={100}
 	unit="%"
-	{onchange}
 />
 <InputNumber
 	label="Hue Rotate"
-	bind:value={
-		() => (options.rasterHueRotate as number) ?? defaults.rasterHueRotate,
-		(v) => (options.rasterHueRotate = v)
-	}
-	defaultValue={defaults.rasterHueRotate}
+	bind:value={raster.hueRotate}
+	defaultValue={defaults.hueRotate}
 	min={0}
 	max={360}
 	unit="°"
-	{onchange}
 />
 <InputNumber
 	label="Brightness Min"
-	bind:value={
-		() => (options.rasterBrightnessMin as number) ?? defaults.rasterBrightnessMin,
-		(v) => (options.rasterBrightnessMin = v)
-	}
-	defaultValue={defaults.rasterBrightnessMin}
+	bind:value={raster.brightnessMin}
+	defaultValue={defaults.brightnessMin}
 	min={0}
 	max={1}
 	scale={100}
 	unit="%"
-	{onchange}
 />
 <InputNumber
 	label="Brightness Max"
-	bind:value={
-		() => (options.rasterBrightnessMax as number) ?? defaults.rasterBrightnessMax,
-		(v) => (options.rasterBrightnessMax = v)
-	}
-	defaultValue={defaults.rasterBrightnessMax}
+	bind:value={raster.brightnessMax}
+	defaultValue={defaults.brightnessMax}
 	min={0}
 	max={1}
 	scale={100}
 	unit="%"
-	{onchange}
 />
 <InputNumber
 	label="Saturation"
-	bind:value={
-		() => (options.rasterSaturation as number) ?? defaults.rasterSaturation,
-		(v) => (options.rasterSaturation = v)
-	}
-	defaultValue={defaults.rasterSaturation}
+	bind:value={raster.saturation}
+	defaultValue={defaults.saturation}
 	min={-1}
 	max={1}
 	scale={100}
 	unit="%"
-	{onchange}
 />
 <InputNumber
 	label="Contrast"
-	bind:value={
-		() => (options.rasterContrast as number) ?? defaults.rasterContrast,
-		(v) => (options.rasterContrast = v)
-	}
-	defaultValue={defaults.rasterContrast}
+	bind:value={raster.contrast}
+	defaultValue={defaults.contrast}
 	min={-1}
 	max={1}
 	scale={100}
 	unit="%"
-	{onchange}
 />

@@ -42,11 +42,11 @@ describe('HashManager', () => {
 		});
 
 		it('parses map and style from hash', () => {
-			window.location.hash = '#map=10/51.5/-0.12&style=eclipse';
+			window.location.hash = '#map=10/51.5/-0.12&style=colorful-dark';
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 
-			expect(hm.initialize()).toEqual({ styleKey: 'eclipse', config: null });
+			expect(hm.initialize()).toEqual({ styleKey: 'colorful-dark', config: null });
 			expect(map.jumpTo).toHaveBeenCalledWith({
 				center: [-0.12, 51.5],
 				zoom: 10,
@@ -69,6 +69,37 @@ describe('HashManager', () => {
 			});
 		});
 
+		it('maps v5 style keys to their v6 themes', () => {
+			const cases = {
+				eclipse: 'colorful-dark',
+				graybeard: 'gray',
+				neutrino: 'muted',
+				shadow: 'gray-dark',
+			};
+			for (const [v5, v6] of Object.entries(cases)) {
+				window.location.hash = `#map=10/51.5/-0.12&style=${v5}`;
+				const hm = new HashManager(createMockMap(), vi.fn());
+				expect(hm.initialize().styleKey).toBe(v6);
+				hm.destroy();
+			}
+		});
+
+		it('rewrites a v5 style key to its theme', () => {
+			window.location.hash = '#map=10/51.5/-0.12&style=graybeard';
+			const hm = new HashManager(createMockMap(), vi.fn());
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+
+			const url = replaceStateSpy.mock.calls[0][2] as string;
+			expect(url).toBe('#map=10/51.5/-0.12&style=gray');
+		});
+
+		it('accepts satellite', () => {
+			window.location.hash = '#style=satellite';
+			const hm = new HashManager(createMockMap(), vi.fn());
+			expect(hm.initialize().styleKey).toBe('satellite');
+		});
+
 		it('falls back to colorful for invalid style key', () => {
 			window.location.hash = '#style=nonexistent';
 			const map = createMockMap();
@@ -87,12 +118,12 @@ describe('HashManager', () => {
 		});
 
 		it('ignores hash segments without an equals sign', () => {
-			window.location.hash = '#map=10/51.5/-0.12&flagonly&style=eclipse';
+			window.location.hash = '#map=10/51.5/-0.12&flagonly&style=colorful-dark';
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 
 			// Should still parse the style param correctly despite the bare segment
-			expect(hm.initialize().styleKey).toBe('eclipse');
+			expect(hm.initialize().styleKey).toBe('colorful-dark');
 		});
 
 		it('registers moveend and hashchange listeners', () => {
@@ -152,12 +183,12 @@ describe('HashManager', () => {
 				.replace(/\+/g, '-')
 				.replace(/\//g, '_')
 				.replace(/=+$/, '');
-			window.location.hash = `#map=10/51.5/-0.12&style=eclipse&config=${encoded}`;
+			window.location.hash = `#map=10/51.5/-0.12&style=colorful-dark&config=${encoded}`;
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 
 			const result = hm.initialize();
-			expect(result.styleKey).toBe('eclipse');
+			expect(result.styleKey).toBe('colorful-dark');
 			expect(result.config).toEqual(config);
 		});
 
@@ -192,19 +223,19 @@ describe('HashManager', () => {
 			vi.advanceTimersByTime(300);
 			replaceStateSpy.mockClear();
 
-			hm.setStyleKey('eclipse');
+			hm.setStyleKey('colorful-dark');
 			vi.advanceTimersByTime(300);
 
 			expect(replaceStateSpy).toHaveBeenCalledTimes(1);
 			const url = replaceStateSpy.mock.calls[0][2] as string;
-			expect(url).toContain('style=eclipse');
+			expect(url).toContain('style=colorful-dark');
 		});
 
 		it('omits style param when set to colorful', () => {
 			const map = createMockMap();
 			const hm = new HashManager(map, vi.fn());
 			hm.initialize();
-			hm.setStyleKey('eclipse');
+			hm.setStyleKey('colorful-dark');
 			vi.advanceTimersByTime(300);
 			replaceStateSpy.mockClear();
 
@@ -291,11 +322,11 @@ describe('HashManager', () => {
 			vi.advanceTimersByTime(300);
 			replaceStateSpy.mockClear();
 
-			hm.setStyleKey('eclipse');
+			hm.setStyleKey('colorful-dark');
 			vi.advanceTimersByTime(300);
 
 			const url = replaceStateSpy.mock.calls[0][2] as string;
-			expect(url).toContain('style=eclipse');
+			expect(url).toContain('style=colorful-dark');
 			expect(url).not.toContain('config=');
 		});
 	});
@@ -343,15 +374,15 @@ describe('HashManager', () => {
 			const hm = new HashManager(map, vi.fn());
 			hm.initialize();
 
-			hm.setStyleKey('eclipse');
-			hm.setStyleKey('shadow');
-			hm.setStyleKey('neutrino');
+			hm.setStyleKey('colorful-dark');
+			hm.setStyleKey('gray-dark');
+			hm.setStyleKey('muted');
 			vi.advanceTimersByTime(300);
 
 			// Only the last scheduled timer fires
 			expect(replaceStateSpy).toHaveBeenCalledTimes(1);
 			const url = replaceStateSpy.mock.calls[0][2] as string;
-			expect(url).toContain('style=neutrino');
+			expect(url).toContain('style=muted');
 		});
 	});
 
@@ -364,10 +395,10 @@ describe('HashManager', () => {
 			vi.advanceTimersByTime(300);
 
 			// Simulate hashchange
-			window.location.hash = '#map=10/51.5/-0.12&style=shadow';
+			window.location.hash = '#map=10/51.5/-0.12&style=gray-dark';
 			window.dispatchEvent(new HashChangeEvent('hashchange'));
 
-			expect(onStyleChange).toHaveBeenCalledWith('shadow', null);
+			expect(onStyleChange).toHaveBeenCalledWith('gray-dark', null);
 			expect(map.jumpTo).toHaveBeenCalled();
 		});
 
@@ -440,7 +471,7 @@ describe('HashManager', () => {
 			const hm = new HashManager(map, vi.fn());
 			hm.initialize();
 
-			hm.setStyleKey('eclipse');
+			hm.setStyleKey('colorful-dark');
 			hm.destroy(); // cancel before timer fires
 			vi.advanceTimersByTime(300);
 

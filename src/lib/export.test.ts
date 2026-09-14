@@ -62,51 +62,14 @@ describe('copyStyleCode', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('copies formatted code to clipboard', async () => {
+	it('copies the code to the clipboard', async () => {
 		const writeText = vi.fn().mockResolvedValue(undefined);
 		Object.assign(navigator, { clipboard: { writeText } });
 		vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-		await copyStyleCode('colorful', { baseUrl: 'https://example.org' });
+		await copyStyleCode("import { osm } from '@versatiles/style';");
 
-		const code = writeText.mock.calls[0][0] as string;
-		expect(code).toContain("import { colorful } from '@versatiles/style';");
-		expect(code).toContain('colorful(');
-	});
-
-	it('strips quotes from JSON keys', async () => {
-		const writeText = vi.fn().mockResolvedValue(undefined);
-		Object.assign(navigator, { clipboard: { writeText } });
-		vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-		await copyStyleCode('colorful', { baseUrl: 'https://example.org' });
-
-		const code = writeText.mock.calls[0][0] as string;
-		expect(code).toContain('baseUrl:');
-		expect(code).not.toContain('"baseUrl":');
-	});
-
-	it('handles empty options', async () => {
-		const writeText = vi.fn().mockResolvedValue(undefined);
-		Object.assign(navigator, { clipboard: { writeText } });
-		vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-		await copyStyleCode('colorful', undefined as never);
-
-		const code = writeText.mock.calls[0][0] as string;
-		expect(code).toBe("import { colorful } from '@versatiles/style';\nconst style = colorful();");
-	});
-
-	it('adds await for satellite style', async () => {
-		const writeText = vi.fn().mockResolvedValue(undefined);
-		Object.assign(navigator, { clipboard: { writeText } });
-		vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-		await copyStyleCode('satellite', { rasterOpacity: 0.5 });
-
-		const code = writeText.mock.calls[0][0] as string;
-		expect(code).toContain("import { satellite } from '@versatiles/style';");
-		expect(code).toContain('await satellite(');
+		expect(writeText).toHaveBeenCalledWith("import { osm } from '@versatiles/style';");
 	});
 
 	it('shows alert after copying', async () => {
@@ -114,7 +77,7 @@ describe('copyStyleCode', () => {
 		Object.assign(navigator, { clipboard: { writeText } });
 		const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-		await copyStyleCode('satellite', {});
+		await copyStyleCode('');
 
 		expect(alertSpy).toHaveBeenCalledWith('Style code copied to clipboard');
 	});
