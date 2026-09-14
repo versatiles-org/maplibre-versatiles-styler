@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FontFaceInfo } from '@versatiles/style';
+	import { osm, type FontFaceInfo } from '@versatiles/style';
 	import type { VectorState } from '../style_config';
 	import SidebarSection from './SidebarSection.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
@@ -58,7 +58,13 @@
 	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} />
 </SidebarSection>
 <SidebarSection title="Fonts & text size" onReset={resetTypography}>
-	<FontOptions bind:fonts={options.text.fonts} defaults={defaults.text.fonts} {fontFaces} />
+	<FontOptions
+		bind:fonts={options.text.fonts}
+		defaults={defaults.text.fonts}
+		fontGroups={osm.fontGroups}
+		{fontFaces}
+		language={options.text.language}
+	/>
 	<LayoutOptions bind:layout={options.layout} defaults={defaults.layout} />
 </SidebarSection>
 <SidebarSection

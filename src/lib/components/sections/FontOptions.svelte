@@ -1,55 +1,142 @@
 <script lang="ts">
-	import type { FontFaceInfo, ResolvedFonts } from '@versatiles/style';
-	import { osm } from '@versatiles/style';
+	import type { FontFaceInfo, FontGroupMap, ResolvedFonts } from '@versatiles/style';
+	import {
+		coverageWarning,
+		faceOptions,
+		fontGroupNodes,
+		uniformFace,
+		withFace,
+	} from '../../font_tree';
 	import InputSelect from '../inputs/InputSelect.svelte';
-
-	// Interim: one select that sets every label topic to the same face. Replaced by the per-topic
-	// font tree (phase 3 of the v6 migration).
+	import InputText from '../inputs/InputText.svelte';
 
 	let {
 		fonts = $bindable(),
 		defaults,
+		fontGroups,
 		fontFaces,
+		language,
+		disabled = false,
 	}: {
 		fonts: ResolvedFonts;
 		defaults: ResolvedFonts;
+		/** `osm.fontGroups` / `satellite.fontGroups`: which topics exist. */
+		fontGroups: FontGroupMap;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
+		/** `text.language`, to warn about faces without its letters. */
+		language: string;
+		disabled?: boolean;
 	} = $props();
 
-	const THEME_DEFAULT = '';
+	type Tree = Record<string, string | Record<string, string>>;
 
-	/** The face every topic uses, or `THEME_DEFAULT` when they differ. */
-	function uniformFace(tree: ResolvedFonts): string {
-		const faces: string[] = [];
-		const walk = (node: unknown) => {
-			if (typeof node === 'string') faces.push(node);
-			else if (node && typeof node === 'object') Object.values(node).forEach(walk);
-		};
-		walk(tree);
-		return faces.length > 0 && faces.every((face) => face === faces[0]) ? faces[0] : THEME_DEFAULT;
+	let groups = $derived(fontGroupNodes(fontGroups, defaults));
+	let expanded = $state<Record<string, boolean>>({});
+
+	const MIXED = 'Mixed';
+
+	function inUse(tree: ResolvedFonts): string[] {
+		return Object.values(tree).flatMap((node) =>
+			typeof node === 'string' ? [node] : Object.values(node)
+		);
 	}
 
-	let defaultFace = $derived(uniformFace(defaults));
-
-	function faceOptions(faces: FontFaceInfo[] | undefined): Record<string, string> {
-		const options: Record<string, string> = { 'Theme default': THEME_DEFAULT };
-		for (const face of faces ?? []) options[face.title] = face.id;
-		return options;
+	// A select only ever writes a face; `undefined` comes from its reset button and restores the
+	// defaults, which may mix faces.
+	function setAll(face: string | undefined) {
+		fonts = face === undefined ? structuredClone(defaults) : withFace(fonts, face);
+	}
+	function getGroup(key: string): string | undefined {
+		return uniformFace((fonts as Tree)[key]);
+	}
+	function setGroup(key: string, face: string | undefined) {
+		const tree = fonts as Tree;
+		tree[key] =
+			face === undefined ? structuredClone((defaults as Tree)[key]) : withFace(tree[key], face);
+	}
+	function groupModified(key: string): boolean {
+		return JSON.stringify((fonts as Tree)[key]) !== JSON.stringify((defaults as Tree)[key]);
+	}
+	function getTopic(group: string, topic: string): string {
+		return ((fonts as Tree)[group] as Record<string, string>)[topic];
+	}
+	function setTopic(group: string, topic: string, face: string | undefined) {
+		((fonts as Tree)[group] as Record<string, string>)[topic] = face ?? defaultTopic(group, topic);
+	}
+	function defaultTopic(group: string, topic: string): string {
+		return ((defaults as Tree)[group] as Record<string, string>)[topic];
 	}
 </script>
 
 {#await fontFaces then faces}
-	<InputSelect
-		label="Font"
-		bind:value={
-			() => uniformFace(fonts),
-			(id) =>
-				(fonts =
-					id === THEME_DEFAULT
-						? structuredClone(defaults)
-						: osm.resolveOptions({ text: { fonts: id } }).text.fonts)
-		}
-		defaultValue={defaultFace}
-		options={faceOptions(faces)}
-	/>
+	{#if faces}
+		{@const options = faceOptions(faces, [...inUse(fonts), ...inUse(defaults)])}
+		<InputSelect
+			label="All labels"
+			{disabled}
+			bind:value={() => uniformFace(fonts), setAll}
+			defaultValue={uniformFace(defaults)}
+			modified={JSON.stringify(fonts) !== JSON.stringify(defaults)}
+			{options}
+			placeholder={MIXED}
+			expanded={false}
+			warning={coverageWarning(faces, uniformFace(fonts), language)}
+		/>
+		{#each groups as group (group.key)}
+			{@const hasTopics = group.topics.length > 0}
+			<InputSelect
+				label={group.label}
+				{disabled}
+				bind:value={() => getGroup(group.key), (face) => setGroup(group.key, face)}
+				defaultValue={uniformFace((defaults as Tree)[group.key])}
+				modified={groupModified(group.key)}
+				{options}
+				placeholder={MIXED}
+				expanded={expanded[group.key] ?? false}
+				onToggle={hasTopics
+					? () => (expanded[group.key] = !(expanded[group.key] ?? false))
+					: undefined}
+				warning={expanded[group.key]
+					? undefined
+					: coverageWarning(faces, getGroup(group.key), language)}
+			/>
+			{#if hasTopics && expanded[group.key]}
+				<div class="nested">
+					{#each group.topics as topic (topic.key)}
+						<InputSelect
+							label={topic.label}
+							{disabled}
+							bind:value={
+								() => getTopic(group.key, topic.key), (face) => setTopic(group.key, topic.key, face)
+							}
+							defaultValue={defaultTopic(group.key, topic.key)}
+							{options}
+							warning={coverageWarning(faces, getTopic(group.key, topic.key), language)}
+						/>
+					{/each}
+				</div>
+			{/if}
+		{/each}
+	{:else}
+		<!-- The server publishes no list of faces: glyph names are typed in. -->
+		<InputText
+			label="All labels"
+			hint="A glyph name, e.g. noto_sans_regular"
+			{disabled}
+			bind:value={() => uniformFace(fonts), setAll}
+			defaultValue={uniformFace(defaults)}
+			modified={JSON.stringify(fonts) !== JSON.stringify(defaults)}
+			placeholder={MIXED}
+		/>
+		{#each groups as group (group.key)}
+			<InputText
+				label={group.label}
+				{disabled}
+				bind:value={() => getGroup(group.key), (face) => setGroup(group.key, face)}
+				defaultValue={uniformFace((defaults as Tree)[group.key])}
+				modified={groupModified(group.key)}
+				placeholder={MIXED}
+			/>
+		{/each}
+	{/if}
 {/await}

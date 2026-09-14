@@ -4,74 +4,46 @@ import { getMapStyle } from './helpers';
 test.beforeEach(async ({ page }) => {
 	await page.goto('/');
 	await page.locator('.maplibregl-versatiles-styler').waitFor({ state: 'attached' });
-	await page
-		.locator('.maplibregl-versatiles-styler .style-list label span:has-text("satellite")')
-		.waitFor({ state: 'attached' });
 });
 
-test('font selects load and show options', async ({ page }) => {
-	const fontsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:has-text("Fonts & text size"))'
-	);
-	await fontsDetails.locator('summary').click();
+function labelsSection(page: import('@playwright/test').Page) {
+	return page.locator('.maplibregl-versatiles-styler details:has(summary:has-text("Labels"))');
+}
 
-	const fontRegularSelect = fontsDetails.locator('select').first();
-	await expect(fontRegularSelect).toBeAttached({ timeout: 10_000 });
+test('language select offers local, browser and the tileset languages', async ({ page }) => {
+	const labels = labelsSection(page);
+	await labels.locator('summary').click();
 
-	const options = fontRegularSelect.locator('option');
-	expect(await options.count()).toBeGreaterThan(1);
+	const select = labels.locator('select');
+	await expect(select.locator('option[value="de"]')).toHaveText('Deutsch', { timeout: 10_000 });
+	await expect(select.locator('option').nth(0)).toHaveAttribute('value', 'local');
+	await expect(select.locator('option').nth(1)).toHaveAttribute('value', 'user');
+	// transliterations and regional variants are not offered
+	await expect(select.locator('option[value="int"], option[value="latin"]')).toHaveCount(0);
 });
 
-test('changing font updates map style text-font', async ({ page }) => {
-	const fontsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:has-text("Fonts & text size"))'
-	);
-	await fontsDetails.locator('summary').click();
+test('choosing a language changes the label field', async ({ page }) => {
+	const labels = labelsSection(page);
+	await labels.locator('summary').click();
 
-	const fontRegularSelect = fontsDetails.locator('select').first();
-	await expect(fontRegularSelect).toBeAttached({ timeout: 10_000 });
-
-	const styleBefore = await getMapStyle(page);
-
-	// Pick a different font (second option)
-	const secondOption = await fontRegularSelect.locator('option').nth(1).getAttribute('value');
-	await fontRegularSelect.selectOption(secondOption!);
-	await fontRegularSelect.dispatchEvent('change');
-
-	const styleAfter = await getMapStyle(page);
-
-	// Find symbol layers that have text-font in layout
-	const symbolLayersBefore = styleBefore.layers.filter(
-		(l) => l.type === 'symbol' && l.layout?.['text-font']
-	);
-	const symbolLayersAfter = styleAfter.layers.filter(
-		(l) => l.type === 'symbol' && l.layout?.['text-font']
-	);
-
-	expect(symbolLayersBefore.length).toBeGreaterThan(0);
-	expect(symbolLayersAfter.length).toBeGreaterThan(0);
-
-	// At least one symbol layer should have a different text-font
-	const fontChanged = symbolLayersAfter.some((layerAfter) => {
-		const layerBefore = symbolLayersBefore.find((l) => l.id === layerAfter.id);
-		if (!layerBefore) return true;
-		return (
-			JSON.stringify(layerAfter.layout?.['text-font']) !==
-			JSON.stringify(layerBefore.layout?.['text-font'])
+	const textField = async () => {
+		const style = await getMapStyle(page);
+		return JSON.stringify(
+			style.layers.find((l) => l.id === 'label-place-city')?.layout?.['text-field']
 		);
-	});
-	expect(fontChanged).toBe(true);
+	};
+	const before = await textField();
+	await labels.locator('select').selectOption('de');
+	await expect.poll(textField).not.toEqual(before);
+	expect(await textField()).toContain('name_de');
 });
 
-test('language select loads with entries', async ({ page }) => {
-	const labelsDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:has-text("Labels"))'
-	);
-	await labelsDetails.locator('summary').click();
+test('"Only this language" is disabled for local names', async ({ page }) => {
+	const labels = labelsSection(page);
+	await labels.locator('summary').click();
 
-	const languageSelect = labelsDetails.locator('select');
-	await expect(languageSelect).toHaveCount(1, { timeout: 10_000 });
-
-	const options = languageSelect.locator('option');
-	expect(await options.count()).toBeGreaterThan(1);
+	const strict = labels.locator('input[type="checkbox"]');
+	await expect(strict).toBeDisabled();
+	await labels.locator('select').selectOption('en');
+	await expect(strict).toBeEnabled();
 });
