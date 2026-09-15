@@ -547,7 +547,7 @@
 	.font-picker {
 		position: fixed;
 		z-index: 10;
-		width: 320px;
+		width: 340px;
 		display: flex;
 		flex-direction: column;
 		box-sizing: border-box;
@@ -557,6 +557,12 @@
 		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 		font-size: 12px;
 		overflow: hidden;
+
+		button {
+			font: inherit;
+			color: inherit;
+			cursor: pointer;
+		}
 
 		.font-picker-header {
 			display: flex;
@@ -569,11 +575,9 @@
 		.font-picker-close {
 			border: none;
 			background: none;
-			color: inherit;
 			font-size: 1.4em;
 			line-height: 1;
 			padding: 0 4px;
-			cursor: pointer;
 			opacity: 0.6;
 
 			&:hover {
@@ -581,8 +585,15 @@
 			}
 		}
 
-		.font-picker-search {
+		.font-picker-tools {
+			display: flex;
+			gap: 6px;
 			margin: 0 8px 6px;
+		}
+
+		.font-picker-search {
+			flex: 1;
+			min-width: 0;
 			padding: 0.35em 0.5em;
 			border: 1px solid var(--border-color);
 			border-radius: 0.2em;
@@ -596,6 +607,62 @@
 			}
 		}
 
+		.font-picker-filter-button {
+			flex: 0 0 auto;
+			padding: 0.35em 0.6em;
+			border: 1px solid var(--border-color);
+			border-radius: 0.2em;
+			background: var(--bg-color);
+
+			&.active {
+				border-color: var(--primary-color);
+				background: var(--primary-color);
+				color: var(--bg-color);
+			}
+		}
+
+		.font-picker-filter {
+			margin: 0 8px 6px;
+			padding: 6px 8px;
+			border: 1px solid var(--border-color);
+			border-radius: 0.2em;
+
+			p {
+				margin: 0 0 4px;
+				opacity: 0.7;
+			}
+
+			.font-picker-filter-options {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 2px 8px;
+				max-height: 9em;
+				overflow-y: auto;
+
+				label {
+					display: flex;
+					align-items: center;
+					gap: 4px;
+					cursor: pointer;
+				}
+			}
+
+			.font-picker-filter-label {
+				font-size: 0.85em;
+				opacity: 0.6;
+			}
+		}
+
+		.font-picker-reset,
+		.font-picker-hidden button {
+			margin-top: 4px;
+			padding: 0;
+			border: none;
+			background: none;
+			color: var(--primary-color);
+			text-decoration: underline;
+		}
+
 		.font-picker-list {
 			margin: 0;
 			padding: 0 0 6px;
@@ -604,7 +671,7 @@
 			min-height: 0;
 		}
 
-		.font-picker-family {
+		.font-picker-heading {
 			position: sticky;
 			top: 0;
 			z-index: 1;
@@ -626,7 +693,8 @@
 			cursor: pointer;
 			border-left: 3px solid transparent;
 
-			&.active {
+			&.active,
+			&:hover {
 				background: var(--btn-color);
 			}
 
@@ -634,28 +702,61 @@
 				border-left-color: var(--primary-color);
 			}
 
-			&:hover {
-				background: var(--btn-color);
-			}
-
 			.font-preview {
 				height: 22px;
 			}
 		}
 
-		.font-picker-name {
+		.font-picker-caption {
 			font-size: 0.85em;
-			opacity: 0.65;
+			color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
 		}
 
 		.font-picker-warning {
+			margin-left: 4px;
 			color: #b45309;
-			opacity: 1;
 		}
 
-		.font-picker-empty {
+		.font-picker-styles {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			padding: 2px 8px 8px 11px;
+			border-left: 3px solid var(--primary-color);
+			background: var(--btn-color);
+		}
+
+		.font-picker-style-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 3px;
+
+			button {
+				padding: 2px 6px;
+				border: 1px solid var(--border-color);
+				border-radius: 0.2em;
+				background: var(--bg-color);
+				font-size: 0.9em;
+
+				&[aria-pressed='true'] {
+					border-color: var(--primary-color);
+					background: var(--primary-color);
+					color: var(--bg-color);
+				}
+			}
+		}
+
+		.font-picker-italic {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			cursor: pointer;
+		}
+
+		.font-picker-empty,
+		.font-picker-hidden {
 			padding: 8px;
-			opacity: 0.6;
+			color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
 		}
 	}
 }

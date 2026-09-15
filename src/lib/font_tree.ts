@@ -97,28 +97,6 @@ export function pickerFaces(
 	return [...faces, ...others];
 }
 
-/** The faces whose title contains every word of `query`, ignoring case. */
-export function filterFaces(faces: readonly FontFaceInfo[], query: string): FontFaceInfo[] {
-	const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-	return faces.filter((face) => {
-		const title = face.title.toLowerCase();
-		return words.every((word) => title.includes(word));
-	});
-}
-
-/** Consecutive faces of the same family, in order. */
-export function groupFacesByFamily(
-	faces: readonly FontFaceInfo[]
-): { name: string; faces: FontFaceInfo[] }[] {
-	const families: { name: string; faces: FontFaceInfo[] }[] = [];
-	for (const face of faces) {
-		const last = families[families.length - 1];
-		if (last && last.name === face.family) last.faces.push(face);
-		else families.push({ name: face.family, faces: [face] });
-	}
-	return families;
-}
-
 /** Preview texts: a label of the kind the font is for, in Latin letters with some accents. */
 const FONT_SAMPLES: Record<string, string> = {
 	all: 'Hamburg · Hauptstraße 12',

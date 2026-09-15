@@ -1,6 +1,24 @@
 <script lang="ts">
 	import type { FontFaceInfo } from '@versatiles/style';
-	import { coverageWarning, filterFaces, groupFacesByFamily } from '../../font_tree';
+	import {
+		closestFace,
+		coversLanguages,
+		filterFamiliesByLanguages,
+		filterLanguageChoices,
+		fontFamilies,
+		matchFace,
+		regularFace,
+		styleChoices,
+		styleOf,
+		weightLabel,
+		widthLabel,
+		type FontFamily,
+		type FontStyle,
+		type FontUse,
+	} from '../../font_families';
+	import { labelLanguage } from '../../font_tree';
+	import { languageTitle } from '../../languages';
+	import { useFontPickerState } from '../../font_picker_state.svelte';
 	import FontPreview from './FontPreview.svelte';
 
 	let {
@@ -10,6 +28,8 @@
 		origin,
 		sample,
 		language,
+		languages,
+		usage,
 		anchor,
 		onselect,
 		onclose,
@@ -20,40 +40,100 @@
 		/** The current face, `undefined` when several are in use. */
 		value: string | undefined;
 		origin: string;
-		/** The text every face is previewed with. */
+		/** The text faces are previewed with. */
 		sample: string;
-		/** `text.language`, to mark faces without its letters. */
+		/** `text.language`, to mark families without its letters and to suggest it in the filter. */
 		language: string;
+		/** The languages of the tileset, as `{ title: code }`, offered in the language filter. */
+		languages: Record<string, string>;
+		/** The faces in use in this style, with the rows that use them. */
+		usage: FontUse[];
 		/** The button that opened the picker: it is placed next to it, and clicks on it do not close it. */
 		anchor: HTMLElement;
-		onselect: (faceId: string) => void;
+		/** Called with a face; `close` tells whether the picker should close. */
+		onselect: (faceId: string, close: boolean) => void;
 		onclose: () => void;
 	} = $props();
 
-	const uid = $props.id();
-	let query = $state('');
-	let filtered = $derived(filterFaces(faces, query));
-	let families = $derived(groupFacesByFamily(filtered));
-	let activeId = $state<string | undefined>();
-	let list = $state<HTMLElement>();
-	let position = $state({ left: 0, top: 0, maxHeight: 480 });
+	type Row =
+		| { key: string; kind: 'used'; face: FontFaceInfo }
+		| { key: string; kind: 'family'; family: FontFamily; face: FontFaceInfo };
 
-	// Keep the active entry among the matches: the current face, else the first match.
+	const uid = $props.id();
+	const shared = useFontPickerState();
+
+	let query = $state('');
+	let searching = $derived(query.trim() !== '');
+	let filterOpen = $state(false);
+	let current = $derived(faces.find((face) => face.id === value));
+	let style = $derived(styleOf(current));
+	let labelCode = $derived(labelLanguage(language));
+
+	let languageFilter = $derived(filterFamiliesByLanguages(fontFamilies(faces), shared.languages));
+	/** Families with the face their row previews: the search match closest to the style, or the regular face. */
+	let families = $derived(
+		languageFilter.families.flatMap((family) => {
+			const face = searching ? matchFace(family, query, style) : regularFace(family);
+			return face ? [{ family, face }] : [];
+		})
+	);
+	let used = $derived(
+		usage.flatMap((use) => {
+			const face = faces.find((f) => f.id === use.faceId);
+			if (!face) return [];
+			if (searching && !face.title.toLowerCase().includes(query.trim().toLowerCase())) return [];
+			return [{ face, labels: use.labels }];
+		})
+	);
+	let rows: Row[] = $derived([
+		...used.map(({ face }) => ({ key: `used:${face.id}`, kind: 'used' as const, face })),
+		...families.map(({ family, face }) => ({
+			key: `family:${family.name}`,
+			kind: 'family' as const,
+			family,
+			face,
+		})),
+	]);
+
+	let filterLanguages = $derived(filterLanguageChoices(Object.values(languages), labelCode));
+
+	let expanded = $state<string | undefined>();
+	let activeKey = $state<string | undefined>();
+	let list = $state<HTMLElement>();
+	let position = $state({ left: 0, top: 0, maxHeight: 520 });
+
+	// Open on the current family, with its styles shown.
+	$effect.pre(() => {
+		if (expanded === undefined && current) expanded = current.family;
+	});
+
+	// Keep the active row among the rows: the current family, else the first row.
 	$effect(() => {
-		const ids = filtered.map((face) => face.id);
-		if (activeId === undefined || !ids.includes(activeId)) {
-			activeId = value !== undefined && ids.includes(value) ? value : ids[0];
+		const keys = rows.map((row) => row.key);
+		if (activeKey === undefined || !keys.includes(activeKey)) {
+			const currentKey = current ? `family:${current.family}` : undefined;
+			activeKey = currentKey && keys.includes(currentKey) ? currentKey : keys[0];
 		}
 	});
 
-	// Scroll the active entry into view: the current face to the middle on opening, then just enough.
+	// Scroll the active row into view: to the middle on opening, then just enough.
 	let scrolled = false;
 	$effect(() => {
-		if (!activeId || !list) return;
-		const entry = list.querySelector(`[data-face="${CSS.escape(activeId)}"]`);
-		entry?.scrollIntoView({ block: scrolled ? 'nearest' : 'center' });
+		if (!activeKey || !list) return;
+		const row = list.querySelector(`[data-row="${CSS.escape(activeKey)}"]`);
+		row?.scrollIntoView({ block: scrolled ? 'nearest' : 'center' });
 		scrolled = true;
 	});
+
+	/**
+	 * Moves the picker to the map container. Inside the control it would be clipped by the sidebar:
+	 * MapLibre gives controls a `transform`, which makes `position: fixed` relative to the control. The
+	 * wrapper carries the control's class, so its styles still apply.
+	 */
+	function portal(layer: HTMLElement) {
+		(anchor.closest('.maplibregl-map') ?? document.body).appendChild(layer);
+		return () => layer.remove();
+	}
 
 	/** Next to the sidebar, level with the button, inside the window; closes on clicks elsewhere. */
 	function place(popup: HTMLElement) {
@@ -62,7 +142,7 @@
 			const pane = anchor.closest('.maplibregl-pane') ?? anchor;
 			const paneRect = pane.getBoundingClientRect();
 			const anchorRect = anchor.getBoundingClientRect();
-			const maxHeight = Math.min(480, window.innerHeight - 2 * margin);
+			const maxHeight = Math.min(520, window.innerHeight - 2 * margin);
 			const height = Math.min(popup.offsetHeight, maxHeight);
 			let left = paneRect.right + margin;
 			if (left + popup.offsetWidth > window.innerWidth - margin) {
@@ -78,25 +158,24 @@
 			const target = event.target as Node;
 			if (!popup.contains(target) && !anchor.contains(target)) onclose();
 		};
+		// Escape closes the picker wherever its focus is, e.g. on a style button.
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && popup.contains(document.activeElement)) {
+				event.preventDefault();
+				onclose();
+			}
+		};
 		update();
 		window.addEventListener('resize', update);
 		window.addEventListener('scroll', update, true);
 		document.addEventListener('pointerdown', closeOutside, true);
+		document.addEventListener('keydown', closeOnEscape);
 		return () => {
+			document.removeEventListener('keydown', closeOnEscape);
 			window.removeEventListener('resize', update);
 			window.removeEventListener('scroll', update, true);
 			document.removeEventListener('pointerdown', closeOutside, true);
 		};
-	}
-
-	/**
-	 * Moves the picker to the map container. Inside the control it would be clipped by the sidebar: MapLibre
-	 * gives controls a `transform`, which makes `position: fixed` relative to the control. The wrapper
-	 * carries the control's class, so its styles still apply.
-	 */
-	function portal(layer: HTMLElement) {
-		(anchor.closest('.maplibregl-map') ?? document.body).appendChild(layer);
-		return () => layer.remove();
 	}
 
 	function focus(input: HTMLInputElement) {
@@ -104,23 +183,47 @@
 		queueMicrotask(() => input.focus());
 	}
 
+	/** Picks a family: the search match, or the face closest to the current style. */
+	function pickFamily(family: FontFamily, match: FontFaceInfo, close: boolean) {
+		expanded = family.name;
+		activeKey = `family:${family.name}`;
+		onselect((searching ? match : closestFace(family, style)).id, close);
+	}
+
+	function pickStyle(family: FontFamily, base: FontFaceInfo, change: Partial<FontStyle>) {
+		onselect(closestFace(family, { ...styleOf(base), ...change }).id, false);
+	}
+
 	function move(offset: number) {
-		if (filtered.length === 0) return;
-		const index = filtered.findIndex((face) => face.id === activeId);
-		const next = Math.min(filtered.length - 1, Math.max(0, index + offset));
-		activeId = filtered[next].id;
+		if (rows.length === 0) return;
+		const index = rows.findIndex((row) => row.key === activeKey);
+		activeKey = rows[Math.min(rows.length - 1, Math.max(0, index + offset))].key;
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
+		const row = rows.find((r) => r.key === activeKey);
 		if (e.key === 'ArrowDown') move(1);
 		else if (e.key === 'ArrowUp') move(-1);
 		else if (e.key === 'PageDown') move(8);
 		else if (e.key === 'PageUp') move(-8);
-		else if (e.key === 'Enter' && activeId) onselect(activeId);
+		else if (e.key === 'ArrowRight' && row?.kind === 'family') expanded = row.family.name;
+		else if (e.key === 'ArrowLeft' && row?.kind === 'family') expanded = undefined;
+		else if (e.key === 'Enter' && row?.kind === 'used') onselect(row.face.id, true);
+		else if (e.key === 'Enter' && row?.kind === 'family') pickFamily(row.family, row.face, true);
 		else if (e.key === 'Escape') onclose();
 		else return;
 		e.preventDefault();
 		e.stopPropagation();
+	}
+
+	/** A note for a family row: unknown coverage, or letters of the label language missing. */
+	function familyNote(family: FontFamily): string | undefined {
+		if (family.faces.every((face) => face.codeblocks === '')) return 'coverage unknown';
+		if (labelCode === 'local') return undefined;
+		if (coversLanguages(regularFace(family), [labelCode]) === false) {
+			return `lacks letters for ${languageTitle(labelCode) ?? labelCode}`;
+		}
+		return undefined;
 	}
 </script>
 
@@ -139,47 +242,161 @@
 			<button type="button" class="font-picker-close" aria-label="Close" onclick={onclose}>×</button
 			>
 		</div>
-		<input
-			class="font-picker-search"
-			type="search"
-			placeholder="Search fonts"
-			aria-label="Search fonts"
-			role="combobox"
-			aria-expanded="true"
-			aria-controls="{uid}-list"
-			aria-activedescendant={activeId ? `${uid}-${activeId}` : undefined}
-			bind:value={query}
-			onkeydown={handleKeydown}
-			{@attach focus}
-		/>
+		<div class="font-picker-tools">
+			<input
+				class="font-picker-search"
+				type="search"
+				placeholder="Search fonts"
+				aria-label="Search fonts"
+				role="combobox"
+				aria-expanded="true"
+				aria-controls="{uid}-list"
+				aria-activedescendant={activeKey ? `${uid}-${activeKey}` : undefined}
+				bind:value={query}
+				onkeydown={handleKeydown}
+				{@attach focus}
+			/>
+			<button
+				type="button"
+				class="font-picker-filter-button"
+				class:active={shared.languages.length > 0}
+				aria-expanded={filterOpen}
+				aria-controls="{uid}-filter"
+				onclick={() => (filterOpen = !filterOpen)}
+				>Languages{#if shared.languages.length > 0}&nbsp;({shared.languages.length}){/if}</button
+			>
+		</div>
+		{#if filterOpen}
+			<div
+				class="font-picker-filter"
+				id="{uid}-filter"
+				role="group"
+				aria-label="Show only fonts with the letters of"
+			>
+				<p class="font-picker-filter-hint">Show only fonts with the letters of:</p>
+				<div class="font-picker-filter-options">
+					{#each filterLanguages as { code, name } (code)}
+						<label>
+							<input
+								type="checkbox"
+								checked={shared.languages.includes(code)}
+								onchange={() => shared.toggleLanguage(code)}
+							/>
+							{name}
+							{#if code === labelCode}<span class="font-picker-filter-label">label language</span
+								>{/if}
+						</label>
+					{/each}
+				</div>
+				{#if shared.languages.length > 0}
+					<button type="button" class="font-picker-reset" onclick={() => shared.resetLanguages()}
+						>Show all fonts</button
+					>
+				{/if}
+			</div>
+		{/if}
 		<ul class="font-picker-list" id="{uid}-list" role="listbox" aria-label="Fonts" bind:this={list}>
-			{#each families as family (family.name)}
-				<li class="font-picker-family" role="presentation">{family.name}</li>
-				{#each family.faces as face (face.id)}
-					{@const warning = coverageWarning(faces, face.id, language)}
+			{#if used.length > 0}
+				<li class="font-picker-heading" role="presentation">Used in this style</li>
+				{#each used as { face, labels } (face.id)}
+					{@const key = `used:${face.id}`}
 					<li
-						id="{uid}-{face.id}"
-						class="font-picker-option"
-						class:active={face.id === activeId}
+						id="{uid}-{key}"
+						class="font-picker-option font-picker-used"
+						class:active={key === activeKey}
 						class:selected={face.id === value}
 						role="option"
 						aria-selected={face.id === value}
-						aria-label={face.title}
+						aria-label="{face.title}, used by {labels.join(', ')}"
 						tabindex="-1"
+						data-row={key}
 						data-face={face.id}
-						onclick={() => onselect(face.id)}
-						onkeydown={(e) => e.key === 'Enter' && onselect(face.id)}
+						onclick={() => onselect(face.id, true)}
+						onkeydown={(e) => e.key === 'Enter' && onselect(face.id, true)}
 					>
-						<FontPreview {origin} faceId={face.id} text={sample} size={18} lazy />
-						<span class="font-picker-name">
-							{face.title}
-							{#if warning}<span class="font-picker-warning" title={warning}>⚠</span>{/if}
-						</span>
+						<FontPreview {origin} faceId={face.id} text={sample} size={16} lazy />
+						<span class="font-picker-caption">{face.title} · {labels.join(', ')}</span>
 					</li>
 				{/each}
-			{:else}
-				<li class="font-picker-empty" role="presentation">No font matches “{query}”.</li>
+				<li class="font-picker-heading" role="presentation">All fonts</li>
+			{/if}
+			{#each families as { family, face } (family.name)}
+				{@const key = `family:${family.name}`}
+				{@const isOpen = expanded === family.name}
+				{@const note = familyNote(family)}
+				<li
+					id="{uid}-{key}"
+					class="font-picker-option font-picker-family-row"
+					class:active={key === activeKey}
+					class:selected={current?.family === family.name}
+					role="option"
+					aria-selected={current?.family === family.name}
+					aria-label={family.name}
+					tabindex="-1"
+					data-row={key}
+					data-family={family.name}
+					onclick={() => pickFamily(family, face, false)}
+					onkeydown={(e) => e.key === 'Enter' && pickFamily(family, face, true)}
+				>
+					<FontPreview {origin} faceId={face.id} text={sample} size={18} lazy />
+					<span class="font-picker-caption">
+						{family.name}{#if searching}&nbsp;· {face.title}{/if} · {family.faces.length}
+						{family.faces.length === 1 ? 'style' : 'styles'}
+						{#if note}<span class="font-picker-warning">⚠ {note}</span>{/if}
+					</span>
+				</li>
+				{#if isOpen}
+					{@const base = current?.family === family.name ? current : closestFace(family, style)}
+					{@const choices = styleChoices(family, styleOf(base))}
+					<li class="font-picker-styles" role="presentation">
+						{#if choices.widths.length > 1}
+							<div class="font-picker-style-row" role="group" aria-label="Width">
+								{#each choices.widths as width (width)}
+									<button
+										type="button"
+										aria-pressed={base.width === width}
+										onclick={() => pickStyle(family, base, { width })}>{widthLabel(width)}</button
+									>
+								{/each}
+							</div>
+						{/if}
+						<div class="font-picker-style-row" role="group" aria-label="Weight">
+							{#each choices.weights as weight (weight)}
+								<button
+									type="button"
+									aria-pressed={base.weight === weight}
+									title={String(weight)}
+									onclick={() => pickStyle(family, base, { weight })}>{weightLabel(weight)}</button
+								>
+							{/each}
+						</div>
+						{#if choices.italic}
+							<label class="font-picker-italic">
+								<input
+									type="checkbox"
+									checked={base.italic}
+									onchange={(e) => pickStyle(family, base, { italic: e.currentTarget.checked })}
+								/>
+								Italic
+							</label>
+						{/if}
+					</li>
+				{/if}
 			{/each}
+			{#if families.length === 0}
+				<li class="font-picker-empty" role="presentation">
+					{searching
+						? `No font matches “${query}”.`
+						: 'No font has the letters of all selected languages.'}
+				</li>
+			{/if}
+			{#if languageFilter.hidden > 0}
+				<li class="font-picker-hidden" role="presentation">
+					{languageFilter.hidden}
+					{languageFilter.hidden === 1 ? 'family' : 'families'} hidden by the language filter ·
+					<button type="button" onclick={() => shared.resetLanguages()}>Show all</button>
+				</li>
+			{/if}
 		</ul>
 	</div>
 </div>

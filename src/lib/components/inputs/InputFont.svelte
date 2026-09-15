@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { FontFaceInfo } from '@versatiles/style';
+	import type { FontUse } from '../../font_families';
+	import { useFontPickerState } from '../../font_picker_state.svelte';
 	import FontPicker from './FontPicker.svelte';
 	import FontPreview from './FontPreview.svelte';
 	import InputRow from './InputRow.svelte';
@@ -15,6 +17,8 @@
 		origin,
 		sample,
 		language,
+		languages,
+		usage,
 		expanded,
 		onToggle,
 		warning,
@@ -32,19 +36,41 @@
 		/** The preview text in the picker. */
 		sample: string;
 		language: string;
+		/** The tileset's languages, `{ title: code }`, for the picker's language filter. */
+		languages: Record<string, string>;
+		/** The faces in use in this style, for the picker's "Used in this style". */
+		usage: FontUse[];
 		expanded?: boolean;
 		onToggle?: () => void;
 		warning?: string;
 	} = $props();
+
+	const shared = useFontPickerState();
+	const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+	const shortcut = isMac ? '⌘' : 'Ctrl+';
 
 	let open = $state(false);
 	let trigger = $state<HTMLButtonElement>();
 	let current = $derived(faces.find((face) => face.id === value));
 	let isModified = $derived(modified ?? value !== defaultValue);
 
-	function select(faceId: string) {
+	function select(faceId: string, closePicker: boolean) {
 		value = faceId;
-		close();
+		if (closePicker) close();
+	}
+
+	/** Ctrl/Cmd+C copies the face of this row, Ctrl/Cmd+V pastes a copied face into it. */
+	function handleKeydown(e: KeyboardEvent) {
+		if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+		const key = e.key.toLowerCase();
+		if (key === 'c' && value !== undefined) {
+			shared.clipboard = value;
+		} else if (key === 'v' && shared.clipboard !== undefined && !disabled) {
+			value = shared.clipboard;
+		} else {
+			return;
+		}
+		e.preventDefault();
 	}
 
 	function close() {
@@ -77,8 +103,10 @@
 			aria-haspopup="dialog"
 			aria-expanded={open}
 			aria-label="{label}: {current?.title ?? value ?? 'Mixed'}"
+			title="Choose a font · {shortcut}C copies it, {shortcut}V pastes a copied font"
 			bind:this={trigger}
 			onclick={() => (open = !open)}
+			onkeydown={handleKeydown}
 		>
 			{#if value === undefined}
 				<span class="font-button-mixed">Mixed</span>
@@ -95,6 +123,8 @@
 				{origin}
 				{sample}
 				{language}
+				{languages}
+				{usage}
 				anchor={trigger}
 				onselect={select}
 				onclose={close}

@@ -6,8 +6,6 @@ import {
 	uniformFace,
 	withFace,
 	pickerFaces,
-	filterFaces,
-	groupFacesByFamily,
 	fontSample,
 	labelLanguage,
 	coverageWarning,
@@ -93,31 +91,6 @@ describe('pickerFaces', () => {
 	it('does not warn about letters of faces it knows nothing about', () => {
 		const [, other] = pickerFaces(faces, ['my_font']);
 		expect(coverageWarning([other], 'my_font', 'ar')).toBeUndefined();
-	});
-});
-
-describe('filterFaces and groupFacesByFamily', () => {
-	const faces = [
-		face('fira_sans_regular', 'Fira Sans', 'Fira Sans Regular'),
-		face('fira_sans_bold_italic', 'Fira Sans', 'Fira Sans Bold Italic'),
-		face('noto_sans_bold', 'Noto Sans', 'Noto Sans Bold'),
-	];
-
-	it('matches every word of the query, ignoring case and order', () => {
-		expect(filterFaces(faces, '').length).toBe(3);
-		expect(filterFaces(faces, 'BOLD').map((f) => f.id)).toEqual([
-			'fira_sans_bold_italic',
-			'noto_sans_bold',
-		]);
-		expect(filterFaces(faces, 'italic fira').map((f) => f.id)).toEqual(['fira_sans_bold_italic']);
-		expect(filterFaces(faces, 'lato')).toEqual([]);
-	});
-
-	it('groups consecutive faces by family', () => {
-		expect(groupFacesByFamily(faces).map((g) => [g.name, g.faces.length])).toEqual([
-			['Fira Sans', 2],
-			['Noto Sans', 1],
-		]);
 	});
 });
 

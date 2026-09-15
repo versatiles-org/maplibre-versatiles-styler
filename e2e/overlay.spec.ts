@@ -94,16 +94,16 @@ test('overlay fonts default to bold and can be changed', async ({ page }) => {
 	await expect(allLabels).toHaveAccessibleName('All labels: Noto Sans Bold', { timeout: 10_000 });
 
 	await allLabels.click();
-	await page
-		.getByRole('dialog', { name: 'Font for All labels' })
-		.getByRole('option', { name: 'Fira Sans Regular', exact: true })
-		.click();
+	const dialog = page.getByRole('dialog', { name: 'Font for All labels' });
+	// The overlay's bold style is kept when switching family
+	await dialog.getByRole('option', { name: 'Fira Sans', exact: true }).click();
+	await dialog.getByRole('button', { name: 'Close' }).click();
 	await expect
 		.poll(async () => (await layer(page, 'label-place-city'))?.layout?.['text-font'])
-		.toEqual(['fira_sans_regular']);
+		.toEqual(['fira_sans_bold']);
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ osmOverlay: { text: { fonts: 'fira_sans_regular' } } });
+		.toEqual({ osmOverlay: { text: { fonts: 'fira_sans_bold' } } });
 });
 
 test('overlay layers only list what the overlay draws', async ({ page }) => {

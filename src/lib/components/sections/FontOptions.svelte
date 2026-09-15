@@ -8,6 +8,7 @@
 		uniformFace,
 		withFace,
 	} from '../../font_tree';
+	import { fontUsage } from '../../font_families';
 	import InputFont from '../inputs/InputFont.svelte';
 	import InputText from '../inputs/InputText.svelte';
 
@@ -18,6 +19,7 @@
 		fontFaces,
 		origin,
 		language,
+		languages,
 		disabled = false,
 	}: {
 		fonts: ResolvedFonts;
@@ -29,6 +31,8 @@
 		origin: string;
 		/** `text.language`, to warn about faces without its letters. */
 		language: string;
+		/** The tileset's languages, `{ title: code }`, for the font picker's language filter. */
+		languages: Record<string, string>;
 		disabled?: boolean;
 	} = $props();
 
@@ -36,6 +40,7 @@
 
 	let groups = $derived(fontGroupNodes(fontGroups, defaults));
 	let expanded = $state<Record<string, boolean>>({});
+	let usage = $derived(fontUsage(fonts, groups));
 
 	const MIXED = 'Mixed';
 
@@ -85,6 +90,8 @@
 			{origin}
 			sample={fontSample('all')}
 			{language}
+			{languages}
+			{usage}
 			expanded={false}
 			warning={coverageWarning(faces, uniformFace(fonts), language)}
 		/>
@@ -100,6 +107,8 @@
 				{origin}
 				sample={fontSample(group.key)}
 				{language}
+				{languages}
+				{usage}
 				expanded={expanded[group.key] ?? false}
 				onToggle={hasTopics
 					? () => (expanded[group.key] = !(expanded[group.key] ?? false))
@@ -122,6 +131,8 @@
 							{origin}
 							sample={fontSample(`${group.key}.${topic.key}`)}
 							{language}
+							{languages}
+							{usage}
 							warning={coverageWarning(faces, getTopic(group.key, topic.key), language)}
 						/>
 					{/each}

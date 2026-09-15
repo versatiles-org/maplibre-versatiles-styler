@@ -89,6 +89,7 @@
 		defaults={defaults.text.fonts}
 		fontGroups={osm.fontGroups}
 		{fontFaces}
+		{languages}
 		{origin}
 		language={options.text.language}
 	/>

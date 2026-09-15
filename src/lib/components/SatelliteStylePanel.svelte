@@ -138,6 +138,7 @@
 			defaults={overlay.text.fonts}
 			fontGroups={satellite.fontGroups}
 			{fontFaces}
+			{languages}
 			{origin}
 			language={options.osmOverlay.text.language}
 			disabled={!overlayAvailable}
