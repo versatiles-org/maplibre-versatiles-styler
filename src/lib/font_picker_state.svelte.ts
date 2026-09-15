@@ -17,6 +17,10 @@ export class FontPickerState {
 			: inScriptOrder([...this.scripts, code]);
 	}
 
+	setScripts(codes: readonly string[]): void {
+		this.scripts = inScriptOrder(codes.filter((code, i) => codes.indexOf(code) === i));
+	}
+
 	clearScripts(): void {
 		this.scripts = [];
 	}

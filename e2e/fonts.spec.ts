@@ -259,16 +259,17 @@ test.describe('reusing fonts', () => {
 const BLOCKS = { Latn: '0-2F', Grek: '37-3F', Cyrl: '40-4F', Hebr: '5D', Deva: '91' };
 const FIXTURE_SCRIPTS: Record<string, (keyof typeof BLOCKS)[]> = {
 	'Fira Sans': ['Latn', 'Grek', 'Cyrl'],
-	'Noto Sans': ['Latn', 'Grek', 'Cyrl', 'Hebr', 'Deva'],
+	'Noto Sans': ['Latn', 'Grek', 'Cyrl', 'Hebr'],
 	'Open Sans': ['Latn', 'Grek', 'Cyrl', 'Hebr'],
 	Roboto: ['Latn', 'Grek', 'Cyrl'],
 	'Libre Baskerville': ['Latn'],
 	Lato: ['Latn'],
+	Nunito: ['Latn', 'Cyrl', 'Deva'],
 };
 
 /**
  * Serves the live `font_families.json` with the coverage above: 12 families write Latin, 10 Cyrillic
- * (unlisted families: Latin and Cyrillic), 4 Greek, 2 Hebrew, 1 Devanagari.
+ * (unlisted families: Latin and Cyrillic), 4 Greek, 2 Hebrew, 1 Devanagari — and none all five.
  */
 async function useCoverageFixture(page: Page) {
 	await page.route('**/assets/glyphs/font_families.json', async (route) => {
@@ -335,14 +336,18 @@ test.describe('script filter', () => {
 		await expect(familyOption(dialog, 'Libre Baskerville')).toHaveCount(0);
 		await expect(familyOption(dialog, 'Fira Sans')).toHaveCount(1);
 		await expect(chip(dialog, 'Hebrew')).toHaveText('Hebrew2');
-		await expect(chip(dialog, 'Devanagari')).toHaveText('Devanagari1');
+		await expect(chip(dialog, 'Devanagari')).toHaveText('Devanagari0');
+		await expect(chip(dialog, 'Devanagari')).toHaveClass(/muted/);
 		await expect(chip(dialog, 'Cyrillic')).toHaveText('Cyrillic4');
 		await expect(dialog.locator('.font-picker-hidden')).toContainText('8 families hidden');
 		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek');
 
-		await chip(dialog, 'Devanagari').click();
-		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek, Devanagari');
-		await expect(dialog.getByRole('option', { name: /Sans$/ })).toHaveText([/Noto Sans/]);
+		await chip(dialog, 'Hebrew').click();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek, Hebrew');
+		await expect(dialog.getByRole('option', { name: /Sans$/ })).toHaveText([
+			/Noto Sans/,
+			/Open Sans/,
+		]);
 
 		// Escape closes the panel first, then the picker
 		await page.keyboard.press('Escape');
@@ -353,12 +358,90 @@ test.describe('script filter', () => {
 
 		await applyTo(page, 'water');
 		dialog = await openPicker(page, 'Water');
-		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek, Devanagari');
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek, Hebrew');
 		await expect(familyOption(dialog, 'Fira Sans')).toHaveCount(0);
 
 		await dialog.locator('.font-picker-hidden').getByRole('button', { name: 'Clear' }).click();
 		await expect(familyOption(dialog, 'Fira Sans')).toHaveCount(1);
 		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts');
+	});
+
+	test('a region checkbox selects the scripts of a region; a partly selected region is mixed', async ({
+		page,
+	}) => {
+		await useCoverageFixture(page);
+		await openFonts(page);
+		const dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		const europe = dialog.getByRole('checkbox', { name: 'Europe' });
+
+		await europe.click();
+		await expect(europe).toBeChecked();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: 3');
+		for (const script of ['Latin', 'Greek', 'Cyrillic']) {
+			await expect(chip(dialog, script)).toHaveAttribute('aria-pressed', 'true');
+		}
+
+		await chip(dialog, 'Greek').click();
+		await expect(europe).toBeChecked({ indeterminate: true });
+		await europe.click();
+		await expect(europe).toBeChecked();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: 3');
+		await europe.click();
+		await expect(europe).not.toBeChecked();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts');
+
+		// only the scripts some font can write
+		await dialog.getByRole('checkbox', { name: 'South Asia' }).click();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Devanagari');
+	});
+
+	test('"All available" offers the closest families when no font writes every script', async ({
+		page,
+	}) => {
+		await useCoverageFixture(page);
+		await openFonts(page);
+		const dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		const allAvailable = dialog.getByRole('button', { name: 'All available' });
+
+		await allAvailable.click();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: 5');
+		await expect(allAvailable).toBeDisabled();
+		await expect(dialog.locator('.font-picker-heading').last()).toHaveText(
+			'No font writes all 5 scripts. Closest:'
+		);
+		const badges = dialog.locator('.font-picker-family-row .font-picker-badge');
+		await expect(badges.nth(0)).toHaveText('4 of 5 — missing: Devanagari');
+		await expect(dialog.locator('.font-picker-family-row').nth(0)).toHaveAttribute(
+			'data-family',
+			'Noto Sans'
+		);
+		await expect(familyOption(dialog, 'Nunito').locator('.font-picker-badge')).toHaveText(
+			'3 of 5 — missing: Greek, Hebrew'
+		);
+		await expect(dialog.locator('.font-picker-hidden')).toHaveCount(0);
+
+		await familyOption(dialog, 'Open Sans').click();
+		await expect.poll(() => hashConfig(page)).toEqual({ text: { font: 'open_sans_regular' } });
+	});
+
+	test('"Label language" selects the script of the label language', async ({ page }) => {
+		await useCoverageFixture(page);
+		await openFonts(page);
+		let dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		// Local names have no one script
+		await expect(dialog.getByRole('button', { name: /^Label language/ })).toHaveCount(0);
+		await dialog.getByRole('button', { name: 'Close' }).click();
+
+		await row(page, 'Language').locator('select').selectOption('el');
+		dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		const labelLanguage = dialog.getByRole('button', { name: 'Label language: Greek' });
+		await labelLanguage.click();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek');
+		await expect(labelLanguage).toBeDisabled();
 	});
 
 	test('a new origin clears the filter', async ({ page }) => {

@@ -5,7 +5,11 @@ import { fontFamilies } from './font_families';
 import { FontPickerState } from './font_picker_state.svelte';
 import {
 	availableScripts,
+	closestFamilies,
 	filterFamiliesByScripts,
+	matchBadge,
+	regionSelection,
+	toggleRegion,
 	inScriptOrder,
 	needsEastAsiaNote,
 	scriptCounts,
@@ -150,5 +154,47 @@ describe('selection', () => {
 		expect(state.scripts).toEqual(['Latn']);
 		state.clearScripts();
 		expect(state.scripts).toEqual([]);
+		state.setScripts(['Hebr', 'Latn', 'Hebr']);
+		expect(state.scripts).toEqual(['Latn', 'Hebr']);
+	});
+});
+
+describe('regions as a whole', () => {
+	const available = availableScripts(families); // Latn, Cyrl, Grek, Hebr, Arab
+	const europe = ['Latn', 'Grek', 'Cyrl', 'Armn', 'Geor'];
+	const middleEast = ['Arab', 'Hebr', 'Syrc', 'Ethi'];
+
+	it('is selected when all its available scripts are, partly when some are', () => {
+		expect(regionSelection(europe, available, [])).toBe('none');
+		expect(regionSelection(europe, available, ['Latn'])).toBe('some');
+		expect(regionSelection(europe, available, ['Cyrl', 'Grek', 'Latn'])).toBe('all');
+		expect(regionSelection(middleEast, available, ['Arab', 'Hebr'])).toBe('all');
+		expect(regionSelection(['Thai', 'Laoo'], available, [])).toBe('none');
+	});
+
+	it('selects the available scripts of a region, and clears them when all were selected', () => {
+		const all = toggleRegion(europe, available, ['Hebr', 'Grek']);
+		expect(all).toEqual(['Latn', 'Cyrl', 'Grek', 'Hebr']);
+		expect(toggleRegion(europe, available, all)).toEqual(['Hebr']);
+		expect(toggleRegion(europe, available, [])).toEqual(['Latn', 'Cyrl', 'Grek']);
+	});
+});
+
+describe('closestFamilies', () => {
+	it('ranks the families by how many selected scripts they write, with what they miss', () => {
+		const matches = closestFamilies(families, ['Latn', 'Grek', 'Hebr', 'Arab']);
+		expect(matches.map((m) => [m.family.name, m.covered.length, m.missing])).toEqual([
+			['Open Sans', 3, ['Arab']],
+			['Noto Sans', 3, ['Hebr']],
+			['Fira Sans', 2, ['Hebr', 'Arab']],
+			['Libre Baskerville', 1, ['Grek', 'Hebr', 'Arab']],
+		]);
+		// only the Noto Sans face that writes Arabic
+		expect(matches[1].family.faces.map((f) => f.weight)).toEqual([700]);
+		expect(matchBadge(matches[0])).toBe('3 of 4 — missing: Arabic');
+	});
+
+	it('leaves out families that write none of the selection', () => {
+		expect(closestFamilies(families, ['Thai'])).toEqual([]);
 	});
 });

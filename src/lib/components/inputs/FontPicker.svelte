@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FONT_SCRIPTS, fontCovers, type FontFaceInfo } from '@versatiles/style';
+	import { FONT_SCRIPTS, fontCovers, languageScript, type FontFaceInfo } from '@versatiles/style';
 	import {
 		closestFace,
 		fontFamilies,
@@ -17,13 +17,18 @@
 	import {
 		EAST_ASIA_NOTE,
 		availableScripts,
+		closestFamilies,
+		faceScripts,
 		filterFamiliesByScripts,
+		matchBadge,
 		needsEastAsiaNote,
 		scriptCounts,
 		scriptExamples,
 		scriptName,
 		scriptRegions,
 		scriptSummary,
+		regionSelection,
+		toggleRegion,
 	} from '../../font_scripts';
 	import { useFontPickerState } from '../../font_picker_state.svelte';
 	import FontPreview from './FontPreview.svelte';
@@ -83,9 +88,19 @@
 	let uncovered = $derived(
 		FONT_SCRIPTS.filter((s) => !available.includes(s) && !shared.scripts.includes(s))
 	);
+	let labelScript = $derived(languageScript(language));
+	/** No family whose coverage is known writes all selected scripts: the closest ones are offered. */
+	let noMatch = $derived(
+		shared.scripts.length > 0 &&
+			scriptFilter.families.every((f) => f.faces.every((face) => faceScripts(face) === null))
+	);
+	let closest = $derived(noMatch ? closestFamilies(allFamilies, shared.scripts) : []);
+	let badges: Record<string, string> = $derived(
+		Object.fromEntries(closest.map((match) => [match.family.name, matchBadge(match)]))
+	);
 	/** Families with the face their row previews: the search match closest to the style, or the regular face. */
 	let families = $derived(
-		scriptFilter.families.flatMap((family) => {
+		[...closest.map((match) => match.family), ...scriptFilter.families].flatMap((family) => {
 			const face = searching ? matchFace(family, query, style) : regularFace(family);
 			return face ? [{ family, face }] : [];
 		})
@@ -236,6 +251,12 @@
 		return undefined;
 	}
 
+	function isSelection(scripts: readonly string[]): boolean {
+		return (
+			scripts.length === shared.scripts.length && scripts.every((s) => shared.scripts.includes(s))
+		);
+	}
+
 	/** Escape in the filter panel closes the panel, not the picker. */
 	function handleFilterKeydown(e: KeyboardEvent) {
 		if (e.key !== 'Escape') return;
@@ -296,17 +317,44 @@
 				aria-label="Scripts"
 				onkeydown={handleFilterKeydown}
 			>
-				<div class="font-picker-filter-top">
-					<p class="font-picker-filter-hint">Show fonts that can write all of:</p>
-					{#if shared.scripts.length > 0}
-						<button type="button" class="font-picker-reset" onclick={() => shared.clearScripts()}
-							>Clear</button
+				<p class="font-picker-filter-hint">Show fonts that can write all of:</p>
+				<div class="font-picker-quick" role="group" aria-label="Quick selection">
+					{#if labelScript}
+						<button
+							type="button"
+							disabled={isSelection([labelScript])}
+							onclick={() => labelScript && shared.setScripts([labelScript])}
+							>Label language: {scriptName(labelScript)}</button
 						>
 					{/if}
+					<button
+						type="button"
+						title="Every script some font on this server can write"
+						disabled={available.length === 0 || isSelection(available)}
+						onclick={() => shared.setScripts(available)}>All available</button
+					>
+					<button
+						type="button"
+						disabled={shared.scripts.length === 0}
+						onclick={() => shared.clearScripts()}>Clear</button
+					>
 				</div>
 				{#each regions as region (region.name)}
+					{@const selection = regionSelection(region.scripts, available, shared.scripts)}
 					<div class="font-picker-region" role="group" aria-label={region.name}>
-						<span class="font-picker-region-name">{region.name}</span>
+						<label class="font-picker-region-name">
+							<input
+								type="checkbox"
+								checked={selection === 'all'}
+								disabled={!region.scripts.some((script) => available.includes(script))}
+								{@attach (box) => {
+									box.indeterminate = selection === 'some';
+								}}
+								onchange={() =>
+									shared.setScripts(toggleRegion(region.scripts, available, shared.scripts))}
+							/>
+							{region.name}
+						</label>
 						<div class="font-picker-chips">
 							{#each region.scripts as script (script)}
 								{@const selected = shared.scripts.includes(script)}
@@ -364,7 +412,14 @@
 						<span class="font-picker-caption">{face.title} · {labels.join(', ')}</span>
 					</li>
 				{/each}
-				<li class="font-picker-heading" role="presentation">All fonts</li>
+				{#if closest.length === 0}
+					<li class="font-picker-heading" role="presentation">All fonts</li>
+				{/if}
+			{/if}
+			{#if closest.length > 0}
+				<li class="font-picker-heading font-picker-closest" role="presentation">
+					No font writes all {shared.scripts.length} scripts. Closest:
+				</li>
 			{/if}
 			{#each families as { family, face } (family.name)}
 				{@const key = `family:${family.name}`}
@@ -388,6 +443,8 @@
 					<span class="font-picker-caption">
 						{family.name}{#if searching}&nbsp;· {face.title}{/if} · {family.faces.length}
 						{family.faces.length === 1 ? 'style' : 'styles'}
+						{#if badges[family.name]}<span class="font-picker-badge">{badges[family.name]}</span
+							>{/if}
 						{#if note}<span class="font-picker-warning">⚠ {note}</span>{/if}
 					</span>
 				</li>
@@ -434,7 +491,7 @@
 					{searching ? `No font matches “${query}”.` : 'No font can write all selected scripts.'}
 				</li>
 			{/if}
-			{#if scriptFilter.hidden > 0}
+			{#if scriptFilter.hidden > 0 && closest.length === 0}
 				<li class="font-picker-hidden" role="presentation">
 					{scriptFilter.hidden}
 					{scriptFilter.hidden === 1 ? 'family' : 'families'} hidden by the script filter ·

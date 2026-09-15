@@ -637,26 +637,45 @@
 				opacity: 0.7;
 			}
 
-			.font-picker-filter-top {
+			.font-picker-quick {
 				display: flex;
-				align-items: baseline;
-				justify-content: space-between;
-				gap: 8px;
+				flex-wrap: wrap;
+				gap: 3px 10px;
+				margin-bottom: 4px;
 
-				.font-picker-reset {
-					margin-top: 0;
+				button {
+					padding: 0;
+					border: none;
+					background: none;
+					color: var(--primary-color);
+					font: inherit;
+					text-decoration: underline;
+					cursor: pointer;
+
+					&:disabled {
+						color: inherit;
+						opacity: 0.4;
+						text-decoration: none;
+						cursor: default;
+					}
 				}
 			}
 
+			// The region name with its checkbox, and its script chips below it.
 			.font-picker-region {
-				display: grid;
-				grid-template-columns: 7.5em 1fr;
-				align-items: baseline;
-				gap: 0 6px;
 				padding: 3px 0;
+
+				.font-picker-chips,
+				.font-picker-note {
+					margin-left: 1.5em;
+				}
 			}
 
 			.font-picker-region-name {
+				display: flex;
+				align-items: center;
+				gap: 3px;
+				cursor: pointer;
 				font-size: 0.8em;
 				font-weight: 600;
 				text-transform: uppercase;
@@ -665,6 +684,7 @@
 			}
 
 			.font-picker-chips {
+				margin-top: 2px;
 				display: flex;
 				flex-wrap: wrap;
 				gap: 3px;
@@ -703,7 +723,6 @@
 			}
 
 			.font-picker-note {
-				grid-column: 2;
 				margin: 2px 0 0;
 				font-size: 0.85em;
 			}
@@ -780,6 +799,18 @@
 		.font-picker-caption {
 			font-size: 0.85em;
 			color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
+		}
+
+		// "No font writes all 4 scripts. Closest:" is a sentence, not a heading label.
+		.font-picker-heading.font-picker-closest {
+			text-transform: none;
+			letter-spacing: normal;
+		}
+
+		.font-picker-badge {
+			display: block;
+			font-size: 0.9em;
+			opacity: 0.75;
 		}
 
 		.font-picker-warning {

@@ -193,3 +193,78 @@ export function scriptSummary(selected: readonly string[]): string {
 	if (selected.length <= 2) return `Scripts: ${selected.map(scriptName).join(', ')}`;
 	return `Scripts: ${selected.length}`;
 }
+
+/**
+ * Whether a region is selected: `'all'` when every script of it some font can write is selected, `'some'`
+ * when a part is, `'none'` otherwise.
+ */
+export function regionSelection(
+	region: readonly string[],
+	available: readonly string[],
+	selected: readonly string[]
+): 'all' | 'some' | 'none' {
+	const offered = region.filter((script) => available.includes(script));
+	const chosen = offered.filter((script) => selected.includes(script));
+	if (offered.length > 0 && chosen.length === offered.length) return 'all';
+	return region.some((script) => selected.includes(script)) ? 'some' : 'none';
+}
+
+/**
+ * The selection after a click on a region: every script of it some font can write, or none of the
+ * region when all of those were selected.
+ */
+export function toggleRegion(
+	region: readonly string[],
+	available: readonly string[],
+	selected: readonly string[]
+): string[] {
+	if (regionSelection(region, available, selected) === 'all') {
+		return selected.filter((script) => !region.includes(script));
+	}
+	const offered = region.filter((script) => available.includes(script));
+	return inScriptOrder([...new Set([...selected, ...offered])]);
+}
+
+export interface FamilyMatch {
+	/** The family with only its faces that write the most of the selected scripts. */
+	family: FontFamily;
+	covered: string[];
+	missing: string[];
+}
+
+/**
+ * For a selection no family writes completely: the families that write part of it, those writing the
+ * most first. Families of unknown coverage and families writing none of it are left out.
+ */
+export function closestFamilies(
+	families: readonly FontFamily[],
+	selected: readonly string[]
+): FamilyMatch[] {
+	const matches: FamilyMatch[] = [];
+	for (const family of families) {
+		let best = 0;
+		let faces: FontFaceInfo[] = [];
+		for (const face of family.faces) {
+			const covered = faceScripts(face);
+			if (covered === null) continue;
+			const count = selected.filter((script) => covered.has(script)).length;
+			if (count > best) [best, faces] = [count, [face]];
+			else if (count === best && count > 0) faces.push(face);
+		}
+		if (best === 0) continue;
+		const scripts = faceScripts(faces[0])!;
+		matches.push({
+			family: { name: family.name, faces },
+			covered: selected.filter((script) => scripts.has(script)),
+			missing: selected.filter((script) => !scripts.has(script)),
+		});
+	}
+	// `sort` is stable: the family order is kept among equals.
+	return matches.sort((a, b) => b.covered.length - a.covered.length);
+}
+
+/** "4 of 5 — missing: Hebrew" */
+export function matchBadge(match: FamilyMatch): string {
+	const total = match.covered.length + match.missing.length;
+	return `${match.covered.length} of ${total} — missing: ${match.missing.map(scriptName).join(', ')}`;
+}
