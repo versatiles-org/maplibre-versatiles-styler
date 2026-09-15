@@ -427,4 +427,67 @@ test.describe('color picker', () => {
 		await expect(dialog).toHaveCount(0);
 		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: chosen } });
 	});
+
+	test('RGB channels: slider and typed value', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const dialog = await openPicker(page, 'water', 'Water');
+		await expect(dialog.getByRole('tab', { name: 'RGB' })).toHaveAttribute('aria-selected', 'true');
+
+		const red = dialog.getByRole('slider', { name: 'Red' });
+		await expect(red).toHaveValue('191');
+		expect(await red.getAttribute('style')).toContain('rgb(0, 217, 242), rgb(255, 217, 242)');
+		await red.fill('255');
+		await expect(field).toHaveValue('#FFD9F2');
+
+		await dialog.getByRole('button', { name: 'Blue: 242. Enter a value' }).click();
+		await page.keyboard.type('0');
+		await page.keyboard.press('Enter');
+		await expect(field).toHaveValue('#FFD900');
+		// Enter in the value field does not close the picker
+		await expect(dialog).toBeVisible();
+		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: '#FFD900' } });
+	});
+
+	test('HSL channels, and the tab is kept for the next picker', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		let dialog = await openPicker(page, 'water', 'Water');
+		await dialog.getByRole('tab', { name: 'HSL' }).click();
+		await dialog.getByRole('slider', { name: 'Lightness' }).fill('100');
+		await expect(field).toHaveValue('#FFFFFF');
+		await dialog.getByRole('slider', { name: 'Lightness' }).fill('50');
+		// the hue and saturation survive white
+		await expect(dialog.getByRole('slider', { name: 'Hue' }).first()).toHaveValue('209');
+		await expect(field).not.toHaveValue('#808080');
+		await dialog.getByRole('button', { name: 'Close' }).click();
+
+		dialog = await openPicker(page, 'land', 'Land');
+		await expect(dialog.getByRole('tab', { name: 'HSL' })).toHaveAttribute('aria-selected', 'true');
+		await expect(dialog.getByRole('slider', { name: 'Saturation', exact: true })).toBeVisible();
+	});
+
+	test('Hex tab takes a typed color; Escape there restores the text first', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const dialog = await openPicker(page, 'water', 'Water');
+		await dialog.getByRole('tab', { name: 'RGB' }).focus();
+		await page.keyboard.press('ArrowLeft');
+		const hexTab = dialog.getByRole('tab', { name: 'Hex' });
+		await expect(hexTab).toHaveAttribute('aria-selected', 'true');
+		await expect(hexTab).toBeFocused();
+
+		const hex = dialog.getByRole('textbox', { name: 'Hex' });
+		await expect(hex).toHaveValue('#BFD9F2');
+		await hex.fill('rgba(18, 52, 86, 0.5)');
+		await hex.press('Enter');
+		await expect(hex).toHaveValue('#12345680');
+		await expect(field).toHaveValue('#12345680');
+		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50 %');
+
+		await hex.fill('#000');
+		await hex.press('Escape');
+		await expect(hex).toHaveValue('#12345680');
+		await expect(dialog).toBeVisible();
+		await hex.press('Escape');
+		await expect(dialog).toHaveCount(0);
+		await expect(field).toHaveValue('#BFD9F2');
+	});
 });

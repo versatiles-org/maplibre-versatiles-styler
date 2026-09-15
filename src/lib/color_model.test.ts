@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+	channelGradient,
 	formatHex,
 	hslaToHsva,
 	hsvaToHsla,
@@ -8,6 +9,7 @@ import {
 	parseColor,
 	rgbaToHsva,
 	sameColor,
+	withRgb,
 } from './color_model';
 
 describe('parseColor', () => {
@@ -64,6 +66,7 @@ describe('conversions', () => {
 		expect(hsvaToHsla({ h: 215, s: 0, v: 50, a: 1 }).h).toBe(215);
 		expect(hslaToHsva({ h: 215, s: 0, l: 100, a: 1 }).h).toBe(215);
 		expect(hslaToHsva({ h: 215, s: 50, l: 0, a: 1 }).h).toBe(215);
+		expect(hsvaToHsla({ h: 360, s: 50, v: 50, a: 1 }).h).toBe(360);
 	});
 
 	it('keeps fractional values', () => {
@@ -82,5 +85,35 @@ describe('sameColor', () => {
 		expect(sameColor('#f00', '#f01')).toBe(false);
 		expect(sameColor('junk', 'junk')).toBe(true);
 		expect(sameColor('junk', '#fff')).toBe(false);
+	});
+});
+
+describe('channel editing', () => {
+	const blue = parseColor('#3388FF80')!;
+
+	it('changes RGB and HSL channels, keeping alpha', () => {
+		expect(formatHex(withRgb(blue, { r: 255 }))).toBe('#FF88FF80');
+		expect(formatHex(withRgb(blue, { g: 0, b: 0 }))).toBe('#33000080');
+		expect(formatHex(hslaToHsva({ ...hsvaToHsla(blue), l: 100 }))).toBe('#FFFFFF80');
+		expect(formatHex(hslaToHsva({ ...hsvaToHsla(blue), h: 0 }))).toBe('#FF333380');
+	});
+
+	it('keeps the hue when RGB channels make a gray', () => {
+		expect(withRgb(blue, { r: 0, g: 0, b: 0 }).h).toBeCloseTo(215, 6);
+	});
+
+	it('paints the tracks from the lowest to the highest value of a channel', () => {
+		expect(channelGradient(blue, 'r')).toBe(
+			'linear-gradient(to right, rgb(0 136 255), rgb(255 136 255))'
+		);
+		expect(channelGradient(blue, 'hsl-s')).toBe(
+			'linear-gradient(to right, hsl(215 0% 60%), hsl(215 100% 60%))'
+		);
+		expect(channelGradient(blue, 'hsl-l')).toBe(
+			'linear-gradient(to right, hsl(215 100% 0%), hsl(215 100% 50%), hsl(215 100% 100%))'
+		);
+		expect(channelGradient(blue, 'hsl-h')).toMatch(
+			/^linear-gradient\(to right, hsl\(0 100% 60%\),/
+		);
 	});
 });

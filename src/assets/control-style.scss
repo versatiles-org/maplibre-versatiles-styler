@@ -726,6 +726,74 @@
 			}
 		}
 
+		.color-picker-tabs {
+			display: flex;
+			margin-top: 2px;
+			border-bottom: 1px solid var(--border-color);
+
+			button {
+				padding: 3px 10px;
+				border: none;
+				border-bottom: 2px solid transparent;
+				margin-bottom: -1px;
+				background: none;
+				color: inherit;
+				font: inherit;
+				opacity: 0.7;
+				cursor: pointer;
+
+				&[aria-selected='true'] {
+					border-bottom-color: var(--primary-color);
+					opacity: 1;
+					font-weight: 600;
+				}
+			}
+		}
+
+		.color-picker-channels {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.color-picker-slider .value {
+			justify-self: end;
+			min-width: 3em;
+			padding: 0;
+			border: none;
+			border-bottom: 1px dotted transparent;
+			background: none;
+			color: inherit;
+			font: inherit;
+			text-align: right;
+			font-variant-numeric: tabular-nums;
+			cursor: text;
+
+			&:hover {
+				border-bottom-color: currentColor;
+			}
+		}
+
+		.color-picker-slider input.value-input {
+			width: 3.4em;
+			box-sizing: border-box;
+			padding: 0 0.2em;
+			border: 1px solid var(--primary-color);
+			border-radius: 0.2em;
+			cursor: text;
+		}
+
+		input.color-picker-hex {
+			box-sizing: border-box;
+			width: 100%;
+			padding: 0.3em 0.4em;
+			border: 1px solid var(--border-color);
+			border-radius: 0.2em;
+			background: var(--bg-color);
+			color: inherit;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		}
+
 		.color-track-hue {
 			background: linear-gradient(
 				to right,

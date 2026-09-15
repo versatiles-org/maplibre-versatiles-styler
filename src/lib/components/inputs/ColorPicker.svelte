@@ -1,8 +1,21 @@
 <script lang="ts">
-	import { onDestroy, untrack } from 'svelte';
-	import { formatHex, parseColor, sameColor, type Hsva } from '../../color_model';
+	import { onDestroy, tick, untrack } from 'svelte';
+	import {
+		channelGradient,
+		formatHex,
+		hsvaToHsla,
+		hsvaToRgba,
+		hslaToHsva,
+		parseColor,
+		sameColor,
+		withRgb,
+		type Hsla,
+		type Hsva,
+	} from '../../color_model';
+	import { useColorPickerState, type ColorMode } from '../../color_picker_state.svelte';
 	import { frameWriter } from '../../frame';
 	import ColorArea from './ColorArea.svelte';
+	import EditableValue from './EditableValue.svelte';
 	import { placeBesidePane, portalToMap, type PopoverPosition } from './popover';
 
 	let {
@@ -29,17 +42,77 @@
 	/** The color the picker opened with: Escape and the "old" swatch go back to it. */
 	const initial = untrack(() => value);
 	const BLACK: Hsva = { h: 0, s: 0, v: 0, a: 1 };
+	const uid = $props.id();
+	const shared = useColorPickerState();
+
+	const MODES: { value: ColorMode; label: string }[] = [
+		{ value: 'rgb', label: 'RGB' },
+		{ value: 'hsl', label: 'HSL' },
+		{ value: 'hex', label: 'Hex' },
+	];
+
+	interface Channel {
+		key: string;
+		label: string;
+		name: string;
+		value: number;
+		max: number;
+		unit: string;
+		gradient: string;
+		set: (value: number) => Hsva;
+	}
 
 	// The color being edited, unrounded. Converting back from the hex value on every change would lose the
 	// hue of gray, black and white, and jitter by rounding.
 	let hsva = $state<Hsva>(untrack(() => parseColor(value) ?? BLACK));
 	let lastWritten = untrack(() => value);
+	/**
+	 * The HSL values last set on the HSL tab. White, black and gray have no saturation in HSV, so without
+	 * them lightness 100 and back would turn the color gray.
+	 */
+	let lastHsl = $state<Hsla | undefined>();
+	/** Once closed, late events (a field's `change` on blur) write nothing. */
+	let closed = false;
 	let position = $state<PopoverPosition>({ left: 0, top: 0, maxHeight: 520 });
 
 	let current = $derived(formatHex(hsva, alpha));
 	let opaque = $derived(formatHex(hsva, false));
 
+	let channels: Channel[] = $derived.by(() => {
+		if (shared.mode === 'rgb') {
+			const rgb = hsvaToRgba(hsva);
+			return (['r', 'g', 'b'] as const).map((key) => ({
+				key,
+				label: key.toUpperCase(),
+				name: { r: 'Red', g: 'Green', b: 'Blue' }[key],
+				value: rgb[key],
+				max: 255,
+				unit: '',
+				gradient: channelGradient(hsva, key),
+				set: (value: number) => withRgb(hsva, { [key]: value }),
+			}));
+		}
+		const hsl =
+			lastHsl && formatHex(hslaToHsva(lastHsl)) === formatHex(hsva) && lastHsl.h === hsva.h
+				? lastHsl
+				: hsvaToHsla(hsva);
+		return (['h', 's', 'l'] as const).map((key) => ({
+			key,
+			label: key.toUpperCase(),
+			name: { h: 'Hue', s: 'Saturation', l: 'Lightness' }[key],
+			value: hsl[key],
+			max: key === 'h' ? 360 : 100,
+			unit: key === 'h' ? '°' : ' %',
+			gradient: channelGradient(hsva, `hsl-${key}`),
+			set: (value: number) => {
+				lastHsl = { ...hsl, [key]: value, a: hsva.a };
+				return hslaToHsva(lastHsl);
+			},
+		}));
+	});
+
 	const writer = frameWriter<string>((color) => {
+		if (closed) return;
 		lastWritten = color;
 		onwrite(color);
 	});
@@ -58,6 +131,7 @@
 	onDestroy(() => writer.flush());
 
 	function update(change: Partial<Hsva>) {
+		if (closed) return;
 		hsva = { ...hsva, ...change };
 		const color = formatHex(hsva, alpha);
 		// Back at the written color: a waiting write would now be wrong.
@@ -67,6 +141,7 @@
 
 	function close() {
 		writer.flush();
+		closed = true;
 		onclose();
 	}
 
@@ -77,6 +152,7 @@
 			lastWritten = initial;
 			onwrite(initial);
 		}
+		closed = true;
 		onclose();
 	}
 
@@ -87,9 +163,51 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
+		if (e.defaultPrevented) return;
 		if (e.key !== 'Enter' || (e.target as HTMLElement).closest('button')) return;
 		e.preventDefault();
 		close();
+	}
+
+	/** A typed channel value: clamped to the channel; text that is no number is ignored. */
+	function commitChannel(channel: Channel, text: string) {
+		const typed = parseFloat(text.trim().replace(',', '.'));
+		if (!Number.isFinite(typed)) return;
+		update(channel.set(Math.min(channel.max, Math.max(0, typed))));
+		writer.flush();
+	}
+
+	function commitHex(input: HTMLInputElement) {
+		const color = parseColor(input.value);
+		if (color) {
+			const hue = color.s === 0 || color.v === 0 ? hsva.h : color.h;
+			update({ ...color, h: hue, a: alpha ? color.a : 1 });
+			writer.flush();
+		}
+		input.value = formatHex(hsva, alpha);
+	}
+
+	/** Enter applies the text; Escape puts back a changed text, else it cancels the picker as usual. */
+	function handleHexKeydown(e: KeyboardEvent) {
+		const input = e.currentTarget as HTMLInputElement;
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			commitHex(input);
+		} else if (e.key === 'Escape' && input.value !== current) {
+			e.preventDefault();
+			input.value = current;
+		}
+	}
+
+	/** ←/→ move between the tabs. */
+	function handleTabKeydown(e: KeyboardEvent) {
+		const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+		if (!step) return;
+		e.preventDefault();
+		const index = MODES.findIndex((mode) => mode.value === shared.mode);
+		shared.mode = MODES[(index + step + MODES.length) % MODES.length].value;
+		const tablist = (e.currentTarget as HTMLElement).parentElement;
+		tick().then(() => tablist?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus());
 	}
 
 	function focus(area: HTMLElement) {
@@ -176,6 +294,64 @@
 					<output aria-hidden="true">{Math.round(hsva.a * 100)} %</output>
 				</label>
 			{/if}
+			<div class="color-picker-tabs" role="tablist" aria-label="Color channels">
+				{#each MODES as mode (mode.value)}
+					{@const selected = shared.mode === mode.value}
+					<button
+						type="button"
+						role="tab"
+						id="{uid}-tab-{mode.value}"
+						aria-selected={selected}
+						aria-controls="{uid}-channels"
+						tabindex={selected ? 0 : -1}
+						onclick={() => (shared.mode = mode.value)}
+						onkeydown={handleTabKeydown}>{mode.label}</button
+					>
+				{/each}
+			</div>
+			<div
+				class="color-picker-channels"
+				role="tabpanel"
+				id="{uid}-channels"
+				aria-labelledby="{uid}-tab-{shared.mode}"
+			>
+				{#if shared.mode === 'hex'}
+					<input
+						class="color-picker-hex"
+						type="text"
+						aria-label="Hex"
+						value={current}
+						spellcheck="false"
+						autocomplete="off"
+						onkeydown={handleHexKeydown}
+						onchange={(e) => commitHex(e.currentTarget)}
+					/>
+				{:else}
+					{#each channels as channel (channel.key)}
+						<div class="color-picker-slider">
+							<span aria-hidden="true">{channel.label}</span>
+							<input
+								type="range"
+								class="color-track"
+								style:background={channel.gradient}
+								min="0"
+								max={channel.max}
+								step="1"
+								value={Math.round(channel.value)}
+								aria-label={channel.name}
+								oninput={(e) => update(channel.set(Number(e.currentTarget.value)))}
+								onchange={() => writer.flush()}
+							/>
+							<EditableValue
+								label={channel.name}
+								display="{Math.round(channel.value)}{channel.unit}"
+								editText={String(Math.round(channel.value))}
+								oncommit={(text) => commitChannel(channel, text)}
+							/>
+						</div>
+					{/each}
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>

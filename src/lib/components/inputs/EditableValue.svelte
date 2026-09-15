@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+
 	let {
 		label,
 		display,
@@ -18,6 +20,12 @@
 	} = $props();
 
 	let editing = $state(false);
+	let button = $state<HTMLButtonElement>();
+
+	/** After Enter or Escape the field goes; the focus goes back to the value, not to the page. */
+	function refocus() {
+		tick().then(() => button?.focus());
+	}
 
 	function commit(input: HTMLInputElement) {
 		if (!editing) return;
@@ -29,9 +37,11 @@
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			commit(e.target as HTMLInputElement);
+			refocus();
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
 			editing = false;
+			refocus();
 		}
 	}
 
@@ -58,6 +68,7 @@
 		class="value"
 		{disabled}
 		title="Click to enter a value"
+		bind:this={button}
 		aria-label="{label}: {display}. Enter a value"
 		onclick={() => (editing = true)}>{display}</button
 	>
