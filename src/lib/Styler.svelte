@@ -222,6 +222,7 @@
 				bind:options={satelliteState}
 				{overlayAvailable}
 				elevationAvailable={hasElevation}
+				fontFaces={sources.fontFaces()}
 				{languages}
 			/>
 		{:else if currentVectorDefaults}

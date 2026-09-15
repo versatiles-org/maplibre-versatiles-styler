@@ -4,6 +4,7 @@ import type {
 	OsmOptions,
 	Palette,
 	ResolvedOsm,
+	ResolvedOsmOverlay,
 	ResolvedSatellite,
 	SatelliteOptions,
 	TileJSONSpecification,
@@ -45,6 +46,11 @@ export function vectorDefaults(theme: Palette): VectorState {
 
 export function satelliteDefaults(): SatelliteState {
 	return toSatelliteState(satellite.resolveOptions());
+}
+
+/** The satellite overlay's defaults for a theme: its colours, plus the imagery treatment (bold fonts, …). */
+export function overlayDefaults(theme: Palette): ResolvedOsmOverlay {
+	return satellite.resolveOptions({ osmOverlay: { theme } }).osmOverlay as ResolvedOsmOverlay;
 }
 
 /**

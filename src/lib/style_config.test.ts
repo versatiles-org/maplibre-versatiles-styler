@@ -6,6 +6,7 @@ import {
 	toStyleKey,
 	vectorDefaults,
 	satelliteDefaults,
+	overlayDefaults,
 	vectorStateFromConfig,
 	satelliteStateFromConfig,
 	buildVectorStyle,
@@ -83,6 +84,18 @@ describe('defaults', () => {
 	it('satellite defaults are the resolved options without urls', () => {
 		const { urls: _urls, ...resolved } = satellite.resolveOptions();
 		expect(satelliteDefaults()).toEqual(resolved);
+	});
+});
+
+describe('overlayDefaults', () => {
+	it('gives the overlay of a theme, with the imagery treatment', () => {
+		const gray = overlayDefaults('gray');
+		expect(gray).toEqual(satelliteDefaults().osmOverlay);
+		const colorful = overlayDefaults('colorful');
+		expect(colorful.theme).toBe('colorful');
+		expect(colorful.colors.water).toBe(vectorDefaults('colorful').colors.water);
+		expect(colorful.colors.label).toBe('#ffffff');
+		expect(colorful.text.fonts).toEqual(gray.text.fonts);
 	});
 });
 
@@ -206,6 +219,34 @@ describe('minimalConfig', () => {
 		const restored = vectorStateFromConfig('natural-dark', config);
 		expect(buildVectorStyle('natural-dark', restored, ORIGIN, allSources)).toEqual(
 			buildVectorStyle('natural-dark', state, ORIGIN, allSources)
+		);
+	});
+
+	it('round-trips satellite options with a full overlay and map options', () => {
+		const state = satelliteDefaults();
+		const overlay = overlayDefaults('toner');
+		overlay.colors.labelWater = '#00ff00';
+		overlay.text.fonts.places.cities = 'fira_sans_bold';
+		overlay.layers.roads.motorways = 0.5;
+		state.osmOverlay = overlay;
+		state.projection = 'mercator';
+		state.sky = { ...(state.sky as object), skyColor: '#123456' } as typeof state.sky;
+		state.sun = { direction: 90, altitude: 60, anchor: 'viewport', intensity: 0.8 };
+		const config = minimalConfig('satellite', vectorDefaults('colorful'), state);
+		expect(config).toEqual({
+			osmOverlay: {
+				theme: 'toner',
+				colors: { labelWater: '#00ff00' },
+				text: { fonts: { places: { cities: 'fira_sans_bold' } } },
+				layers: { roads: { motorways: 0.5 } },
+			},
+			projection: 'mercator',
+			sky: { skyColor: '#123456' },
+			sun: { direction: 90, intensity: 0.8 },
+		});
+		const restored = satelliteStateFromConfig(config);
+		expect(buildSatelliteStyle(restored, ORIGIN, allSources)).toEqual(
+			buildSatelliteStyle(state, ORIGIN, allSources)
 		);
 	});
 

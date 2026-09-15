@@ -75,7 +75,7 @@ test.describe('tile source discovery', () => {
 		await open(page);
 
 		const overlayDetails = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:has-text("Overlay"))'
+			'.maplibregl-versatiles-styler details:has(summary .section-title:text-is("Overlay"))'
 		);
 		await expect(overlayDetails).toBeAttached();
 		const overlayCheckbox = overlayDetails.locator('input[type="checkbox"]');
@@ -89,7 +89,7 @@ test.describe('tile source discovery', () => {
 		await styleList.locator('label:has(input[value="satellite"])').click();
 
 		const overlayDetails = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:has-text("Overlay"))'
+			'.maplibregl-versatiles-styler details:has(summary .section-title:text-is("Overlay"))'
 		);
 		const overlayCheckbox = overlayDetails.locator('input[type="checkbox"]');
 		await expect(overlayCheckbox).toBeEnabled();

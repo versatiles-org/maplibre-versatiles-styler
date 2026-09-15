@@ -35,6 +35,7 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 		'Fonts & text size',
 		'Layers',
 		'Terrain & hillshade',
+		'Map',
 		'Labels',
 		'Export',
 	];

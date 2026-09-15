@@ -8,6 +8,7 @@
 	import LayoutOptions from './sections/LayoutOptions.svelte';
 	import ElevationOptions from './sections/ElevationOptions.svelte';
 	import LayerOptions from './sections/LayerOptions.svelte';
+	import MapOptions from './sections/MapOptions.svelte';
 	import InputCheckbox from './inputs/InputCheckbox.svelte';
 	import LanguageOptions from './sections/LanguageOptions.svelte';
 
@@ -42,6 +43,11 @@
 	function resetElevation() {
 		options.features.terrain = defaults.features.terrain;
 		options.features.hillshade = defaults.features.hillshade;
+	}
+	function resetMap() {
+		options.projection = defaults.projection;
+		options.sky = structuredClone(defaults.sky);
+		options.sun = structuredClone(defaults.sun);
 	}
 	function resetLabels() {
 		options.text.language = defaults.text.language;
@@ -101,6 +107,14 @@
 	onReset={hasElevation ? resetElevation : undefined}
 >
 	<ElevationOptions bind:features={options.features} disabled={!hasElevation} />
+</SidebarSection>
+<SidebarSection title="Map" description="Projection, sky and sun." onReset={resetMap}>
+	<MapOptions
+		bind:projection={options.projection}
+		bind:sky={options.sky}
+		bind:sun={options.sun}
+		skyColorFallback={options.colors.water}
+	/>
 </SidebarSection>
 <SidebarSection
 	title="Labels"
