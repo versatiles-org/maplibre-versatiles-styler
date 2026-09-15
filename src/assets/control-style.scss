@@ -351,10 +351,37 @@
 	}
 
 	.maplibregl-list.style-list {
-		// Themes come in light/dark pairs: light in the left column, its dark theme next to it.
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		column-gap: 0.3em;
+		// The themes as a table: the theme's name, then a radio for its light and for its dark variant.
+		.theme-table {
+			width: 100%;
+			border-collapse: collapse;
+
+			th,
+			td {
+				padding: 0;
+			}
+
+			thead th {
+				font-size: 0.85em;
+				font-weight: 600;
+				text-align: center;
+				opacity: 0.6;
+			}
+
+			tbody th {
+				text-align: left;
+				font-weight: 500;
+			}
+
+			td {
+				width: 4em;
+				text-align: center;
+			}
+
+			label {
+				display: inline-flex;
+			}
+		}
 
 		label {
 			display: flex;
@@ -364,7 +391,6 @@
 			overflow: hidden;
 
 			&.satellite {
-				grid-column: 1 / -1;
 				margin-top: 0.3em;
 				padding-top: 0.3em;
 				border-top: 1px solid var(--border-color);
@@ -379,6 +405,11 @@
 					&:before {
 						box-shadow: inset 0 0 0 0.4375em var(--primary-color);
 					}
+				}
+
+				&:focus-visible + span:before {
+					outline: 2px solid var(--primary-color);
+					outline-offset: 1px;
 				}
 			}
 
@@ -400,6 +431,15 @@
 					margin-right: 0.375em;
 					transition: 0.1s ease;
 					box-shadow: inset 0 0 0 0.125em var(--primary-color);
+				}
+
+				// A radio without a text, in the theme table.
+				&:empty {
+					padding: 0.3em;
+
+					&:before {
+						margin-right: 0;
+					}
 				}
 			}
 		}

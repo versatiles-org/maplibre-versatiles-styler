@@ -4,6 +4,7 @@ import type { TileJSONSpecification } from '@versatiles/style';
 import {
 	PALETTES,
 	toStyleKey,
+	themeRows,
 	vectorDefaults,
 	satelliteDefaults,
 	overlayDefaults,
@@ -76,6 +77,27 @@ describe('containerBackground', () => {
 		expect(containerBackground('colorful-dark')).toBe('#000000');
 		expect(containerBackground('gray-dark')).toBe('#000000');
 		expect(containerBackground('satellite')).toBe('#000000');
+	});
+});
+
+describe('themeRows', () => {
+	it('pairs every light theme with its dark theme, in palette order', () => {
+		expect(themeRows([...PALETTES, 'satellite'])).toEqual([
+			{ name: 'colorful', light: 'colorful', dark: 'colorful-dark' },
+			{ name: 'natural', light: 'natural', dark: 'natural-dark' },
+			{ name: 'muted', light: 'muted', dark: 'muted-dark' },
+			{ name: 'gray', light: 'gray', dark: 'gray-dark' },
+			{ name: 'toner', light: 'toner', dark: 'toner-dark' },
+		]);
+	});
+
+	it('leaves out satellite, and gives no rows without themes', () => {
+		expect(themeRows(['satellite'])).toEqual([]);
+		expect(themeRows([])).toEqual([]);
+	});
+
+	it('keeps a row whose light or dark theme is missing', () => {
+		expect(themeRows(['gray-dark'])).toEqual([{ name: 'gray', dark: 'gray-dark' }]);
 	});
 });
 

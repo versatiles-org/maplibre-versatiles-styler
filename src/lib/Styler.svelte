@@ -10,6 +10,7 @@
 		satelliteDefaults,
 		vectorStateFromConfig,
 		satelliteStateFromConfig,
+		themeRows,
 		buildVectorStyle,
 		buildSatelliteStyle,
 		containerBackground,
@@ -59,6 +60,7 @@
 		...(osmTileJSON === null ? [] : PALETTES),
 		...(satelliteTileJSON ? (['satellite'] as const) : []),
 	]);
+	let themes = $derived(themeRows(styleKeys));
 	let overlayAvailable = $derived(osmTileJSON !== null);
 	let hasElevation = $derived(Boolean(elevationTileJSON));
 	let languages = $derived(languageOptions(osmTileJSON ? osm.languages(osmTileJSON) : []));
@@ -208,6 +210,17 @@
 	});
 </script>
 
+{#snippet styleRadio(key: StyleKey, label: string)}
+	<input
+		type="radio"
+		name="{uid}-style"
+		value={key}
+		checked={currentStyleKey === key}
+		aria-label={label}
+		onclick={() => setBaseStyle(key)}
+	/>
+{/snippet}
+
 <div class="maplibregl-ctrl maplibregl-ctrl-group">
 	<button
 		type="button"
@@ -227,17 +240,40 @@
 			</div>
 		</SidebarSection>
 		<SidebarSection title="Base style" open listClass="style-list">
-			{#each styleKeys as key (key)}
-				<label class:satellite={key === 'satellite'}>
-					<input
-						type="radio"
-						value={key}
-						checked={currentStyleKey === key}
-						onclick={() => setBaseStyle(key)}
-					/>
-					<span>{key}</span>
+			{#if themes.length > 0}
+				<table class="theme-table">
+					<thead>
+						<tr>
+							<td></td>
+							<th scope="col">light</th>
+							<th scope="col">dark</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each themes as theme (theme.name)}
+							<tr>
+								<th scope="row">{theme.name}</th>
+								{#each [theme.light, theme.dark] as key, index (index)}
+									<td>
+										{#if key}
+											<label title={key}>
+												{@render styleRadio(key, `${theme.name} ${index === 0 ? 'light' : 'dark'}`)}
+												<span></span>
+											</label>
+										{/if}
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
+			{#if styleKeys.includes('satellite')}
+				<label class="satellite">
+					{@render styleRadio('satellite', 'satellite')}
+					<span>satellite</span>
 				</label>
-			{/each}
+			{/if}
 		</SidebarSection>
 		{#if isSatellite}
 			<SatelliteStylePanel

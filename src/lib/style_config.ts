@@ -25,6 +25,26 @@ export type VectorState = Omit<ResolvedOsm, 'theme' | 'urls'>;
 /** The options the satellite panel edits: `satellite`'s resolved options without `urls`. */
 export type SatelliteState = Omit<ResolvedSatellite, 'urls'>;
 
+export interface ThemeRow {
+	/** The light theme's name, which names the row. */
+	name: string;
+	light?: StyleKey;
+	dark?: StyleKey;
+}
+
+/** The themes among `keys` as rows of the theme table: each light theme with its `-dark` theme. */
+export function themeRows(keys: readonly StyleKey[]): ThemeRow[] {
+	const rows: ThemeRow[] = [];
+	for (const key of keys) {
+		if (key === 'satellite') continue;
+		const name = key.replace(/-dark$/, '');
+		let row = rows.find((r) => r.name === name);
+		if (!row) rows.push((row = { name }));
+		row[key === name ? 'light' : 'dark'] = key;
+	}
+	return rows;
+}
+
 /** v5 style keys in links shared before v6, and the v6 theme closest to each. */
 const V5_STYLE_KEYS: Record<string, Palette> = {
 	eclipse: 'colorful-dark',
