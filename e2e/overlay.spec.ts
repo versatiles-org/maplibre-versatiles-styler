@@ -50,11 +50,11 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 		'Overlay',
 		'Overlay color adjustments',
 		'Overlay colors',
-		'Overlay fonts & text size',
+		'Overlay labels',
+		'Overlay icons',
 		'Overlay layers',
 		'Terrain & hillshade',
 		'Map',
-		'Labels',
 		'Export',
 	]);
 
@@ -89,9 +89,9 @@ test('overlay colors', async ({ page }) => {
 });
 
 test('overlay fonts default to bold and can be changed', async ({ page }) => {
-	const fonts = await open(page, 'Overlay fonts & text size');
-	const allLabels = row(fonts, 'All labels').locator('button.font-button');
-	await expect(allLabels).toHaveAccessibleName('All labels: Noto Sans Bold', { timeout: 10_000 });
+	const labels = await open(page, 'Overlay labels');
+	const allLabels = row(labels, 'Font').locator('button.font-button');
+	await expect(allLabels).toHaveAccessibleName('Font: Noto Sans Bold', { timeout: 10_000 });
 
 	await allLabels.click();
 	const dialog = page.getByRole('dialog', { name: 'Font for All labels' });
@@ -103,7 +103,7 @@ test('overlay fonts default to bold and can be changed', async ({ page }) => {
 		.toEqual(['fira_sans_bold']);
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ osmOverlay: { text: { fonts: 'fira_sans_bold' } } });
+		.toEqual({ osmOverlay: { text: { font: 'fira_sans_bold' } } });
 });
 
 test('overlay layers only list what the overlay draws', async ({ page }) => {

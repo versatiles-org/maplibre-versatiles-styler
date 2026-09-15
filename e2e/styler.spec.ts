@@ -32,11 +32,11 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 		'Base style',
 		'Color adjustments',
 		'Individual colors',
-		'Fonts & text size',
+		'Labels',
+		'Icons',
 		'Layers',
 		'Terrain & hillshade',
 		'Map',
-		'Labels',
 		'Export',
 	];
 	await expect(titles).toHaveCount(expectedTitles.length);

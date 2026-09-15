@@ -11,12 +11,11 @@
 	import OverlayOptions from './sections/OverlayOptions.svelte';
 	import RecolorOptions from './sections/RecolorOptions.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
-	import FontOptions from './sections/FontOptions.svelte';
-	import LayoutOptions from './sections/LayoutOptions.svelte';
+	import LabelOptions from './sections/LabelOptions.svelte';
+	import IconOptions from './sections/IconOptions.svelte';
 	import LayerOptions from './sections/LayerOptions.svelte';
 	import ElevationOptions from './sections/ElevationOptions.svelte';
 	import MapOptions from './sections/MapOptions.svelte';
-	import LanguageOptions from './sections/LanguageOptions.svelte';
 
 	let {
 		options = $bindable(),
@@ -68,11 +67,11 @@
 	function resetOverlayColors() {
 		if (options.osmOverlay && overlay) options.osmOverlay.colors = structuredClone(overlay.colors);
 	}
-	function resetOverlayTypography() {
-		if (options.osmOverlay && overlay) {
-			options.osmOverlay.text.fonts = structuredClone(overlay.text.fonts);
-			options.osmOverlay.layout = structuredClone(overlay.layout);
-		}
+	function resetOverlayLabels() {
+		if (options.osmOverlay && overlay) options.osmOverlay.text = structuredClone(overlay.text);
+	}
+	function resetOverlayIcons() {
+		if (options.osmOverlay && overlay) options.osmOverlay.icon = structuredClone(overlay.icon);
 	}
 	function resetOverlayLayers() {
 		if (options.osmOverlay && overlay) options.osmOverlay.layers = structuredClone(overlay.layers);
@@ -84,12 +83,6 @@
 		options.projection = defaults.projection;
 		options.sky = structuredClone(defaults.sky);
 		options.sun = structuredClone(defaults.sun);
-	}
-	function resetLabels() {
-		if (options.osmOverlay && overlay) {
-			options.osmOverlay.text.language = overlay.text.language;
-			options.osmOverlay.text.languageStrict = overlay.text.languageStrict;
-		}
 	}
 </script>
 
@@ -129,23 +122,30 @@
 		<ColorOptions bind:colors={options.osmOverlay.colors} defaults={overlay.colors} />
 	</SidebarSection>
 	<SidebarSection
-		title="Overlay fonts & text size"
-		onReset={resetOverlayTypography}
-		modified={changed('osmOverlay.text.fonts', 'osmOverlay.layout')}
+		title="Overlay labels"
+		description="Language, fonts and the look of the overlay's labels."
+		onReset={resetOverlayLabels}
+		modified={changed('osmOverlay.text')}
 	>
-		<FontOptions
-			bind:fonts={options.osmOverlay.text.fonts}
-			defaults={overlay.text.fonts}
-			fontGroups={satellite.fontGroups}
+		<LabelOptions
+			bind:text={options.osmOverlay.text}
+			defaults={overlay.text}
+			textGroups={satellite.textGroups}
 			{fontFaces}
 			{languages}
 			{origin}
-			language={options.osmOverlay.text.language}
 			disabled={!overlayAvailable}
 		/>
-		<LayoutOptions
-			bind:layout={options.osmOverlay.layout}
-			defaults={overlay.layout}
+	</SidebarSection>
+	<SidebarSection
+		title="Overlay icons"
+		description="Size and spacing of the overlay's icons, shields and road markings."
+		onReset={resetOverlayIcons}
+		modified={changed('osmOverlay.icon')}
+	>
+		<IconOptions
+			bind:icon={options.osmOverlay.icon}
+			defaults={overlay.icon}
 			disabled={!overlayAvailable}
 		/>
 	</SidebarSection>
@@ -185,20 +185,4 @@
 		bind:sun={options.sun}
 		skyColorFallback={options.osmOverlay ? options.osmOverlay.colors.water : MAPLIBRE_SKY_COLOR}
 	/>
-</SidebarSection>
-<SidebarSection
-	title="Labels"
-	description="Language used for place names and labels."
-	onReset={resetLabels}
-	modified={changed('osmOverlay.text.language', 'osmOverlay.text.languageStrict')}
->
-	{#if options.osmOverlay}
-		<LanguageOptions
-			bind:language={options.osmOverlay.text.language}
-			bind:languageStrict={options.osmOverlay.text.languageStrict}
-			{languages}
-		/>
-	{:else}
-		<LanguageOptions language="local" languageStrict={false} {languages} disabled />
-	{/if}
 </SidebarSection>

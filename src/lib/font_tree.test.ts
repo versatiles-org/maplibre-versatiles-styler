@@ -1,17 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { osm } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import {
-	fontGroupNodes,
-	uniformFace,
-	withFace,
-	pickerFaces,
-	fontSample,
-	labelLanguage,
-	coverageWarning,
-} from './font_tree';
+import { pickerFaces, fontSample, labelLanguage, coverageWarning } from './font_tree';
+import { labelNodes } from './label_tree';
 
-const defaults = osm.resolveOptions().text.fonts;
+const defaults = osm.resolveOptions().text;
 
 function face(id: string, family: string, title: string, codeblocks = '0-7'): FontFaceInfo {
 	return { id, family, title, weight: 400, italic: false, width: 'normal', codeblocks };
@@ -19,62 +12,6 @@ function face(id: string, family: string, title: string, codeblocks = '0-7'): Fo
 
 afterEach(() => {
 	vi.unstubAllGlobals();
-});
-
-describe('fontGroupNodes', () => {
-	it('lists every group of osm.fontGroups in reading order, with its topics', () => {
-		const nodes = fontGroupNodes(osm.fontGroups, defaults);
-		expect(nodes.map((n) => n.key)).toEqual([
-			'places',
-			'streets',
-			'water',
-			'boundaries',
-			'pois',
-			'addresses',
-		]);
-		expect(nodes[0]).toEqual({
-			key: 'places',
-			label: 'Places',
-			topics: [
-				{ key: 'cities', label: 'Cities' },
-				{ key: 'villages', label: 'Villages' },
-				{ key: 'districts', label: 'Districts' },
-			],
-		});
-		expect(nodes[nodes.length - 1]).toEqual({
-			key: 'addresses',
-			label: 'House numbers',
-			topics: [],
-		});
-	});
-
-	it('covers exactly the topics of the resolved tree', () => {
-		const paths = fontGroupNodes(osm.fontGroups, defaults).flatMap((g) =>
-			g.topics.length > 0 ? g.topics.map((t) => `${g.key}.${t.key}`) : [g.key]
-		);
-		const treePaths = Object.entries(defaults).flatMap(([group, node]) =>
-			typeof node === 'string' ? [group] : Object.keys(node).map((topic) => `${group}.${topic}`)
-		);
-		expect(paths.sort()).toEqual(treePaths.sort());
-	});
-});
-
-describe('uniformFace / withFace', () => {
-	it('finds the face shared by a subtree', () => {
-		expect(uniformFace('a')).toBe('a');
-		expect(uniformFace({ x: 'a', y: 'a' })).toBe('a');
-		expect(uniformFace({ x: 'a', y: { z: 'a' } })).toBe('a');
-		expect(uniformFace({ x: 'a', y: 'b' })).toBeUndefined();
-		expect(uniformFace(defaults)).toBeUndefined(); // bold refs and POI names
-		expect(uniformFace(defaults.places)).toBe('noto_sans_regular');
-	});
-
-	it('sets every topic and keeps the shape', () => {
-		const tree = withFace(defaults, 'fira_sans_regular');
-		expect(tree).toEqual(osm.resolveOptions({ text: { fonts: 'fira_sans_regular' } }).text.fonts);
-		expect(withFace(defaults.streets, 'x')).toEqual({ names: 'x', refs: 'x', exits: 'x' });
-		expect(withFace('a', 'b')).toBe('b');
-	});
 });
 
 describe('pickerFaces', () => {
@@ -95,12 +32,9 @@ describe('pickerFaces', () => {
 });
 
 describe('fontSample', () => {
-	it('has a sample for every group and topic of osm.fontGroups', () => {
-		for (const group of fontGroupNodes(osm.fontGroups, defaults)) {
-			expect(fontSample(group.key)).not.toBe(fontSample('all'));
-			for (const topic of group.topics) {
-				expect(fontSample(`${group.key}.${topic.key}`)).not.toBe(fontSample('all'));
-			}
+	it('has a sample for every group and topic of osm.textGroups', () => {
+		for (const node of labelNodes(osm.textGroups, defaults).slice(1)) {
+			expect(fontSample(node.path), node.path).not.toBe(fontSample('all'));
 		}
 		expect(fontSample('unknown')).toBe(fontSample('all'));
 	});

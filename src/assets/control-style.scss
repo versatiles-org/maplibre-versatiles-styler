@@ -378,6 +378,11 @@
 			font-weight: bold;
 		}
 
+		// A slider for a group whose topics differ: the thumb stands at the default, faded.
+		.entry.mixed input[type='range'] {
+			opacity: 0.4;
+		}
+
 		.nested {
 			padding-left: 0.8em;
 			margin-left: 0.1em;

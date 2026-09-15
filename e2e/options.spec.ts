@@ -7,14 +7,20 @@ test.beforeEach(async ({ page }) => {
 });
 
 function labelsSection(page: import('@playwright/test').Page) {
-	return page.locator('.maplibregl-versatiles-styler details:has(summary:has-text("Labels"))');
+	return page.locator(
+		'.maplibregl-versatiles-styler details:has(summary .section-title:text-is("Labels"))'
+	);
+}
+
+function languageSelect(page: import('@playwright/test').Page) {
+	return labelsSection(page).locator('.entry:has(label:text-is("Language")) select');
 }
 
 test('language select offers local, browser and the tileset languages', async ({ page }) => {
 	const labels = labelsSection(page);
 	await labels.locator('summary').click();
 
-	const select = labels.locator('select');
+	const select = languageSelect(page);
 	await expect(select.locator('option[value="de"]')).toHaveText('Deutsch', { timeout: 10_000 });
 	await expect(select.locator('option').nth(0)).toHaveAttribute('value', 'local');
 	await expect(select.locator('option').nth(1)).toHaveAttribute('value', 'user');
@@ -33,7 +39,7 @@ test('choosing a language changes the label field', async ({ page }) => {
 		);
 	};
 	const before = await textField();
-	await labels.locator('select').selectOption('de');
+	await languageSelect(page).selectOption('de');
 	await expect.poll(textField).not.toEqual(before);
 	expect(await textField()).toContain('name_de');
 });
@@ -42,8 +48,8 @@ test('"Only this language" is disabled for local names', async ({ page }) => {
 	const labels = labelsSection(page);
 	await labels.locator('summary').click();
 
-	const strict = labels.locator('input[type="checkbox"]');
+	const strict = labels.locator('.entry:has(label:text-is("Only this language")) input');
 	await expect(strict).toBeDisabled();
-	await labels.locator('select').selectOption('en');
+	await languageSelect(page).selectOption('en');
 	await expect(strict).toBeEnabled();
 });

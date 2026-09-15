@@ -38,21 +38,21 @@ test('a change shows the reset button of its section only; resetting hides it', 
 	page,
 }) => {
 	await page.goto('/');
-	const fonts = section(page, 'Fonts & text size');
-	await fonts.locator('summary').click();
-	await type(page, fonts, 'Text Scale', '150');
-	await expect.poll(() => changedSections(page)).toEqual(['Fonts & text size']);
+	const labels = section(page, 'Labels');
+	await labels.locator('summary').click();
+	await type(page, labels, 'Size', '150');
+	await expect.poll(() => changedSections(page)).toEqual(['Labels']);
 
 	const layers = section(page, 'Layers');
 	await layers.locator('summary').click();
 	await row(layers, '3D buildings').locator('input[type="checkbox"]').check();
-	await expect.poll(() => changedSections(page)).toEqual(['Fonts & text size', 'Layers']);
+	await expect.poll(() => changedSections(page)).toEqual(['Labels', 'Layers']);
 
-	await fonts.locator('.section-reset').click();
+	await labels.locator('.section-reset').click();
 	await expect.poll(() => changedSections(page)).toEqual(['Layers']);
-	await expect(row(fonts, 'Text Scale').locator('button.value')).toHaveText('100%');
+	await expect(row(labels, 'Size').locator('button.value')).toHaveText('100%');
 	// resetting does not fold the section
-	await expect(fonts).toHaveAttribute('open', '');
+	await expect(labels).toHaveAttribute('open', '');
 });
 
 test('setting a value back by hand hides the reset button too', async ({ page }) => {

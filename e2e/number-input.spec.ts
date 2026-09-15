@@ -21,9 +21,9 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('typing a slider value', () => {
 	test('click the value, type a number, press Enter', async ({ page }) => {
-		const fonts = section(page, 'Fonts & text size');
-		await fonts.locator('summary').click();
-		const textScale = row(fonts, 'Text Scale');
+		const labels = section(page, 'Labels');
+		await labels.locator('summary').click();
+		const textScale = row(labels, 'Size');
 
 		await textScale.locator('button.value').click();
 		const field = textScale.locator('input.value-input');
@@ -35,13 +35,13 @@ test.describe('typing a slider value', () => {
 		await expect(field).toHaveCount(0);
 		await expect(textScale.locator('button.value')).toHaveText('150%');
 		await expect(textScale.locator('input[type="range"]')).toHaveValue('150');
-		await expect.poll(() => hashConfig(page)).toEqual({ layout: { scale: { labels: 1.5 } } });
+		await expect.poll(() => hashConfig(page)).toEqual({ text: { scale: 1.5 } });
 	});
 
 	test('Escape cancels, leaving the field applies', async ({ page }) => {
-		const fonts = section(page, 'Fonts & text size');
-		await fonts.locator('summary').click();
-		const iconScale = row(fonts, 'Icon Scale');
+		const icons = section(page, 'Icons');
+		await icons.locator('summary').click();
+		const iconScale = row(icons, 'Size');
 
 		await iconScale.locator('button.value').click();
 		await page.keyboard.type('250');
@@ -52,13 +52,13 @@ test.describe('typing a slider value', () => {
 		await page.keyboard.type('80');
 		await iconScale.locator('input.value-input').blur();
 		await expect(iconScale.locator('button.value')).toHaveText('80%');
-		await expect.poll(() => hashConfig(page)).toEqual({ layout: { scale: { icons: 0.8 } } });
+		await expect.poll(() => hashConfig(page)).toEqual({ icon: { scale: 0.8 } });
 	});
 
 	test('invalid text keeps the value; numbers are clamped to the range', async ({ page }) => {
-		const fonts = section(page, 'Fonts & text size');
-		await fonts.locator('summary').click();
-		const textScale = row(fonts, 'Text Scale');
+		const labels = section(page, 'Labels');
+		await labels.locator('summary').click();
+		const textScale = row(labels, 'Size');
 		const value = textScale.locator('button.value');
 
 		await value.click();
@@ -97,11 +97,11 @@ test.describe('typing a slider value', () => {
 	});
 
 	test('the value button is keyboard accessible and names its setting', async ({ page }) => {
-		const fonts = section(page, 'Fonts & text size');
-		await fonts.locator('summary').click();
-		const button = page.getByRole('button', { name: 'Label Spacing: 100%. Enter a value' });
+		const labels = section(page, 'Labels');
+		await labels.locator('summary').click();
+		const button = labels.getByRole('button', { name: 'Spacing: 100%. Enter a value' });
 		await button.focus();
 		await page.keyboard.press('Enter');
-		await expect(page.getByRole('textbox', { name: 'Label Spacing' })).toBeFocused();
+		await expect(page.getByRole('textbox', { name: 'Spacing' })).toBeFocused();
 	});
 });

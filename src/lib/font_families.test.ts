@@ -15,7 +15,7 @@ import {
 	weightLabel,
 	widthLabel,
 } from './font_families';
-import { fontGroupNodes } from './font_tree';
+import { labelNodes } from './label_tree';
 
 // Latin, Cyrillic and Greek blocks (U+0000–U+04FF), like Fira Sans
 const EUROPEAN = '0-4F';
@@ -158,9 +158,8 @@ describe('language filter', () => {
 
 describe('fontUsage', () => {
 	it('lists the faces in use with their rows, most used first', () => {
-		const defaults = osm.resolveOptions().text.fonts;
-		const groups = fontGroupNodes(osm.fontGroups, defaults);
-		const usage = fontUsage(defaults, groups);
+		const defaults = osm.resolveOptions().text;
+		const usage = fontUsage(defaults, labelNodes(osm.textGroups, defaults));
 		expect(usage[0].faceId).toBe('noto_sans_regular');
 		expect(usage[0].labels).toEqual(
 			expect.arrayContaining(['Places', 'Water', 'Boundaries', 'Street names', 'Transit stops'])

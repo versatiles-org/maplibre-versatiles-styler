@@ -1,6 +1,6 @@
 import { fontCovers } from '@versatiles/style';
-import type { FontFaceInfo, ResolvedFonts } from '@versatiles/style';
-import type { FontGroupNode } from './font_tree';
+import type { FontFaceInfo, ResolvedText } from '@versatiles/style';
+import { topicStyle, type LabelNode } from './label_tree';
 import { languageTitle } from './languages';
 
 /** A font family with its faces, as the font picker lists it. */
@@ -173,23 +173,20 @@ export interface FontUse {
 	labels: string[];
 }
 
-/** The faces in use in a font tree, most used first, with the rows that use them. */
-export function fontUsage(fonts: ResolvedFonts, groups: readonly FontGroupNode[]): FontUse[] {
+/** The faces in use in a text tree, most used first, with the rows that use them. */
+export function fontUsage(text: ResolvedText, nodes: readonly LabelNode[]): FontUse[] {
 	const uses = new Map<string, string[]>();
 	const add = (faceId: string, label: string) =>
 		uses.set(faceId, [...(uses.get(faceId) ?? []), label]);
-	const tree = fonts as unknown as Record<string, string | Record<string, string>>;
-	for (const group of groups) {
-		const node = tree[group.key];
-		if (typeof node === 'string') {
-			add(node, group.label);
-			continue;
-		}
-		const faces = new Set(Object.values(node));
+	for (const group of nodes.filter((node) => node.depth === 1)) {
+		const faces = new Set(group.topics.map((topic) => topicStyle(text, topic).font));
 		if (faces.size === 1) {
 			add([...faces][0], group.label);
 		} else {
-			for (const topic of group.topics) add(node[topic.key], topic.label);
+			for (const topic of nodes.filter(
+				(node) => node.depth === 2 && group.topics.includes(node.path)
+			))
+				add(topicStyle(text, topic.path).font, topic.label);
 		}
 	}
 	return [...uses]

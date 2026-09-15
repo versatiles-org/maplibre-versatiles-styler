@@ -4,13 +4,12 @@
 	import SidebarSection from './SidebarSection.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
 	import RecolorOptions from './sections/RecolorOptions.svelte';
-	import FontOptions from './sections/FontOptions.svelte';
-	import LayoutOptions from './sections/LayoutOptions.svelte';
+	import LabelOptions from './sections/LabelOptions.svelte';
+	import IconOptions from './sections/IconOptions.svelte';
 	import ElevationOptions from './sections/ElevationOptions.svelte';
 	import LayerOptions from './sections/LayerOptions.svelte';
 	import MapOptions from './sections/MapOptions.svelte';
 	import InputCheckbox from './inputs/InputCheckbox.svelte';
-	import LanguageOptions from './sections/LanguageOptions.svelte';
 
 	let {
 		options = $bindable(),
@@ -40,9 +39,11 @@
 	function resetIndividualColors() {
 		options.colors = structuredClone(defaults.colors);
 	}
-	function resetTypography() {
-		options.text.fonts = structuredClone(defaults.text.fonts);
-		options.layout = structuredClone(defaults.layout);
+	function resetLabels() {
+		options.text = structuredClone(defaults.text);
+	}
+	function resetIcons() {
+		options.icon = structuredClone(defaults.icon);
 	}
 	function resetLayers() {
 		options.layers = structuredClone(defaults.layers);
@@ -56,10 +57,6 @@
 		options.projection = defaults.projection;
 		options.sky = structuredClone(defaults.sky);
 		options.sun = structuredClone(defaults.sun);
-	}
-	function resetLabels() {
-		options.text.language = defaults.text.language;
-		options.text.languageStrict = defaults.text.languageStrict;
 	}
 </script>
 
@@ -80,20 +77,27 @@
 	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} />
 </SidebarSection>
 <SidebarSection
-	title="Fonts & text size"
-	onReset={resetTypography}
-	modified={changed('text.fonts', 'layout')}
+	title="Labels"
+	description="Language, fonts and the look of labels."
+	onReset={resetLabels}
+	modified={changed('text')}
 >
-	<FontOptions
-		bind:fonts={options.text.fonts}
-		defaults={defaults.text.fonts}
-		fontGroups={osm.fontGroups}
+	<LabelOptions
+		bind:text={options.text}
+		defaults={defaults.text}
+		textGroups={osm.textGroups}
 		{fontFaces}
 		{languages}
 		{origin}
-		language={options.text.language}
 	/>
-	<LayoutOptions bind:layout={options.layout} defaults={defaults.layout} />
+</SidebarSection>
+<SidebarSection
+	title="Icons"
+	description="Size and spacing of POI icons, shields and road markings."
+	onReset={resetIcons}
+	modified={changed('icon')}
+>
+	<IconOptions bind:icon={options.icon} defaults={defaults.icon} />
 </SidebarSection>
 <SidebarSection
 	title="Layers"
@@ -137,17 +141,5 @@
 		bind:sky={options.sky}
 		bind:sun={options.sun}
 		skyColorFallback={options.colors.water}
-	/>
-</SidebarSection>
-<SidebarSection
-	title="Labels"
-	description="Language used for place names and labels."
-	onReset={resetLabels}
-	modified={changed('text.language', 'text.languageStrict')}
->
-	<LanguageOptions
-		bind:language={options.text.language}
-		bind:languageStrict={options.text.languageStrict}
-		{languages}
 	/>
 </SidebarSection>

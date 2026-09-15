@@ -33,7 +33,8 @@ describe('canDiff', () => {
 		const edits: [string, (s: VectorState) => void][] = [
 			['a color', (s) => void (s.colors.water = '#ff0000')],
 			['a layer group', (s) => void (s.layers.labels.places.cities = false)],
-			['a font', (s) => void (s.text.fonts.water.rivers = 'fira_sans_bold')],
+			['a font', (s) => void (s.text.water.rivers.font = 'fira_sans_bold')],
+			['a label style', (s) => void (s.text.streets.names.letterSpacing = 0.1)],
 			['the sky', (s) => void (s.sky = false)],
 			['hillshade', (s) => void (s.features.hillshade = hillshadeOn)],
 		];

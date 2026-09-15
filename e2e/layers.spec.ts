@@ -99,17 +99,17 @@ test.describe('layers', () => {
 	});
 });
 
-test.describe('text layout', () => {
+test.describe('label style', () => {
 	test('spacing and tilt of line labels', async ({ page }) => {
-		const fonts = section(page, 'Fonts & text size');
-		await fonts.locator('summary').click();
+		const labels = section(page, 'Labels');
+		await labels.locator('summary').click();
 
-		await setRange(row(fonts, 'Label Spacing').locator('input[type="range"]'), 200);
+		await setRange(row(labels, 'Spacing').locator('input[type="range"]'), 200);
 		await expect
 			.poll(async () => (await layer(page, 'label-street-residential'))?.layout?.['symbol-spacing'])
 			.toBe(500);
 
-		await row(fonts, 'Tilted Line Labels').locator('select').selectOption('viewport');
+		await row(labels, 'Tilted line labels').locator('select').selectOption('viewport');
 		await expect
 			.poll(
 				async () =>
@@ -118,7 +118,7 @@ test.describe('text layout', () => {
 			.toBe('viewport');
 		await expect
 			.poll(() => hashConfig(page))
-			.toEqual({ layout: { spacing: { labels: 2 }, pitchAlignment: 'viewport' } });
+			.toEqual({ text: { spacing: 2, pitchAlignment: 'viewport' } });
 	});
 });
 

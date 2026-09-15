@@ -16,6 +16,7 @@
 		faces,
 		origin,
 		sample,
+		pickerTitle,
 		language,
 		languages,
 		usage,
@@ -35,6 +36,8 @@
 		origin: string;
 		/** The preview text in the picker. */
 		sample: string;
+		/** What the picker is for, "Font for …". Default: `label`. */
+		pickerTitle?: string;
 		language: string;
 		/** The tileset's languages, `{ title: code }`, for the picker's language filter. */
 		languages: Record<string, string>;
@@ -117,7 +120,7 @@
 		</button>
 		{#if open && trigger}
 			<FontPicker
-				title={label}
+				title={pickerTitle ?? label}
 				{faces}
 				{value}
 				{origin}

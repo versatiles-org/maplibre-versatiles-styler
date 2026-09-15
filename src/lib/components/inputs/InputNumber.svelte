@@ -21,13 +21,17 @@
 		step,
 		logarithmic = false,
 		unit = '',
+		placeholder = 'Mixed',
+		modified,
 		onchange,
 	}: {
 		label: string;
 		hint?: string;
 		disabled?: boolean;
-		value: number;
-		defaultValue: number;
+		/** `undefined` shows `placeholder`, e.g. for a group whose topics differ. */
+		value: number | undefined;
+		/** Reset writes it; `undefined` when the defaults differ, too. */
+		defaultValue: number | undefined;
 		min: number;
 		max: number;
 		/** Factor from the value to what is shown, e.g. 100 for percent. */
@@ -37,12 +41,15 @@
 		/** Spread the slider over the ratio `min`–`max`, for factors where 1 means no change. */
 		logarithmic?: boolean;
 		unit?: string;
+		placeholder?: string;
+		/** Overrides `value !== defaultValue`, when `value` summarises several settings. */
+		modified?: boolean;
 		onchange?: () => void;
 	} = $props();
 
 	let options = $derived({ min, max, scale, step: step ?? 1 / scale, logarithmic });
 	let range = $derived(sliderRange(options));
-	let isModified = $derived(value !== defaultValue);
+	let isModified = $derived(modified ?? value !== defaultValue);
 
 	function handleChange(e: Event) {
 		const input = e.target as HTMLInputElement;
@@ -63,7 +70,14 @@
 	}
 </script>
 
-<InputRow {label} {hint} {disabled} containerClass="number-container" {isModified} onReset={reset}>
+<InputRow
+	{label}
+	{hint}
+	{disabled}
+	containerClass={value === undefined ? 'number-container mixed' : 'number-container'}
+	{isModified}
+	onReset={reset}
+>
 	{#snippet children(uid)}
 		<input
 			id={uid}
@@ -71,15 +85,15 @@
 			min={range.min}
 			max={range.max}
 			step={range.step}
-			value={sliderPosition(value, options)}
+			value={sliderPosition(value ?? defaultValue ?? min, options)}
 			{disabled}
 			onchange={handleChange}
 		/>
 		<EditableValue
 			{label}
 			{disabled}
-			display={sliderLabel(value, options, unit)}
-			editText={sliderLabel(value, options, '')}
+			display={value === undefined ? placeholder : sliderLabel(value, options, unit)}
+			editText={value === undefined ? '' : sliderLabel(value, options, '')}
 			oncommit={handleTyped}
 		/>
 	{/snippet}

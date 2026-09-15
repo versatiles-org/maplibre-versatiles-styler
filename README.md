@@ -18,12 +18,12 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Interactive styling UI directly inside MapLibre
 - Ten vector themes — `colorful`, `natural`, `muted`, `gray`, `toner`, each with a `-dark` variant — and satellite imagery
 - Colors: global adjustments (hue, saturation, brightness, contrast, gamma, tint, blend) and every individual color, grouped by feature
-- Fonts per label group and topic (places, streets, water, …), with a warning when a font lacks the letters of the label language
-- Labels in any language of the tileset, or in the browser's language
+- Labels in any language of the tileset, or in the browser's language; tilt of line labels
+- Label style for all labels, a group or a topic (places, streets, water, …): font, size, spacing, capitalization, letter spacing, line height, wrap width and halo — with a warning when a font lacks the letters of the label language
+- Icon size and spacing
 - Show, hide or fade every layer group; 3D buildings
-- Text and icon size and spacing, tilt of line labels
 - Terrain and hillshade, projection (globe, Mercator), sky and sun
-- Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, fonts, layers)
+- Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, labels, icons, layers)
 - The whole configuration is kept in the URL hash, so a styled map can be shared as a link
 - Export styles as `style.json` download or copy `@versatiles/style` code to clipboard
 - Works as a standard MapLibre control (`map.addControl`)

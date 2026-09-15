@@ -129,7 +129,7 @@ describe('overlayDefaults', () => {
 		expect(colorful.theme).toBe('colorful');
 		expect(colorful.colors.water).toBe(vectorDefaults('colorful').colors.water);
 		expect(colorful.colors.label).toBe('#ffffff');
-		expect(colorful.text.fonts).toEqual(gray.text.fonts);
+		expect(colorful.text).toEqual(gray.text);
 	});
 });
 
@@ -145,6 +145,14 @@ describe('state from hash config', () => {
 		const state = vectorStateFromConfig('gray', { textScale: 2, fonts: { regular: 'x' } });
 		expect(state).toEqual(vectorDefaults('gray'));
 		expect(console.warn).toHaveBeenCalled();
+	});
+
+	it('falls back to the theme defaults for pre-release v6 text and layout options', () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		expect(vectorStateFromConfig('gray', { text: { fonts: 'fira_sans_regular' } })).toEqual(
+			vectorDefaults('gray')
+		);
+		expect(vectorStateFromConfig('gray', { layout: { scale: 2 } })).toEqual(vectorDefaults('gray'));
 	});
 
 	it('never takes theme, urls or landcover from the config', () => {
@@ -235,11 +243,13 @@ describe('minimalConfig', () => {
 	it('keeps changes, without theme, urls or landcover', () => {
 		const state = vectorDefaults('muted');
 		state.colors.water = '#ff0000';
-		state.layout.scale = { labels: 2, icons: 2 };
+		state.text.places.cities.scale = 2;
+		state.icon.scale = 2;
 		state.features.landcover = true;
 		expect(minimalConfig('muted', state, satelliteDefaults())).toEqual({
 			colors: { water: '#ff0000' },
-			layout: { scale: 2 },
+			text: { places: { cities: { scale: 2 } } },
+			icon: { scale: 2 },
 		});
 	});
 
@@ -260,7 +270,8 @@ describe('minimalConfig', () => {
 		const state = satelliteDefaults();
 		const overlay = overlayDefaults('toner');
 		overlay.colors.labelWater = '#00ff00';
-		overlay.text.fonts.places.cities = 'fira_sans_bold';
+		overlay.text.places.cities.font = 'fira_sans_regular';
+		overlay.text.streets.names.haloWidth = 3;
 		overlay.layers.roads.motorways = 0.5;
 		state.osmOverlay = overlay;
 		state.projection = 'mercator';
@@ -277,7 +288,10 @@ describe('minimalConfig', () => {
 			osmOverlay: {
 				theme: 'toner',
 				colors: { labelWater: '#00ff00' },
-				text: { fonts: { places: { cities: 'fira_sans_bold' } } },
+				text: {
+					places: { cities: { font: 'fira_sans_regular' } },
+					streets: { names: { haloWidth: 3 } },
+				},
 				layers: { roads: { motorways: 0.5 } },
 			},
 			projection: 'mercator',
@@ -332,9 +346,9 @@ describe('styleCode', () => {
 
 describe('configChanges', () => {
 	it('finds set paths, at any depth', () => {
-		const config = { recolor: { rotateHue: 90 }, text: { fonts: 'fira_sans_regular' } };
+		const config = { recolor: { rotateHue: 90 }, text: { font: 'fira_sans_regular' } };
 		expect(configChanges(config, ['recolor'])).toBe(true);
-		expect(configChanges(config, ['text.fonts', 'layout'])).toBe(true);
+		expect(configChanges(config, ['text.font', 'icon'])).toBe(true);
 		expect(configChanges(config, ['text.language'])).toBe(false);
 		expect(configChanges(config, ['colors', 'layers'])).toBe(false);
 		expect(configChanges({}, ['recolor'])).toBe(false);
