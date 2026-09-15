@@ -289,6 +289,7 @@
 			<SatelliteStylePanel
 				bind:options={satelliteState}
 				config={minimal}
+				{origin}
 				{overlayAvailable}
 				elevationAvailable={hasElevation}
 				fontFaces={sources.fontFaces()}
@@ -298,6 +299,7 @@
 			<VectorStylePanel
 				bind:options={vectorState}
 				config={minimal}
+				{origin}
 				defaults={currentVectorDefaults}
 				{hasElevation}
 				fontFaces={sources.fontFaces()}

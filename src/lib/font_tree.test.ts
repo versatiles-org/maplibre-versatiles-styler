@@ -5,7 +5,10 @@ import {
 	fontGroupNodes,
 	uniformFace,
 	withFace,
-	faceOptions,
+	pickerFaces,
+	filterFaces,
+	groupFacesByFamily,
+	fontSample,
 	labelLanguage,
 	coverageWarning,
 } from './font_tree';
@@ -76,28 +79,57 @@ describe('uniformFace / withFace', () => {
 	});
 });
 
-describe('faceOptions', () => {
-	const faces = [
-		face('fira_sans_regular', 'Fira Sans', 'Fira Sans Regular'),
-		face('fira_sans_condensed_light_italic', 'Fira Sans', 'Fira Sans Condensed Light Italic'),
-		face('noto_sans_bold', 'Noto Sans', 'Noto Sans Bold'),
-	];
+describe('pickerFaces', () => {
+	const faces = [face('fira_sans_regular', 'Fira Sans', 'Fira Sans Regular')];
 
-	it('groups by family and labels with the full title', () => {
-		expect(faceOptions(faces)).toEqual([
-			{ value: 'fira_sans_regular', label: 'Fira Sans Regular', group: 'Fira Sans' },
-			{
-				value: 'fira_sans_condensed_light_italic',
-				label: 'Fira Sans Condensed Light Italic',
-				group: 'Fira Sans',
-			},
-			{ value: 'noto_sans_bold', label: 'Noto Sans Bold', group: 'Noto Sans' },
+	it('adds faces in use that the server does not list, once, under "Other"', () => {
+		const result = pickerFaces(faces, ['fira_sans_regular', 'my_font', 'my_font']);
+		expect(result.map((f) => [f.id, f.family])).toEqual([
+			['fira_sans_regular', 'Fira Sans'],
+			['my_font', 'Other'],
 		]);
 	});
 
-	it('adds faces in use that the server does not list', () => {
-		const options = faceOptions(faces, ['noto_sans_bold', 'my_font', 'my_font']);
-		expect(options.slice(3)).toEqual([{ value: 'my_font', label: 'my_font', group: 'Other' }]);
+	it('does not warn about letters of faces it knows nothing about', () => {
+		const [, other] = pickerFaces(faces, ['my_font']);
+		expect(coverageWarning([other], 'my_font', 'ar')).toBeUndefined();
+	});
+});
+
+describe('filterFaces and groupFacesByFamily', () => {
+	const faces = [
+		face('fira_sans_regular', 'Fira Sans', 'Fira Sans Regular'),
+		face('fira_sans_bold_italic', 'Fira Sans', 'Fira Sans Bold Italic'),
+		face('noto_sans_bold', 'Noto Sans', 'Noto Sans Bold'),
+	];
+
+	it('matches every word of the query, ignoring case and order', () => {
+		expect(filterFaces(faces, '').length).toBe(3);
+		expect(filterFaces(faces, 'BOLD').map((f) => f.id)).toEqual([
+			'fira_sans_bold_italic',
+			'noto_sans_bold',
+		]);
+		expect(filterFaces(faces, 'italic fira').map((f) => f.id)).toEqual(['fira_sans_bold_italic']);
+		expect(filterFaces(faces, 'lato')).toEqual([]);
+	});
+
+	it('groups consecutive faces by family', () => {
+		expect(groupFacesByFamily(faces).map((g) => [g.name, g.faces.length])).toEqual([
+			['Fira Sans', 2],
+			['Noto Sans', 1],
+		]);
+	});
+});
+
+describe('fontSample', () => {
+	it('has a sample for every group and topic of osm.fontGroups', () => {
+		for (const group of fontGroupNodes(osm.fontGroups, defaults)) {
+			expect(fontSample(group.key)).not.toBe(fontSample('all'));
+			for (const topic of group.topics) {
+				expect(fontSample(`${group.key}.${topic.key}`)).not.toBe(fontSample('all'));
+			}
+		}
+		expect(fontSample('unknown')).toBe(fontSample('all'));
 	});
 });
 

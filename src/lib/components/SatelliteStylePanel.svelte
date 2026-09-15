@@ -21,6 +21,7 @@
 	let {
 		options = $bindable(),
 		config,
+		origin,
 		overlayAvailable,
 		elevationAvailable,
 		fontFaces,
@@ -29,6 +30,8 @@
 		options: SatelliteState;
 		/** The minimal config of the current options, to tell which sections have changes. */
 		config: Record<string, unknown>;
+		/** The server the font previews load their glyphs from. */
+		origin: string;
 		overlayAvailable: boolean;
 		elevationAvailable: boolean;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
@@ -135,6 +138,7 @@
 			defaults={overlay.text.fonts}
 			fontGroups={satellite.fontGroups}
 			{fontFaces}
+			{origin}
 			language={options.osmOverlay.text.language}
 			disabled={!overlayAvailable}
 		/>

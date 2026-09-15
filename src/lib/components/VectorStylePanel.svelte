@@ -16,6 +16,7 @@
 		options = $bindable(),
 		defaults,
 		config,
+		origin,
 		hasElevation,
 		fontFaces,
 		languages,
@@ -24,6 +25,8 @@
 		defaults: VectorState;
 		/** The minimal config of the current options, to tell which sections have changes. */
 		config: Record<string, unknown>;
+		/** The server the font previews load their glyphs from. */
+		origin: string;
 		hasElevation: boolean;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
 		languages: Record<string, string>;
@@ -86,6 +89,7 @@
 		defaults={defaults.text.fonts}
 		fontGroups={osm.fontGroups}
 		{fontFaces}
+		{origin}
 		language={options.text.language}
 	/>
 	<LayoutOptions bind:layout={options.layout} defaults={defaults.layout} />

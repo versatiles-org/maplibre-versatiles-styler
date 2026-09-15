@@ -2,12 +2,13 @@
 	import type { FontFaceInfo, FontGroupMap, ResolvedFonts } from '@versatiles/style';
 	import {
 		coverageWarning,
-		faceOptions,
 		fontGroupNodes,
+		fontSample,
+		pickerFaces,
 		uniformFace,
 		withFace,
 	} from '../../font_tree';
-	import InputSelect from '../inputs/InputSelect.svelte';
+	import InputFont from '../inputs/InputFont.svelte';
 	import InputText from '../inputs/InputText.svelte';
 
 	let {
@@ -15,6 +16,7 @@
 		defaults,
 		fontGroups,
 		fontFaces,
+		origin,
 		language,
 		disabled = false,
 	}: {
@@ -23,6 +25,8 @@
 		/** `osm.fontGroups` / `satellite.fontGroups`: which topics exist. */
 		fontGroups: FontGroupMap;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
+		/** The server the glyphs for the previews come from. */
+		origin: string;
 		/** `text.language`, to warn about faces without its letters. */
 		language: string;
 		disabled?: boolean;
@@ -70,28 +74,32 @@
 
 {#await fontFaces then faces}
 	{#if faces}
-		{@const options = faceOptions(faces, [...inUse(fonts), ...inUse(defaults)])}
-		<InputSelect
+		{@const choices = pickerFaces(faces, [...inUse(fonts), ...inUse(defaults)])}
+		<InputFont
 			label="All labels"
 			{disabled}
 			bind:value={() => uniformFace(fonts), setAll}
 			defaultValue={uniformFace(defaults)}
 			modified={JSON.stringify(fonts) !== JSON.stringify(defaults)}
-			{options}
-			placeholder={MIXED}
+			faces={choices}
+			{origin}
+			sample={fontSample('all')}
+			{language}
 			expanded={false}
 			warning={coverageWarning(faces, uniformFace(fonts), language)}
 		/>
 		{#each groups as group (group.key)}
 			{@const hasTopics = group.topics.length > 0}
-			<InputSelect
+			<InputFont
 				label={group.label}
 				{disabled}
 				bind:value={() => getGroup(group.key), (face) => setGroup(group.key, face)}
 				defaultValue={uniformFace((defaults as Tree)[group.key])}
 				modified={groupModified(group.key)}
-				{options}
-				placeholder={MIXED}
+				faces={choices}
+				{origin}
+				sample={fontSample(group.key)}
+				{language}
 				expanded={expanded[group.key] ?? false}
 				onToggle={hasTopics
 					? () => (expanded[group.key] = !(expanded[group.key] ?? false))
@@ -103,14 +111,17 @@
 			{#if hasTopics && expanded[group.key]}
 				<div class="nested">
 					{#each group.topics as topic (topic.key)}
-						<InputSelect
+						<InputFont
 							label={topic.label}
 							{disabled}
 							bind:value={
 								() => getTopic(group.key, topic.key), (face) => setTopic(group.key, topic.key, face)
 							}
 							defaultValue={defaultTopic(group.key, topic.key)}
-							{options}
+							faces={choices}
+							{origin}
+							sample={fontSample(`${group.key}.${topic.key}`)}
+							{language}
 							warning={coverageWarning(faces, getTopic(group.key, topic.key), language)}
 						/>
 					{/each}

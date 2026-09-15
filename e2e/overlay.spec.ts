@@ -90,10 +90,14 @@ test('overlay colors', async ({ page }) => {
 
 test('overlay fonts default to bold and can be changed', async ({ page }) => {
 	const fonts = await open(page, 'Overlay fonts & text size');
-	const allLabels = row(fonts, 'All labels').locator('select');
-	await expect(allLabels).toHaveValue('noto_sans_bold', { timeout: 10_000 });
+	const allLabels = row(fonts, 'All labels').locator('button.font-button');
+	await expect(allLabels).toHaveAccessibleName('All labels: Noto Sans Bold', { timeout: 10_000 });
 
-	await allLabels.selectOption('fira_sans_regular');
+	await allLabels.click();
+	await page
+		.getByRole('dialog', { name: 'Font for All labels' })
+		.getByRole('option', { name: 'Fira Sans Regular', exact: true })
+		.click();
 	await expect
 		.poll(async () => (await layer(page, 'label-place-city'))?.layout?.['text-font'])
 		.toEqual(['fira_sans_regular']);

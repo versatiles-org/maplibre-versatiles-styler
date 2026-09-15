@@ -14,6 +14,22 @@ function row(page: Page, label: string): Locator {
 	});
 }
 
+function fontButton(page: Page, label: string): Locator {
+	return row(page, label).locator('button.font-button');
+}
+
+function picker(page: Page, label: string): Locator {
+	return page.getByRole('dialog', { name: `Font for ${label}` });
+}
+
+/** Opens the picker of a row and picks a face by its title. */
+async function chooseFont(page: Page, label: string, title: string) {
+	await fontButton(page, label).click();
+	await expect(picker(page, label)).toBeVisible();
+	await picker(page, label).getByRole('option', { name: title, exact: true }).click();
+	await expect(picker(page, label)).toHaveCount(0);
+}
+
 async function textFont(page: Page, layerId: string): Promise<unknown> {
 	const style = await getMapStyle(page);
 	return style.layers.find((layer) => layer.id === layerId)?.layout?.['text-font'];
@@ -30,41 +46,69 @@ async function hashConfig(page: Page): Promise<unknown> {
 async function openFonts(page: Page) {
 	await page.goto('/');
 	await fontsSection(page).locator('summary').click();
-	await expect(row(page, 'All labels').locator('select')).toBeAttached({ timeout: 10_000 });
+	await expect(fontButton(page, 'All labels')).toBeAttached({ timeout: 10_000 });
 }
 
-test('lists the server’s faces grouped by family', async ({ page }) => {
+test('a picker lists the server’s faces by family, with previews drawn from the glyphs', async ({
+	page,
+}) => {
 	await openFonts(page);
-	const select = row(page, 'All labels').locator('select');
-	await expect(select.locator('optgroup[label="Fira Sans"]')).toHaveCount(1);
-	await expect(
-		select.locator('optgroup[label="Noto Sans"] option', { hasText: 'Noto Sans Bold' })
-	).toHaveCount(1);
 	// The theme mixes regular and bold faces
-	await expect(select).toHaveValue('');
-	await expect(select.locator('option:checked')).toHaveText('Mixed');
+	await expect(fontButton(page, 'All labels')).toHaveAccessibleName('All labels: Mixed');
+	await expect(fontButton(page, 'Places')).toHaveAccessibleName('Places: Noto Sans Regular');
+
+	await fontButton(page, 'All labels').click();
+	const dialog = picker(page, 'All labels');
+	await expect(dialog.locator('.font-picker-family', { hasText: 'Fira Sans' })).toHaveCount(1);
+	await expect(dialog.getByRole('option', { name: 'Noto Sans Bold', exact: true })).toHaveCount(1);
+
+	// Previews are drawn on canvas once they scroll into view
+	const notoBold = dialog.getByRole('option', { name: 'Noto Sans Bold', exact: true });
+	await notoBold.scrollIntoViewIfNeeded();
+	const drawn = notoBold.locator('.font-preview.ready canvas');
+	await expect(drawn).toBeVisible({ timeout: 10_000 });
+	const inked = await drawn.evaluate((canvas: HTMLCanvasElement) => {
+		const { data } = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height);
+		let count = 0;
+		for (let i = 3; i < data.length; i += 4) if (data[i] > 128) count++;
+		return count;
+	});
+	expect(inked).toBeGreaterThan(50);
 });
 
-test('shows one select per group', async ({ page }) => {
+test('the picker opens beside the sidebar, not clipped by it', async ({ page }) => {
+	await openFonts(page);
+	await fontButton(page, 'Water').click();
+	const box = await picker(page, 'Water').boundingBox();
+	const pane = await page.locator('.maplibregl-pane').boundingBox();
+	expect(box!.x).toBeGreaterThanOrEqual(pane!.x + pane!.width);
+	expect(box!.width).toBeGreaterThan(300);
+	await expect(picker(page, 'Water').getByRole('button', { name: 'Close' })).toBeVisible();
+});
+
+test('shows one font button per group', async ({ page }) => {
 	await openFonts(page);
 	for (const label of ['Places', 'Streets', 'Water', 'Boundaries', 'POIs', 'House numbers']) {
-		await expect(row(page, label).locator('select')).toHaveCount(1);
+		await expect(fontButton(page, label)).toHaveCount(1);
 	}
 });
 
 test('"All labels" sets every label and stores a single face', async ({ page }) => {
 	await openFonts(page);
-	await row(page, 'All labels').locator('select').selectOption('fira_sans_regular');
+	await chooseFont(page, 'All labels', 'Fira Sans Regular');
 
 	await expect.poll(() => textFont(page, 'label-place-city')).toEqual(['fira_sans_regular']);
 	expect(await textFont(page, 'label-motorway-shield')).toEqual(['fira_sans_regular']);
 	await expect.poll(() => hashConfig(page)).toEqual({ text: { fonts: 'fira_sans_regular' } });
+	await expect(fontButton(page, 'All labels')).toHaveAccessibleName(
+		'All labels: Fira Sans Regular'
+	);
 });
 
-test('a group select sets only that group', async ({ page }) => {
+test('a group sets only that group', async ({ page }) => {
 	await openFonts(page);
 	const placesBefore = await textFont(page, 'label-place-city');
-	await row(page, 'Water').locator('select').selectOption('fira_sans_regular_italic');
+	await chooseFont(page, 'Water', 'Fira Sans Italic');
 
 	await expect
 		.poll(() => textFont(page, 'label-water-river'))
@@ -76,17 +120,17 @@ test('a group select sets only that group', async ({ page }) => {
 		.toEqual({ text: { fonts: { water: 'fira_sans_regular_italic' } } });
 });
 
-test('a topic select sets only that topic', async ({ page }) => {
+test('a topic sets only that topic', async ({ page }) => {
 	await openFonts(page);
 	const lakesBefore = await textFont(page, 'label-water-area-major');
 	await row(page, 'Water').locator('button.expander').click();
-	await row(page, 'Rivers').locator('select').selectOption('fira_sans_regular_italic');
+	await chooseFont(page, 'Rivers', 'Fira Sans Italic');
 
 	await expect
 		.poll(() => textFont(page, 'label-water-river'))
 		.toEqual(['fira_sans_regular_italic']);
 	expect(await textFont(page, 'label-water-area-major')).toEqual(lakesBefore);
-	await expect(row(page, 'Water').locator('select')).toHaveValue('');
+	await expect(fontButton(page, 'Water')).toHaveAccessibleName('Water: Mixed');
 	await expect
 		.poll(() => hashConfig(page))
 		.toEqual({ text: { fonts: { water: { rivers: 'fira_sans_regular_italic' } } } });
@@ -95,26 +139,59 @@ test('a topic select sets only that topic', async ({ page }) => {
 test('resetting a group restores the theme’s faces', async ({ page }) => {
 	await openFonts(page);
 	const refsBefore = await textFont(page, 'label-motorway-shield');
-	const streets = row(page, 'Streets');
-	await streets.locator('select').selectOption('fira_sans_light');
+	await chooseFont(page, 'Streets', 'Fira Sans Light');
 	await expect.poll(() => textFont(page, 'label-motorway-shield')).toEqual(['fira_sans_light']);
 
-	await streets.locator('button.reset').click();
+	await row(page, 'Streets').locator('button.reset').click();
 	await expect.poll(() => textFont(page, 'label-motorway-shield')).toEqual(refsBefore);
 	await expect.poll(() => hashConfig(page)).toEqual({});
 });
 
 test('restores font choices from the hash', async ({ page }) => {
 	await openFonts(page);
-	await row(page, 'Boundaries').locator('select').selectOption('fira_sans_bold');
+	await chooseFont(page, 'Boundaries', 'Fira Sans Bold');
 	await expect(page).toHaveURL(/config=/);
 
 	await page.reload();
 	await fontsSection(page).locator('summary').click();
-	await expect(row(page, 'Boundaries').locator('select')).toHaveValue('fira_sans_bold', {
+	await expect(fontButton(page, 'Boundaries')).toHaveAccessibleName('Boundaries: Fira Sans Bold', {
 		timeout: 10_000,
 	});
 	expect(await textFont(page, 'label-boundary-state')).toEqual(['fira_sans_bold']);
+});
+
+test('search and keyboard: filter, pick with Enter, Escape closes', async ({ page }) => {
+	await openFonts(page);
+	await fontButton(page, 'Places').click();
+	const dialog = picker(page, 'Places');
+	await expect(dialog.getByRole('combobox', { name: 'Search fonts' })).toBeFocused();
+
+	await page.keyboard.type('lato bold');
+	const options = dialog.getByRole('option');
+	await expect(options.first()).toHaveAccessibleName(/^Lato .*Bold/);
+	const names = await options.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label')));
+	for (const name of names) expect(name).toMatch(/^Lato .*Bold/);
+
+	await page.keyboard.press('ArrowDown');
+	const second = await options.nth(1).getAttribute('data-face');
+	await page.keyboard.press('Enter');
+	await expect(dialog).toHaveCount(0);
+	await expect(fontButton(page, 'Places')).toBeFocused();
+	await expect.poll(() => hashConfig(page)).toEqual({ text: { fonts: { places: second } } });
+
+	await fontButton(page, 'Places').click();
+	await page.keyboard.press('Escape');
+	await expect(picker(page, 'Places')).toHaveCount(0);
+	await expect(fontButton(page, 'Places')).toBeFocused();
+});
+
+test('a click outside closes the picker without a change', async ({ page }) => {
+	await openFonts(page);
+	await fontButton(page, 'POIs').click();
+	await expect(picker(page, 'POIs')).toBeVisible();
+	await page.mouse.click(900, 600);
+	await expect(picker(page, 'POIs')).toHaveCount(0);
+	await expect.poll(() => hashConfig(page)).toEqual({});
 });
 
 test('warns when a face lacks the letters of the label language', async ({ page }) => {
@@ -125,7 +202,13 @@ test('warns when a face lacks the letters of the label language', async ({ page 
 	await labels.locator('summary').click();
 	await labels.locator('select').selectOption('ar');
 
-	await row(page, 'All labels').locator('select').selectOption('fira_sans_regular');
+	await fontButton(page, 'All labels').click();
+	const option = picker(page, 'All labels').getByRole('option', {
+		name: 'Fira Sans Regular',
+		exact: true,
+	});
+	await expect(option.locator('.font-picker-warning')).toHaveCount(1);
+	await option.click();
 	await expect(row(page, 'All labels').locator('.warning')).toContainText(
 		'Fira Sans Regular may lack the letters for'
 	);

@@ -1,7 +1,6 @@
 import { fontCovers } from '@versatiles/style';
 import type { FontFaceInfo, FontGroupMap, ResolvedFonts } from '@versatiles/style';
 import { languageTitle } from './languages';
-import type { SelectOption } from './components/inputs/select';
 
 export interface FontTopicNode {
 	key: string;
@@ -76,24 +75,76 @@ export function withFace<T>(node: T, face: string): T {
 }
 
 /**
- * The select entries for a list of faces, grouped by family and labelled with their full title — a
- * closed select shows only the chosen option, so "Bold" alone would not say which family. Faces in
- * use that the server does not list (`extra`) are added under "Other", so the select can show them.
+ * The faces to pick from: the server's, plus faces in use that it does not list (`extra`), under
+ * "Other" — so a hash or a theme default with such a face still shows it.
  */
-export function faceOptions(
+export function pickerFaces(
 	faces: readonly FontFaceInfo[],
 	extra: readonly string[] = []
-): SelectOption[] {
-	const options: SelectOption[] = faces.map((face) => ({
-		value: face.id,
-		label: face.title,
-		group: face.family,
-	}));
+): FontFaceInfo[] {
 	const known = new Set(faces.map((face) => face.id));
-	for (const id of new Set(extra)) {
-		if (!known.has(id)) options.push({ value: id, label: id, group: 'Other' });
+	const others = [...new Set(extra)]
+		.filter((id) => !known.has(id))
+		.map((id) => ({
+			id,
+			family: 'Other',
+			title: id,
+			weight: 400,
+			italic: false,
+			width: 'normal',
+			codeblocks: '',
+		}));
+	return [...faces, ...others];
+}
+
+/** The faces whose title contains every word of `query`, ignoring case. */
+export function filterFaces(faces: readonly FontFaceInfo[], query: string): FontFaceInfo[] {
+	const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+	return faces.filter((face) => {
+		const title = face.title.toLowerCase();
+		return words.every((word) => title.includes(word));
+	});
+}
+
+/** Consecutive faces of the same family, in order. */
+export function groupFacesByFamily(
+	faces: readonly FontFaceInfo[]
+): { name: string; faces: FontFaceInfo[] }[] {
+	const families: { name: string; faces: FontFaceInfo[] }[] = [];
+	for (const face of faces) {
+		const last = families[families.length - 1];
+		if (last && last.name === face.family) last.faces.push(face);
+		else families.push({ name: face.family, faces: [face] });
 	}
-	return options;
+	return families;
+}
+
+/** Preview texts: a label of the kind the font is for, in Latin letters with some accents. */
+const FONT_SAMPLES: Record<string, string> = {
+	all: 'Hamburg · Hauptstraße 12',
+	places: 'Zürich',
+	'places.cities': 'Zürich',
+	'places.villages': 'Grünwald',
+	'places.districts': 'Altstadt',
+	streets: 'Hauptstraße',
+	'streets.names': 'Hauptstraße',
+	'streets.refs': 'A 7',
+	'streets.exits': 'Exit 12',
+	water: 'Bodensee',
+	'water.lakes': 'Bodensee',
+	'water.rivers': 'Rhein',
+	boundaries: 'Österreich',
+	'boundaries.countries': 'Österreich',
+	'boundaries.states': 'Bayern',
+	pois: 'Café Central',
+	'pois.general': 'Café Central',
+	'pois.transit': 'Hauptbahnhof',
+	addresses: '12a',
+};
+
+/** The preview text for a font group or topic (`'water'`, `'water.rivers'`), or for all labels. */
+export function fontSample(path: string): string {
+	return FONT_SAMPLES[path] ?? FONT_SAMPLES.all;
 }
 
 /** The language labels are drawn in: `'user'` stands for the browser language. */
@@ -112,7 +163,8 @@ export function coverageWarning(
 	language: string
 ): string | undefined {
 	const face = faces.find((f) => f.id === faceId);
-	if (!face) return undefined;
+	// Faces the server does not list have no coverage to check.
+	if (!face || face.codeblocks === '') return undefined;
 	const code = labelLanguage(language);
 	if (fontCovers(face, code) !== false) return undefined;
 	return `${face.title} may lack the letters for ${languageTitle(code) ?? code}.`;
