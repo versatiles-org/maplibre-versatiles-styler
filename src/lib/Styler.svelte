@@ -25,6 +25,7 @@
 	import { languageOptions } from './languages';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from './hash';
+	import { canDiff, type RenderedStyle } from './style_update';
 	import SidebarSection from './components/SidebarSection.svelte';
 	import VectorStylePanel from './components/VectorStylePanel.svelte';
 	import SatelliteStylePanel from './components/SatelliteStylePanel.svelte';
@@ -87,23 +88,30 @@
 	// ── Rendering ────────────────────────────────────────────────────────────────
 
 	/**
-	 * The style for the current options, or `undefined` while a TileJSON it needs is still loading.
-	 * Sources are only read when the options need them, so a source that arrives later and changes
-	 * nothing does not rebuild — and reload — the style.
+	 * The style for the current options and what it was built from, or `undefined` while a TileJSON it
+	 * needs is still loading. Sources are only read when the options need them, so a source that
+	 * arrives later and changes nothing does not rebuild the style.
 	 */
-	function currentStyle(): StyleSpecification | undefined {
-		if (currentStyleKey === 'satellite') {
+	function currentStyle(): { style: StyleSpecification; rendered: RenderedStyle } | undefined {
+		const styleKey = currentStyleKey;
+		if (styleKey === 'satellite') {
 			const state = $state.snapshot(satelliteState) as SatelliteState;
 			const satellite = satelliteTileJSON;
 			if (!satellite) return undefined;
 			const stateSources = styleSources(state.osmOverlay !== false, state.features);
 			if (!stateSources) return undefined;
-			return buildSatelliteStyle(state, origin, { ...stateSources, satellite });
+			return {
+				style: buildSatelliteStyle(state, origin, { ...stateSources, satellite }),
+				rendered: { styleKey, origin, options: state },
+			};
 		}
 		const state = $state.snapshot(vectorState) as VectorState;
 		const stateSources = styleSources(true, state.features);
 		if (!stateSources?.osm) return undefined;
-		return buildVectorStyle(currentStyleKey, state, origin, stateSources);
+		return {
+			style: buildVectorStyle(styleKey, state, origin, stateSources),
+			rendered: { styleKey, origin, options: state },
+		};
 	}
 
 	function styleSources(
@@ -122,15 +130,17 @@
 		return result;
 	}
 
+	// What the style on the map was built from, to decide how the next one is applied.
+	let rendered: RenderedStyle | undefined;
+
 	$effect(() => {
-		const style = currentStyle();
-		if (!style) return;
+		const next = currentStyle();
+		if (!next) return;
 		untrack(() => {
-			// `diff: false` forces a full style reload. With the default diff,
-			// MapLibre applies the rebuilt style to its model (map.getStyle() is
-			// correct) but can leave already-rendered tiles showing the previous
-			// paint until the next interaction.
-			map.setStyle(style, { diff: false });
+			// MapLibre's diff keeps the loaded tiles and repaints in place — no blank map, no tile
+			// requests. Changes it cannot apply reload the style in full (see `style_update.ts`).
+			map.setStyle(next.style, { diff: canDiff(rendered, next.rendered) });
+			rendered = next.rendered;
 			hashManager?.setConfig(minimalConfig(currentStyleKey, vectorState, satelliteState));
 		});
 	});
@@ -155,8 +165,8 @@
 	// ── Export ───────────────────────────────────────────────────────────────────
 
 	function handleDownload() {
-		const style = currentStyle();
-		if (style) downloadStyle(style);
+		const current = currentStyle();
+		if (current) downloadStyle(current.style);
 	}
 
 	async function handleCopyCode() {

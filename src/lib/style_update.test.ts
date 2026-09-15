@@ -1,0 +1,61 @@
+import { describe, it, expect } from 'vitest';
+import { osm } from '@versatiles/style';
+import { canDiff, FULL_RELOAD_PATHS, type RenderedStyle } from './style_update';
+import { satelliteDefaults, vectorDefaults, type VectorState } from './style_config';
+
+const ORIGIN = 'https://tiles.example.org';
+
+function vector(edit?: (state: VectorState) => void): RenderedStyle {
+	const options = vectorDefaults('colorful');
+	edit?.(options);
+	return { styleKey: 'colorful', origin: ORIGIN, options };
+}
+
+const hillshadeOn = osm.resolveOptions({ features: { hillshade: true } }).features.hillshade;
+
+const withTerrain = (exaggeration: number) => (s: VectorState) => {
+	s.features.terrain = { exaggeration };
+};
+
+describe('canDiff', () => {
+	it('loads the first style in full', () => {
+		expect(canDiff(undefined, vector())).toBe(false);
+	});
+
+	it('diffs option changes', () => {
+		const edits: [string, (s: VectorState) => void][] = [
+			['a color', (s) => void (s.colors.water = '#ff0000')],
+			['a layer group', (s) => void (s.layers.labels.places.cities = false)],
+			['a font', (s) => void (s.text.fonts.water.rivers = 'fira_sans_bold')],
+			['the sky', (s) => void (s.sky = false)],
+			['hillshade', (s) => void (s.features.hillshade = hillshadeOn)],
+		];
+		for (const [name, edit] of edits) expect(canDiff(vector(), vector(edit)), name).toBe(true);
+	});
+
+	it('diffs a change of theme and a switch to satellite', () => {
+		expect(canDiff(vector(), { ...vector(), styleKey: 'toner-dark' })).toBe(true);
+		const satellite: RenderedStyle = {
+			styleKey: 'satellite',
+			origin: ORIGIN,
+			options: satelliteDefaults(),
+		};
+		expect(canDiff(vector(), satellite)).toBe(true);
+	});
+
+	it('reloads in full when the origin changes', () => {
+		expect(canDiff(vector(), { ...vector(), origin: 'https://other.example.org' })).toBe(false);
+	});
+
+	it('reloads in full when terrain changes, in any detail', () => {
+		expect(FULL_RELOAD_PATHS).toContain('features.terrain');
+		expect(canDiff(vector(), vector(withTerrain(1)))).toBe(false);
+		expect(canDiff(vector(withTerrain(1)), vector(withTerrain(2)))).toBe(false);
+
+		const otherEdit = vector((s) => {
+			withTerrain(1)(s);
+			s.colors.water = '#ff0000';
+		});
+		expect(canDiff(vector(withTerrain(1)), otherEdit)).toBe(true);
+	});
+});
