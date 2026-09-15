@@ -7,9 +7,13 @@ import { test, expect, type Page } from '@playwright/test';
  */
 
 type UpdatesWindow = Window & {
-	__setStyle: { diff: boolean | undefined }[];
+	__setStyle: { diff?: boolean; validate?: boolean }[];
 	__diffWarnings: string[];
-	_map: { loaded(): boolean; once(type: string, listener: () => void): void };
+	_map: {
+		loaded(): boolean;
+		once(type: string, listener: () => void): void;
+		getStyle(): { transition?: unknown };
+	};
 };
 
 const VIEW = 'map=13/52.52/13.405';
@@ -42,8 +46,11 @@ async function record(page: Page) {
 			set: (value) => {
 				lib = value;
 				const setStyle = value.Map.prototype.setStyle;
-				value.Map.prototype.setStyle = function (style: unknown, options?: { diff?: boolean }) {
-					w.__setStyle.push({ diff: options?.diff });
+				value.Map.prototype.setStyle = function (
+					style: unknown,
+					options?: { diff?: boolean; validate?: boolean }
+				) {
+					w.__setStyle.push({ diff: options?.diff, validate: options?.validate });
 					return setStyle.call(this, style, options);
 				};
 			},
@@ -128,7 +135,10 @@ test.describe('style updates', () => {
 	for (const [name, options] of DIFFED) {
 		test(`${name} is diffed and looks like a fresh load`, async ({ browser, page }) => {
 			await edit(page, hashFor(options));
-			expect(await setStyleCalls(page)).toEqual([{ diff: false }, { diff: true }]);
+			expect(await setStyleCalls(page)).toEqual([
+				{ diff: false, validate: false },
+				{ diff: true, validate: false },
+			]);
 			expect(await diffWarnings(page)).toEqual([]);
 			const edited = await page.screenshot({ clip: CLIP });
 
@@ -143,9 +153,42 @@ test.describe('style updates', () => {
 		});
 	}
 
+	test('a color edit is final in the first frames: no paint transition', async ({ page }) => {
+		await record(page);
+		await page.goto('/' + `#${VIEW}`);
+		await settle(page, 1);
+		expect(
+			await page.evaluate(() => (window as unknown as UpdatesWindow)._map.getStyle().transition)
+		).toEqual({
+			duration: 0,
+			delay: 0,
+		});
+
+		await page.evaluate(
+			(h) => (location.hash = h),
+			hashFor({ config: { recolor: { rotateHue: 180 } } })
+		);
+		await page.waitForFunction(() => (window as unknown as UpdatesWindow).__setStyle.length >= 2);
+		// Two animation frames after setStyle: with MapLibre's default 300 ms transition, the colors
+		// would still be on their way here.
+		await page.evaluate(
+			() =>
+				new Promise<void>((resolve) =>
+					requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+				)
+		);
+		const early = await page.screenshot({ clip: CLIP });
+		await settle(page, 2);
+		const final = await page.screenshot({ clip: CLIP });
+		expect(await differingPixels(page, early, final)).toBeLessThan(0.005);
+	});
+
 	test('terrain is applied as a full reload', async ({ page }) => {
 		await edit(page, hashFor({ config: { features: { terrain: true } } }));
-		expect(await setStyleCalls(page)).toEqual([{ diff: false }, { diff: false }]);
+		expect(await setStyleCalls(page)).toEqual([
+			{ diff: false, validate: false },
+			{ diff: false, validate: false },
+		]);
 		expect(await diffWarnings(page)).toEqual([]);
 	});
 
@@ -161,6 +204,9 @@ test.describe('style updates', () => {
 		await input.fill('https://tiles.versatiles.org/');
 		await input.dispatchEvent('change');
 		await settle(page, 2);
-		expect(await setStyleCalls(page)).toEqual([{ diff: false }, { diff: false }]);
+		expect(await setStyleCalls(page)).toEqual([
+			{ diff: false, validate: false },
+			{ diff: false, validate: false },
+		]);
 	});
 });

@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { osm } from '@versatiles/style';
-import { canDiff, FULL_RELOAD_PATHS, type RenderedStyle } from './style_update';
+import type { StyleSpecification } from 'maplibre-gl';
+import {
+	canDiff,
+	FULL_RELOAD_PATHS,
+	setStyleOptions,
+	styleForEditing,
+	type RenderedStyle,
+} from './style_update';
 import { satelliteDefaults, vectorDefaults, type VectorState } from './style_config';
 
 const ORIGIN = 'https://tiles.example.org';
@@ -57,5 +64,20 @@ describe('canDiff', () => {
 			s.colors.water = '#ff0000';
 		});
 		expect(canDiff(vector(withTerrain(1)), otherEdit)).toBe(true);
+	});
+});
+
+describe('styleForEditing', () => {
+	it('turns off paint transitions, without changing the style it is given', () => {
+		const style = { version: 8, sources: {}, layers: [] } as StyleSpecification;
+		expect(styleForEditing(style)).toEqual({ ...style, transition: { duration: 0, delay: 0 } });
+		expect(style).not.toHaveProperty('transition');
+	});
+});
+
+describe('setStyleOptions', () => {
+	it('skips validation and diffs where possible', () => {
+		expect(setStyleOptions(undefined, vector())).toEqual({ diff: false, validate: false });
+		expect(setStyleOptions(vector(), vector())).toEqual({ diff: true, validate: false });
 	});
 });

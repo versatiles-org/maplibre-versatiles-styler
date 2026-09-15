@@ -1,3 +1,4 @@
+import type { StyleSpecification } from 'maplibre-gl';
 import type { StyleKey } from './style_config';
 
 /** What a style on the map was built from. */
@@ -42,4 +43,29 @@ function valueAt(object: object, path: string): unknown {
 
 function same(a: unknown, b: unknown): boolean {
 	return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
+ * The style as the styler puts it on the map, tuned for editing. Downloads and copied code use the style
+ * as built.
+ *
+ * `transition: { duration: 0 }`: MapLibre animates paint changes over 300 ms by default, so every color,
+ * recolor and opacity edit would take that long to settle. Without the animation, the first frame after
+ * an edit is final. MapLibre reads the transition from the current style, so this also applies to diffs.
+ */
+export function styleForEditing(style: StyleSpecification): StyleSpecification {
+	return { ...style, transition: { duration: 0, delay: 0 } };
+}
+
+/**
+ * The options for `map.setStyle()`.
+ *
+ * `validate: false`: the styles come from `@versatiles/style`, whose tests validate them against the
+ * style spec. Skipping MapLibre's validation saves about 5 ms per edit.
+ */
+export function setStyleOptions(
+	previous: RenderedStyle | undefined,
+	next: RenderedStyle
+): { diff: boolean; validate: boolean } {
+	return { diff: canDiff(previous, next), validate: false };
 }

@@ -22,6 +22,8 @@ test('download triggers with a self-contained style', async ({ page }) => {
 
 	expect(json.version).toBe(8);
 	expect(json.layers).toBeDefined();
+	// The editing tweaks of the map's style (no paint transitions) stay out of the export.
+	expect(json.transition).toBeUndefined();
 	// Sources are inlined: absolute tile URLs, no TileJSON reference left.
 	const source = json.sources['versatiles-shortbread'];
 	expect(source.url).toBeUndefined();
@@ -48,4 +50,5 @@ test('copy writes a v6 snippet to the clipboard', async ({ context, page }) => {
 	expect(clipboardText).toContain('theme: "gray-dark"');
 	// the demo's origin
 	expect(clipboardText).toContain('base: "https://tiles.versatiles.org"');
+	expect(clipboardText).not.toContain('transition');
 });

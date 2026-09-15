@@ -25,7 +25,7 @@
 	import { languageOptions } from './languages';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from './hash';
-	import { canDiff, type RenderedStyle } from './style_update';
+	import { setStyleOptions, styleForEditing, type RenderedStyle } from './style_update';
 	import SidebarSection from './components/SidebarSection.svelte';
 	import VectorStylePanel from './components/VectorStylePanel.svelte';
 	import SatelliteStylePanel from './components/SatelliteStylePanel.svelte';
@@ -139,7 +139,7 @@
 		untrack(() => {
 			// MapLibre's diff keeps the loaded tiles and repaints in place — no blank map, no tile
 			// requests. Changes it cannot apply reload the style in full (see `style_update.ts`).
-			map.setStyle(next.style, { diff: canDiff(rendered, next.rendered) });
+			map.setStyle(styleForEditing(next.style), setStyleOptions(rendered, next.rendered));
 			rendered = next.rendered;
 			hashManager?.setConfig(minimalConfig(currentStyleKey, vectorState, satelliteState));
 		});
