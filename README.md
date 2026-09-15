@@ -8,7 +8,7 @@
 # MapLibre VersaTiles Styler
 
 A lightweight MapLibre GL JS control that allows users to explore and modify **VersaTiles map styles** directly inside the map.
-It provides a sidebar with editable color palettes, recoloring tools, style options such as font and language selection, and an export function.
+It provides a sidebar that edits every option of [`@versatiles/style`](https://github.com/versatiles-org/versatiles-style) v6 — themes, colors, fonts, layers, terrain, sky and more — and exports the result as a `style.json` or as code.
 Perfect for data journalism, demos, prototyping, or interactive style exploration.
 
 ---
@@ -16,14 +16,21 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 ## Features
 
 - Interactive styling UI directly inside MapLibre
-- Switch between vector style presets (colorful, eclipse, graybeard, shadow, neutrino) and satellite
-- Edit individual colors and apply global recoloring (hue, saturation, brightness, contrast)
-- Change fonts and map language
-- Adjust satellite imagery options (opacity, hue, brightness, saturation, contrast)
+- Ten vector themes — `colorful`, `natural`, `muted`, `gray`, `toner`, each with a `-dark` variant — and satellite imagery
+- Colors: global adjustments (hue, saturation, brightness, contrast, gamma, tint, blend) and every individual color, grouped by feature
+- Fonts per label group and topic (places, streets, water, …), with a warning when a font lacks the letters of the label language
+- Labels in any language of the tileset, or in the browser's language
+- Show, hide or fade every layer group; 3D buildings
+- Text and icon size and spacing, tilt of line labels
+- Terrain and hillshade, projection (globe, Mercator), sky and sun
+- Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, fonts, layers)
+- The whole configuration is kept in the URL hash, so a styled map can be shared as a link
 - Export styles as `style.json` download or copy `@versatiles/style` code to clipboard
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite
+
+Requires MapLibre GL JS 5 or later.
 
 ---
 
@@ -94,8 +101,50 @@ When using the UMD build, the control is available as the global `VersaTilesStyl
 
 The `VersaTilesStylerControl` constructor accepts an optional config object:
 
-| Option   | Type      | Default                  | Description                                        |
-| -------- | --------- | ------------------------ | -------------------------------------------------- |
-| `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles tile server              |
-| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially               |
-| `hash`   | `boolean` | `true`                   | Persist the selected style in the URL hash fragment |
+| Option   | Type      | Default                  | Description                                                                  |
+| -------- | --------- | ------------------------ | ---------------------------------------------------------------------------- |
+| `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.       |
+| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially                                        |
+| `hash`   | `boolean` | `true`                   | Keep the map view, the style and its options in the URL hash fragment        |
+
+---
+
+## Server requirements
+
+The styler reads everything from the `origin`. Each of these is optional — what is missing is left out of the sidebar:
+
+| Path                                        | Used for                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| `/tiles/osm/tiles.json`                     | The vector themes and the satellite overlay; languages; landcover        |
+| `/tiles/satellite/tiles.json`               | The satellite style                                                      |
+| `/tiles/elevation/tiles.json`               | Terrain and hillshade                                                    |
+| `/assets/glyphs/{fontstack}/{range}.pbf`    | Label fonts                                                              |
+| `/assets/glyphs/font_families.json`         | The font lists; without it, fonts are entered as glyph names             |
+| `/assets/sprites/base`                      | Icons                                                                    |
+
+The three TileJSON files are loaded in parallel when the control is added, and the style is set once they are in.
+
+---
+
+## URL hash
+
+With `hash: true` the styler keeps its state in the URL:
+
+```
+#map=<zoom>/<lat>/<lng>[/<bearing>/<pitch>]&style=<theme or satellite>&config=<options>
+```
+
+`config` is the base64url-encoded JSON of the options that differ from the theme's defaults — the same
+options `@versatiles/style` takes, e.g. `{"layers":{"labels":false}}`.
+
+---
+
+## Upgrading from 1.x
+
+Version 2 is built on `@versatiles/style` v6:
+
+- The v5 styles `eclipse`, `graybeard`, `neutrino` and `shadow` are replaced by themes. Links that use them
+  open the closest theme (`colorful-dark`, `gray`, `muted`, `gray-dark`).
+- Options stored in older links use v5 option names; they are ignored and the theme's defaults are shown.
+- The copied code uses the v6 API: `await inlineSources(osm({ theme, … }))`.
+- `/tiles/index.json` is no longer read; sources are detected from their TileJSON files (see above).
