@@ -1,0 +1,344 @@
+import { test, expect, type Page } from '@playwright/test';
+
+/**
+ * No content is wider or higher than its container: in the sidebar, the font picker and the color
+ * picker, at several window sizes and with long content.
+ */
+
+const SIZES = [
+	{ width: 1100, height: 900 },
+	{ width: 800, height: 500 },
+	{ width: 420, height: 700 },
+	// shorter than the color picker
+	{ width: 800, height: 360 },
+];
+
+/** Elements that stick out on purpose. */
+const ALLOWED = [
+	// centered on the chosen point, so it overhangs the area at its edges
+	'.color-area-thumb',
+];
+
+/**
+ * Layout problems in the sidebar and the popups:
+ *
+ * - content cut off by a container that clips (`overflow: hidden`/`clip`), unless it is truncated with an
+ *   ellipsis on purpose;
+ * - content spilling out of a container that does not clip, or scrolling sideways;
+ * - an element outside the content box of its parent (padding and border are not room for children);
+ * - in flex and grid containers, children overlapping each other — e.g. a field wider than its grid
+ *   column, which stays inside the row;
+ * - a popup outside the window, or a sidebar wider than it.
+ */
+function findLayoutProblems(allowed: string[]): string[] {
+	const problems = new Set<string>();
+	const TOLERANCE = 1;
+	const name = (el: Element) => {
+		const classes = typeof el.className === 'string' ? el.className.trim().split(/\s+/) : [];
+		const text = el.children.length === 0 ? el.textContent?.trim().slice(0, 40) : '';
+		const label = el.getAttribute('aria-label');
+		return `${el.tagName.toLowerCase()}${classes
+			.filter(Boolean)
+			.map((c) => `.${c}`)
+			.join('')}${label ? `[${label}]` : ''}${text ? ` "${text}"` : ''}`;
+	};
+	const isFormControl = (el: Element) =>
+		['input', 'select', 'textarea'].includes(el.tagName.toLowerCase());
+	const clips = (overflow: string) => overflow === 'hidden' || overflow === 'clip';
+	const scrolls = (overflow: string) => overflow === 'auto' || overflow === 'scroll';
+	const isHidden = (el: Element, style: CSSStyleDeclaration, rect: DOMRect) =>
+		style.display === 'none' ||
+		// the content of a closed section keeps its size, but is not shown
+		(el.parentElement?.closest('details:not([open])') !== null && !el.closest('summary')) ||
+		style.visibility === 'hidden' ||
+		(rect.width === 0 && rect.height === 0) ||
+		// moved out of sight on purpose, e.g. the radios of the theme table
+		(style.position === 'absolute' && (rect.right < -1000 || rect.bottom < -1000));
+	const contentBox = (el: Element, style: CSSStyleDeclaration) => {
+		const r = el.getBoundingClientRect();
+		const px = (value: string) => parseFloat(value) || 0;
+		return {
+			left: r.left + px(style.borderLeftWidth) + px(style.paddingLeft),
+			right: r.right - px(style.borderRightWidth) - px(style.paddingRight),
+			top: r.top + px(style.borderTopWidth) + px(style.paddingTop),
+			bottom: r.bottom - px(style.borderBottomWidth) - px(style.paddingBottom),
+		};
+	};
+	const isAllowed = (el: Element) => allowed.some((selector) => el.matches(selector));
+
+	for (const root of document.querySelectorAll('.maplibregl-pane, .font-picker, .color-picker')) {
+		const rootRect = root.getBoundingClientRect();
+		if (root.classList.contains('maplibregl-pane')) {
+			if (rootRect.right > innerWidth + TOLERANCE)
+				problems.add(`${name(root)} is wider than the window`);
+		} else {
+			if (rootRect.left < -TOLERANCE || rootRect.top < -TOLERANCE) {
+				problems.add(`${name(root)} starts outside the window`);
+			}
+			if (rootRect.right > innerWidth + TOLERANCE || rootRect.bottom > innerHeight + TOLERANCE) {
+				problems.add(
+					`${name(root)} ends outside the window: ${Math.round(rootRect.right)}×${Math.round(rootRect.bottom)} in ${innerWidth}×${innerHeight}`
+				);
+			}
+		}
+
+		for (const el of [root, ...root.querySelectorAll('*')]) {
+			if (isAllowed(el)) continue;
+			const style = getComputedStyle(el);
+			const rect = el.getBoundingClientRect();
+			if (isHidden(el, style, rect)) continue;
+
+			// Content larger than the element: cut off, spilling out, or scrolling sideways.
+			if (!isFormControl(el) && el.clientWidth > 0) {
+				const wider = el.scrollWidth > el.clientWidth + TOLERANCE;
+				const higher = el.scrollHeight > el.clientHeight + TOLERANCE;
+				const ellipsis = style.textOverflow === 'ellipsis';
+				if (wider && !ellipsis) {
+					const how = clips(style.overflowX)
+						? 'cut off'
+						: scrolls(style.overflowX)
+							? 'scrolls sideways'
+							: 'spills out';
+					problems.add(
+						`${name(el)}: content ${how}, ${el.scrollWidth}px wide in ${el.clientWidth}px`
+					);
+				}
+				if (higher && !scrolls(style.overflowY)) {
+					const how = clips(style.overflowY) ? 'cut off' : 'spills out';
+					problems.add(
+						`${name(el)}: content ${how}, ${el.scrollHeight}px high in ${el.clientHeight}px`
+					);
+				}
+			}
+
+			const parent = el.parentElement;
+			if (!parent || !root.contains(parent) || el === root) continue;
+			const parentStyle = getComputedStyle(parent);
+			const positioned = style.position === 'absolute' || style.position === 'fixed';
+
+			// Inside the parent's content box. Scroll containers move their content, so only their width counts.
+			const box = positioned ? parent.getBoundingClientRect() : contentBox(parent, parentStyle);
+			const sideways = Math.max(rect.right - box.right, box.left - rect.left);
+			if (sideways > TOLERANCE) {
+				problems.add(
+					`${name(el)} sticks out ${Math.round(sideways)}px sideways of ${name(parent)}`
+				);
+			}
+			if (!scrolls(parentStyle.overflowY) && style.position !== 'sticky') {
+				const vertically = Math.max(rect.bottom - box.bottom, box.top - rect.top);
+				if (vertically > TOLERANCE) {
+					problems.add(
+						`${name(el)} sticks out ${Math.round(vertically)}px vertically of ${name(parent)}`
+					);
+				}
+			}
+		}
+
+		// Children of flex and grid containers do not overlap.
+		for (const parent of [root, ...root.querySelectorAll('*')]) {
+			const display = getComputedStyle(parent).display;
+			if (!/flex|grid/.test(display)) continue;
+			const children = [...parent.children].filter((child) => {
+				const style = getComputedStyle(child);
+				const rect = child.getBoundingClientRect();
+				return (
+					!isAllowed(child) &&
+					!isHidden(child, style, rect) &&
+					!['absolute', 'fixed', 'sticky'].includes(style.position)
+				);
+			});
+			// In a grid whose children are placed one after another, each child stays in its column.
+			const parentStyle = getComputedStyle(parent);
+			const columns = parentStyle.gridTemplateColumns.split(' ').map(parseFloat);
+			const autoPlaced = children.every(
+				(child) => getComputedStyle(child).gridColumnStart === 'auto'
+			);
+			if (display.includes('grid') && autoPlaced && columns.every((width) => width > 0)) {
+				const gap = parseFloat(parentStyle.columnGap) || 0;
+				const box = contentBox(parent, parentStyle);
+				children.forEach((child, i) => {
+					const column = i % columns.length;
+					const start =
+						box.left + columns.slice(0, column).reduce((sum, width) => sum + width + gap, 0);
+					const end = start + columns[column];
+					const r = child.getBoundingClientRect();
+					const out = Math.max(r.right - end, start - r.left);
+					if (out > TOLERANCE) {
+						problems.add(
+							`${name(child)} sticks out ${Math.round(out)}px of its grid column ${column + 1} in ${name(parent)}`
+						);
+					}
+				});
+			}
+			for (let i = 0; i < children.length; i++) {
+				for (let j = i + 1; j < children.length; j++) {
+					const a = children[i].getBoundingClientRect();
+					const b = children[j].getBoundingClientRect();
+					const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+					const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+					if (x > TOLERANCE && y > TOLERANCE) {
+						problems.add(
+							`${name(children[i])} and ${name(children[j])} overlap by ${Math.round(x)}×${Math.round(y)}px in ${name(parent)}`
+						);
+					}
+				}
+			}
+		}
+	}
+	return [...problems];
+}
+
+async function layoutProblems(page: Page): Promise<string[]> {
+	return page.evaluate(findLayoutProblems, ALLOWED);
+}
+
+/** A long family name and a long label language, to see that long content stays inside. */
+async function useLongContent(page: Page) {
+	await page.route('**/assets/glyphs/font_families.json', async (route) => {
+		const response = await route.fetch();
+		const families = (await response.json()) as { name: string; faces: unknown[] }[];
+		families.push({
+			name: 'Extraordinarily Condensed Humanist Grotesque Display',
+			faces: [400, 700].map((weight) => ({
+				id: `extraordinarily_condensed_humanist_grotesque_display_${weight}`,
+				style: 'normal',
+				weight,
+				width: 'normal',
+				codeblocks: '0-2F',
+			})),
+		});
+		await route.fulfill({ response, json: families });
+	});
+}
+
+async function openAllSections(page: Page) {
+	await page.waitForSelector('.maplibregl-pane details', { state: 'attached' });
+	await page.evaluate(() =>
+		document
+			.querySelectorAll<HTMLDetailsElement>('.maplibregl-pane details')
+			.forEach((details) => (details.open = true))
+	);
+}
+
+function labelsSection(page: Page) {
+	return page.locator(
+		'.maplibregl-versatiles-styler details:has(summary .section-title:text-is("Labels"))'
+	);
+}
+
+for (const size of SIZES) {
+	test.describe(`layout at ${size.width}×${size.height}`, () => {
+		test.use({ viewport: size });
+
+		test.beforeEach(async ({ page }) => {
+			await useLongContent(page);
+		});
+
+		test('sidebar with every section open', async ({ page }) => {
+			await page.goto('/');
+			await openAllSections(page);
+			// changes add "•" marks and reset buttons
+			const labels = labelsSection(page);
+			await labels.locator('.entry:has(label:text-is("Language")) select').selectOption('el');
+			await labels
+				.locator('.entry:has(label:text-is("Apply to")) select')
+				.selectOption('streets.refs');
+			await labels.locator('.entry:has(label:text-is("Size")) button.value').click();
+			await page.keyboard.type('150');
+			await page.keyboard.press('Enter');
+			await expect(labels.locator('button.font-button')).toBeAttached({ timeout: 10_000 });
+			expect(await layoutProblems(page)).toEqual([]);
+		});
+
+		test('satellite sidebar with every section open', async ({ page }) => {
+			await page.goto('/#map=5/50/10&style=satellite');
+			await openAllSections(page);
+			await page.waitForSelector('.maplibregl-pane button.font-button', { state: 'attached' });
+			await openAllSections(page);
+			expect(await layoutProblems(page)).toEqual([]);
+		});
+
+		test('font picker with the script filter, closest fonts, styles and a search', async ({
+			page,
+		}) => {
+			await page.goto('/');
+			await labelsSection(page).locator('summary').click();
+			await labelsSection(page).locator('button.font-button').click();
+			const dialog = page.getByRole('dialog', { name: 'Font for All labels' });
+			await expect(dialog).toBeVisible();
+
+			await dialog.locator('button.font-picker-filter-button').click();
+			await dialog.locator('.font-picker-uncovered summary').click();
+			expect(await layoutProblems(page)).toEqual([]);
+
+			await dialog.getByRole('button', { name: 'All available' }).click();
+			await dialog.getByRole('option', { name: 'Fira Sans', exact: true }).click();
+			expect(await layoutProblems(page)).toEqual([]);
+
+			await dialog.getByRole('button', { name: 'Clear' }).first().click();
+			await dialog.getByRole('combobox', { name: 'Search fonts' }).fill('extraordinarily');
+			await expect(dialog.getByRole('option', { name: /^Extraordinarily/ })).toBeVisible();
+			expect(await layoutProblems(page)).toEqual([]);
+		});
+
+		test('color picker on every tab', async ({ page }) => {
+			await page.goto('/');
+			const colors = page.locator(
+				'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
+			);
+			await colors.locator('summary').click();
+			await colors.locator('button.color-swatch').first().click();
+			const dialog = page.getByRole('dialog', { name: /^Color for/ });
+			await expect(dialog).toBeVisible();
+			for (const tab of ['RGB', 'HSL', 'Hex']) {
+				await dialog.getByRole('tab', { name: tab }).click();
+				expect(await layoutProblems(page), tab).toEqual([]);
+			}
+			// a channel value while it is typed
+			await dialog.getByRole('tab', { name: 'HSL' }).click();
+			await dialog.getByRole('button', { name: /^Saturation: .* Enter a value$/ }).click();
+			await expect(dialog.getByRole('textbox', { name: 'Saturation' })).toBeFocused();
+			expect(await layoutProblems(page), 'editing a value').toEqual([]);
+		});
+	});
+}
+
+test('the layout check finds content that sticks out', async ({ page }) => {
+	await page.goto('/');
+	await openAllSections(page);
+	await page.addStyleTag({
+		content: `
+			.maplibregl-pane .section-description { width: 600px; }
+			.maplibregl-pane .color-container .label { min-width: 400px !important; }
+		`,
+	});
+	const problems = await layoutProblems(page);
+	expect(
+		problems.some((p) => /p\.section-description ".*" sticks out \d+px sideways/.test(p))
+	).toBe(true);
+	expect(
+		problems.some((p) => /div\.label sticks out/.test(p) || /content \d+px wide/.test(p))
+	).toBe(true);
+
+	const colors = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
+	);
+	await colors.locator('button.color-swatch').first().click();
+	await page.addStyleTag({
+		content: `
+			.color-picker { max-height: 150px !important; }
+			.color-picker .color-picker-body { overflow: hidden !important; }
+			.color-picker .color-picker-slider output { min-width: 60px; }
+		`,
+	});
+	const pickerProblems = await layoutProblems(page);
+	expect(pickerProblems.some((p) => /color-picker-body: content cut off/.test(p))).toBe(true);
+	expect(
+		pickerProblems.some((p) => /output .* sticks out \d+px of its grid column 3/.test(p))
+	).toBe(true);
+
+	await page.addStyleTag({ content: '.color-picker { margin-top: 2000px; }' });
+	expect(
+		(await layoutProblems(page)).some((p) => /color-picker.* ends outside the window/.test(p))
+	).toBe(true);
+});
