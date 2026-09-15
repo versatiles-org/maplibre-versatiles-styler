@@ -164,3 +164,63 @@ test('changing Rotate Hue repaints the map canvas', async ({ page }) => {
 	// The visible map must actually repaint.
 	expect(Buffer.compare(before, after)).not.toBe(0);
 });
+
+test.describe('gamma and contrast sliders', () => {
+	function recolorRow(page: import('@playwright/test').Page, label: string) {
+		return page
+			.locator('.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))')
+			.locator('.entry', { has: page.locator(`label:text-is("${label}")`) });
+	}
+
+	async function hashConfig(page: import('@playwright/test').Page): Promise<unknown> {
+		const match = page.url().match(/config=([^&]+)/);
+		if (!match) return {};
+		return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
+	}
+
+	test.beforeEach(async ({ page }) => {
+		await page
+			.locator(
+				'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments")) summary'
+			)
+			.click();
+	});
+
+	test('gamma starts at 1 in the middle and moves in steps of 0.01', async ({ page }) => {
+		const gamma = recolorRow(page, 'Gamma');
+		const range = gamma.locator('input[type="range"]');
+		const max = Number(await range.getAttribute('max'));
+		await expect(range).toHaveValue(String(max / 2));
+		await expect(gamma.locator('.value')).toHaveText('1');
+
+		await range.focus();
+		await page.keyboard.press('ArrowRight');
+		await expect(gamma.locator('.value')).toHaveText('1.01');
+		await expect.poll(() => hashConfig(page)).toEqual({ recolor: { gamma: 1.01 } });
+
+		await page.keyboard.press('ArrowLeft');
+		await page.keyboard.press('ArrowLeft');
+		await expect(gamma.locator('.value')).toHaveText('0.99');
+
+		await gamma.locator('.input > button').click();
+		await expect(gamma.locator('.value')).toHaveText('1');
+		await expect.poll(() => hashConfig(page)).toEqual({});
+	});
+
+	test('gamma and contrast reach 0.1 and 10', async ({ page }) => {
+		for (const [label, low, high] of [
+			['Gamma', '0.1', '10'],
+			['Contrast', '10%', '1000%'],
+		]) {
+			const row = recolorRow(page, label);
+			const range = row.locator('input[type="range"]');
+			await range.fill('0');
+			await range.dispatchEvent('change');
+			await expect(row.locator('.value')).toHaveText(low);
+			await range.fill(String(await range.getAttribute('max')));
+			await range.dispatchEvent('change');
+			await expect(row.locator('.value')).toHaveText(high);
+		}
+		await expect.poll(() => hashConfig(page)).toEqual({ recolor: { gamma: 10, contrast: 10 } });
+	});
+});

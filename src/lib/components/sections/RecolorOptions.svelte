@@ -40,21 +40,24 @@
 />
 <InputNumber
 	label="Gamma"
-	hint="Non-linear brightness curve. 1 means no change."
+	hint="Non-linear brightness curve. 1 means no change, below 1 brightens, above 1 darkens."
 	bind:value={recolor.gamma}
 	defaultValue={defaults.gamma}
 	min={0.1}
 	max={10}
+	step={0.01}
+	logarithmic
 />
 <InputNumber
 	label="Contrast"
 	hint="Push colors away from mid-grey. 100% means no change."
 	bind:value={recolor.contrast}
 	defaultValue={defaults.contrast}
-	min={0}
+	min={0.1}
 	max={10}
 	scale={100}
 	unit="%"
+	logarithmic
 />
 <InputNumber
 	label="Brightness"

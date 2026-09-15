@@ -1,5 +1,6 @@
 <script lang="ts">
 	import InputRow from './InputRow.svelte';
+	import { sliderLabel, sliderPosition, sliderRange, sliderValue } from './number_slider';
 
 	let {
 		label,
@@ -10,6 +11,8 @@
 		min,
 		max,
 		scale = 1,
+		step,
+		logarithmic = false,
 		unit = '',
 		onchange,
 	}: {
@@ -20,26 +23,23 @@
 		defaultValue: number;
 		min: number;
 		max: number;
+		/** Factor from the value to what is shown, e.g. 100 for percent. */
 		scale?: number;
+		/** The smallest change of the value. Default: 1 of what is shown (1 %, 1°). */
+		step?: number;
+		/** Spread the slider over the ratio `min`–`max`, for factors where 1 means no change. */
+		logarithmic?: boolean;
 		unit?: string;
 		onchange?: () => void;
 	} = $props();
 
+	let options = $derived({ min, max, scale, step: step ?? 1 / scale, logarithmic });
+	let range = $derived(sliderRange(options));
 	let isModified = $derived(value !== defaultValue);
-	let scaledMin = $derived(min * scale);
-	let scaledMax = $derived(max * scale);
-	let scaledValue = $derived(clamp(value) * scale);
-	let displayValue = $derived(Math.round(scaledValue * 100) / 100 + unit);
-
-	function clamp(v: number): number {
-		if (v < min) return min;
-		if (v > max) return max;
-		return v;
-	}
 
 	function handleChange(e: Event) {
 		const input = e.target as HTMLInputElement;
-		value = parseFloat(input.value) / scale;
+		value = sliderValue(parseFloat(input.value), options);
 		onchange?.();
 	}
 
@@ -54,13 +54,13 @@
 		<input
 			id={uid}
 			type="range"
-			min={scaledMin}
-			max={scaledMax}
-			step="1"
-			value={scaledValue}
+			min={range.min}
+			max={range.max}
+			step={range.step}
+			value={sliderPosition(value, options)}
 			{disabled}
 			onchange={handleChange}
 		/>
-		<span class="value">{displayValue}</span>
+		<span class="value">{sliderLabel(value, options, unit)}</span>
 	{/snippet}
 </InputRow>
