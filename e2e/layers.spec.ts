@@ -109,7 +109,7 @@ test.describe('label style', () => {
 			.poll(async () => (await layer(page, 'label-street-residential'))?.layout?.['symbol-spacing'])
 			.toBe(500);
 
-		await row(labels, 'Tilted line labels').locator('select').selectOption('viewport');
+		await row(labels, 'Tilted line labels').getByRole('radio', { name: 'Upright' }).click();
 		await expect
 			.poll(
 				async () =>
@@ -148,7 +148,7 @@ test.describe('terrain & hillshade', () => {
 		const shadow = row(elevation, 'Shadow Color').locator('input.color-text');
 		await shadow.fill('#ff0000');
 		await shadow.press('Enter');
-		await row(elevation, 'Light Source').locator('select').selectOption('viewport');
+		await row(elevation, 'Light Source').getByRole('radio', { name: 'Screen' }).click();
 
 		await expect
 			.poll(async () => (await layer(page, 'hillshade'))?.paint)

@@ -4,7 +4,7 @@
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputColor from '../inputs/InputColor.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
-	import InputSelect from '../inputs/InputSelect.svelte';
+	import InputSegmented from '../inputs/InputSegmented.svelte';
 
 	let {
 		features = $bindable(),
@@ -92,7 +92,7 @@
 			bind:value={features.hillshade.accentColor}
 			defaultValue={hillshadeDefaults.accentColor}
 		/>
-		<InputSelect
+		<InputSegmented
 			label="Light Source"
 			hint="Map: the light comes from a fixed direction on the map and turns with it. Screen: it always comes from the top of the screen."
 			{disabled}

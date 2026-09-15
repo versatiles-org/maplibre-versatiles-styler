@@ -21,6 +21,7 @@
 	import type { SelectOption } from '../inputs/select';
 	import InputFont from '../inputs/InputFont.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
+	import InputSegmented from '../inputs/InputSegmented.svelte';
 	import InputSelect from '../inputs/InputSelect.svelte';
 	import InputText from '../inputs/InputText.svelte';
 	import LanguageOptions from './LanguageOptions.svelte';
@@ -73,8 +74,8 @@
 	];
 
 	const SHAPE: NumberEditor[] = [
-		{ key: 'letterSpacing', label: 'Letter spacing', min: -0.1, max: 0.5, step: 0.01, unit: ' em' },
-		{ key: 'lineHeight', label: 'Line height', min: 0.8, max: 2, step: 0.05, unit: ' em' },
+		{ key: 'letterSpacing', label: 'Letter spacing', min: -0.1, max: 0.5, step: 0.01, unit: 'em' },
+		{ key: 'lineHeight', label: 'Line height', min: 0.8, max: 2, step: 0.05, unit: 'em' },
 		{
 			key: 'maxWidth',
 			label: 'Max width',
@@ -82,7 +83,7 @@
 			min: 1,
 			max: 30,
 			step: 0.5,
-			unit: ' em',
+			unit: 'em',
 		},
 		{
 			key: 'haloWidth',
@@ -91,19 +92,19 @@
 			min: 0,
 			max: 5,
 			step: 0.1,
-			unit: ' px',
+			unit: 'px',
 		},
-		{ key: 'haloBlur', label: 'Halo blur', min: 0, max: 5, step: 0.1, unit: ' px' },
+		{ key: 'haloBlur', label: 'Halo blur', min: 0, max: 5, step: 0.1, unit: 'px' },
 	];
 
 	const TRANSFORMS: SelectOption[] = [
-		{ value: 'none', label: 'As written' },
-		{ value: 'uppercase', label: 'UPPERCASE' },
-		{ value: 'lowercase', label: 'lowercase' },
+		{ value: 'none', label: 'Aa', title: 'As written' },
+		{ value: 'uppercase', label: 'AA', title: 'Uppercase' },
+		{ value: 'lowercase', label: 'aa', title: 'Lowercase' },
 	];
 
 	const PITCH_ALIGNMENTS: SelectOption[] = [
-		{ value: 'map', label: 'On the map' },
+		{ value: 'map', label: 'Flat' },
 		{ value: 'viewport', label: 'Upright' },
 	];
 
@@ -157,7 +158,7 @@
 	{languages}
 	{disabled}
 />
-<InputSelect
+<InputSegmented
 	label="Tilted line labels"
 	hint="How street and river names sit when the map is tilted: lying on the ground, or standing up facing the viewer."
 	{disabled}
@@ -215,7 +216,7 @@
 	{#each SIZE as editor (editor.key)}
 		{@render numberEditor(editor)}
 	{/each}
-	<InputSelect
+	<InputSegmented
 		label="Capitalization"
 		{disabled}
 		bind:value={
@@ -225,7 +226,6 @@
 		defaultValue={nodeValue(defaults, node, 'transform')}
 		modified={modified('transform')}
 		options={TRANSFORMS}
-		placeholder={MIXED}
 	/>
 	{#each SHAPE as editor (editor.key)}
 		{@render numberEditor(editor)}

@@ -5,6 +5,7 @@
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputColor from '../inputs/InputColor.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
+	import InputSegmented from '../inputs/InputSegmented.svelte';
 	import InputSelect from '../inputs/InputSelect.svelte';
 
 	let {
@@ -135,7 +136,7 @@
 			max={90}
 			unit="°"
 		/>
-		<InputSelect
+		<InputSegmented
 			label="Anchor"
 			hint="Map: the direction turns with the map. Screen: it is fixed to the screen."
 			{disabled}

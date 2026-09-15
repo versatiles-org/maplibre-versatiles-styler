@@ -86,6 +86,9 @@
 			max={range.max}
 			step={range.step}
 			value={sliderPosition(value ?? defaultValue ?? min, options)}
+			style:--val="{((sliderPosition(value ?? defaultValue ?? min, options) - range.min) /
+				(range.max - range.min)) *
+				100}%"
 			{disabled}
 			onchange={handleChange}
 		/>

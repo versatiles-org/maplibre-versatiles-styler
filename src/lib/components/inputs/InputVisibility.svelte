@@ -76,6 +76,7 @@
 			max="100"
 			step="5"
 			value={percent}
+			style:--val="{percent}%"
 			disabled={disabled || mixed}
 			aria-label="{label} opacity"
 			onchange={handleRange}

@@ -590,17 +590,22 @@ test.describe('label style', () => {
 		await applyTo(page, 'all');
 		await expect(row(page, 'Halo width').locator('button.value')).toHaveText('Mixed');
 		await applyTo(page, 'streets.exits');
-		await expect(row(page, 'Halo width').locator('button.value')).toHaveText('3 px');
+		await expect(row(page, 'Halo width').locator('button.value')).toHaveText('3px');
 	});
 
 	test('capitalization of a topic', async ({ page }) => {
 		await openFonts(page);
 		await applyTo(page, 'places');
-		await expect(row(page, 'Capitalization').locator('select')).toHaveValue('');
+		// the topics differ: no option is chosen
+		const capitalization = row(page, 'Capitalization').getByRole('radiogroup');
+		await expect(capitalization.getByRole('radio', { checked: true })).toHaveCount(0);
 		await applyTo(page, 'places.hamlets');
-		const select = row(page, 'Capitalization').locator('select');
-		await expect(select).toHaveValue('uppercase');
-		await select.selectOption('none');
+		await expect(capitalization.getByRole('radio', { name: 'Uppercase' })).toBeChecked();
+		// arrow keys move the choice, as in a radio group
+		await capitalization.getByRole('radio', { name: 'Uppercase' }).focus();
+		await page.keyboard.press('ArrowLeft');
+		await expect(capitalization.getByRole('radio', { name: 'As written' })).toBeChecked();
+		await expect(capitalization.getByRole('radio', { name: 'As written' })).toBeFocused();
 
 		await expect
 			.poll(async () => (await layer(page, 'label-place-hamlet'))?.layout?.['text-transform'])

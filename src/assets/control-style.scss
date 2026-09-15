@@ -2,15 +2,39 @@
 @mixin checkerboard($layers) {
 	background:
 		$layers,
-		repeating-conic-gradient(#c8c8c8 0 25%, #fff 0 50%) 0 0 / 8px 8px;
+		repeating-conic-gradient(#c9ced6 0 25%, #fff 0 50%) 0 0 / 8px 8px;
 }
 
+/** A 16px icon drawn in the current text color. */
+@mixin icon($svg) {
+	content: '';
+	flex: none;
+	width: 16px;
+	height: 16px;
+	background-color: currentColor;
+	mask: url('data:image/svg+xml,#{$svg}') center / 16px no-repeat;
+}
+
+$chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+
 .maplibregl-versatiles-styler {
-	--bg-color: #fff;
-	--fg-color: #000;
-	--primary-color: #3388ff;
-	--border-color: color-mix(in srgb, var(--bg-color) 80%, var(--fg-color) 20%);
-	--btn-color: color-mix(in srgb, var(--bg-color) 95%, var(--fg-color) 5%);
+	// Surfaces
+	--bg: #ffffff;
+	--sunken: #f3f5f8;
+	--line: #e2e6ec;
+	// Text: ink for content, muted for secondary text (above 4.5:1 on --bg), subtle for small labels
+	--ink: #18202b;
+	--muted: #5a6574;
+	--subtle: #6b7583;
+	// Accent and states
+	--accent: #2b74e8;
+	--accent-soft: #e7effd;
+	--ring: rgba(43, 116, 232, 0.35);
+	--warn: #b45309;
+	--shadow: 0 1px 2px rgba(16, 24, 40, 0.1), 0 10px 28px rgba(16, 24, 40, 0.16);
+
+	--font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
 	button.maplibregl-ctrl-icon {
 		background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB3aWR0aD0iNTQuODQ5cHgiIGhlaWdodD0iNTQuODQ5cHgiIHZpZXdCb3g9IjAgMCA1NC44NDkgNTQuODQ5IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1NC44NDkgNTQuODQ5OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PGc+PGc+PGc+PHBhdGggZD0iTTU0LjQ5NywzOS42MTRsLTEwLjM2My00LjQ5bC0xNC45MTcsNS45NjhjLTAuNTM3LDAuMjE0LTEuMTY1LDAuMzE5LTEuNzkzLDAuMzE5Yy0wLjYyNywwLTEuMjU0LTAuMTA0LTEuNzktMC4zMThsLTE0LjkyMS01Ljk2OEwwLjM1MSwzOS42MTRjLTAuNDcyLDAuMjAzLTAuNDY3LDAuNTI0LDAuMDEsMC43MTZMMjYuNTYsNTAuODFjMC40NzcsMC4xOTEsMS4yNTEsMC4xOTEsMS43MjksMEw1NC40ODgsNDAuMzNDNTQuOTY0LDQwLjEzOSw1NC45NjksMzkuODE3LDU0LjQ5NywzOS42MTR6Ii8+PHBhdGggZD0iTTU0LjQ5NywyNy41MTJsLTEwLjM2NC00LjQ5MWwtMTQuOTE2LDUuOTY2Yy0wLjUzNiwwLjIxNS0xLjE2NSwwLjMyMS0xLjc5MiwwLjMyMWMtMC42MjgsMC0xLjI1Ni0wLjEwNi0xLjc5My0wLjMyMWwtMTQuOTE4LTUuOTY2TDAuMzUxLDI3LjUxMmMtMC40NzIsMC4yMDMtMC40NjcsMC41MjMsMC4wMSwwLjcxNkwyNi41NiwzOC43MDZjMC40NzcsMC4xOSwxLjI1MSwwLjE5LDEuNzI5LDBsMjYuMTk5LTEwLjQ3OUM1NC45NjQsMjguMDM2LDU0Ljk2OSwyNy43MTYsNTQuNDk3LDI3LjUxMnoiLz48cGF0aCBkPSJNMC4zNjEsMTYuMTI1bDEzLjY2Miw1LjQ2NWwxMi41MzcsNS4wMTVjMC40NzcsMC4xOTEsMS4yNTEsMC4xOTEsMS43MjksMGwxMi41NDEtNS4wMTZsMTMuNjU4LTUuNDYzYzAuNDc3LTAuMTkxLDAuNDgtMC41MTEsMC4wMS0wLjcxNkwyOC4yNzcsNC4wNDhjLTAuNDcxLTAuMjA0LTEuMjM2LTAuMjA0LTEuNzA4LDBMMC4zNTEsMTUuNDFDLTAuMTIxLDE1LjYxNC0wLjExNiwxNS45MzUsMC4zNjEsMTYuMTI1eiIvPjwvZz48L2c+PC9nPjxnPjwvZz48Zz48L2c+PGc+PC9nPjxnPjwvZz48Zz48L2c+PGc+PC9nPjxnPjwvZz48Zz48L2c+PGc+PC9nPjxnPjwvZz48Zz48L2c+PGc+PC9nPjxnPjwvZz48Zz48L2c+PGc+PC9nPjwvc3ZnPg==);
@@ -20,10 +44,11 @@
 	}
 
 	a {
-		color: var(--fg-color);
+		color: var(--muted);
 		text-decoration: none;
 
 		&:hover {
+			color: var(--ink);
 			text-decoration: underline;
 		}
 	}
@@ -37,20 +62,24 @@
 		}
 	}
 
-	.maplibregl-pane {
+	// The sidebar. `.maplibregl-ctrl` doubles the class to win over MapLibre's control group style.
+	.maplibregl-ctrl.maplibregl-pane {
 		overflow-y: scroll;
-		width: 300px;
+		width: 320px;
 		box-sizing: border-box;
 		max-height: calc(100vh - 80px);
-		background-color: var(--bg-color);
-		color: var(--fg-color);
-		font-size: 12px;
+		background-color: var(--bg);
+		color: var(--ink);
+		font: 400 13px/1.35 var(--font-ui);
+		border-radius: 10px;
+		box-shadow: var(--shadow);
 
 		h3 {
 			all: unset;
 			display: block;
-			font-size: 1.3em;
-			padding: 0.5em 0em 0.5em 0.5em;
+			font-size: 14px;
+			font-weight: 600;
+			padding: 10px 12px;
 
 			img {
 				vertical-align: -0.39em;
@@ -59,37 +88,61 @@
 			}
 		}
 
+		// A heading above a group of sections: Style, Content, Appearance, Scene, Setup.
+		h4.section-group {
+			margin: 0;
+			padding: 16px 12px 4px;
+			font-size: 11px;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--subtle);
+
+			&:not(:first-child) {
+				margin-top: 4px;
+				border-top: 1px solid var(--line);
+			}
+
+			&:first-child {
+				padding-top: 12px;
+			}
+		}
+
 		details {
-			margin: 0.2em 0em;
+			margin: 0;
 			overflow: hidden;
-			border-bottom: 1px solid var(--border-color);
+			border-top: 1px solid var(--line);
 
 			summary {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 9px 8px 9px 12px;
 				list-style: none;
 				cursor: pointer;
 				font-weight: 600;
-				font-size: 1em;
-				padding: 6px 8px;
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
 
 				.section-title {
 					margin-right: auto;
 				}
 
 				.section-reset {
-					border: none;
-					background: none;
-					cursor: pointer;
-					padding: 0 4px;
+					display: grid;
+					place-items: center;
+					width: 24px;
+					height: 24px;
 					margin: 0;
-					font-size: 1em;
-					color: inherit;
-					opacity: 0.4;
+					padding: 0;
+					border: none;
+					border-radius: 6px;
+					background: none;
+					color: var(--muted);
+					font-size: 14px;
+					cursor: pointer;
 
 					&:hover {
-						opacity: 1;
+						background: var(--sunken);
+						color: var(--ink);
 					}
 				}
 
@@ -97,73 +150,51 @@
 					display: none;
 				}
 
-				&:after {
-					content: '▾';
-					font-size: 1.3em;
-					margin-left: 4px;
-					opacity: 0.7;
+				&::after {
+					@include icon($chevron-down);
+					color: var(--subtle);
+					transition: transform 0.15s ease;
 				}
 			}
 
-			&[open] summary:after {
-				transform: rotate(-180deg);
+			&[open] > summary::after {
+				transform: rotate(180deg);
 			}
 		}
 
-		// A heading above a group of sections: Style, Content, Appearance, Scene, Setup.
-		h4.section-group {
-			margin: 0;
-			padding: 12px 8px 2px;
-			font-size: 0.8em;
-			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.06em;
-			color: color-mix(in srgb, var(--fg-color) 55%, var(--bg-color) 45%);
-
-			&:first-child {
-				padding-top: 6px;
-			}
+		h4.section-group + details {
+			border-top: 0;
 		}
 
 		.github-link {
-			margin: 0em;
-			font-size: 0.7em;
+			margin: 0;
+			padding: 10px 12px 12px;
+			border-top: 1px solid var(--line);
+			font-size: 11px;
 			text-align: center;
-			padding: 0;
-
-			a {
-				opacity: 0.3;
-
-				&:hover {
-					opacity: 1;
-				}
-			}
 		}
 	}
 
 	.maplibregl-list {
-		padding: 0.5em 0.9em;
+		display: grid;
+		gap: 10px;
+		padding: 0 12px 14px;
 		box-sizing: border-box;
-		width: 300px;
 
 		.entry {
+			position: relative;
 			display: grid;
-			grid-template-columns: 1fr 1.3fr;
+			grid-template-columns: 118px minmax(0, 1fr);
 			align-items: center;
-			column-gap: 0.7em;
-			margin: 0.35em 0;
-			min-height: 1.8em;
-
+			column-gap: 12px;
+			min-height: 28px;
 			box-sizing: border-box;
-			background: none;
-			border: none;
-			cursor: default;
 			text-align: left;
 
 			.label {
 				display: flex;
 				align-items: center;
-				gap: 0.2em;
+				gap: 4px;
 				min-width: 0;
 			}
 
@@ -174,7 +205,8 @@
 			.expander {
 				flex: 0 0 auto;
 				width: 1em;
-				font-size: 0.9em;
+				font-size: 11px;
+				color: var(--subtle);
 				transition: transform 0.1s ease;
 				text-align: center;
 
@@ -185,17 +217,17 @@
 
 			.warning {
 				grid-column: 1 / -1;
-				margin: 0.15em 0 0;
-				font-size: 0.85em;
-				line-height: 1.3;
-				color: #b45309;
+				margin: 4px 0 0;
+				font-size: 12px;
+				line-height: 1.35;
+				color: var(--warn);
 			}
 
 			.input {
 				display: flex;
 				align-items: center;
 				justify-content: flex-end;
-				gap: 0.5em;
+				gap: 8px;
 				min-width: 0;
 			}
 
@@ -210,62 +242,153 @@
 			}
 
 			input {
+				// A thin track filled up to the value (`--val`), accent only while it is touched.
 				&[type='range'] {
+					--fill: color-mix(in srgb, var(--accent) 70%, var(--line));
 					flex: 1;
 					min-width: 0;
-					height: 1em;
+					height: 16px;
+					appearance: none;
+					-webkit-appearance: none;
 					cursor: pointer;
-				}
 
-				&.color-text {
-					flex: 1;
-					min-width: 0;
-					border: 1px solid var(--border-color);
-					border-radius: 0.2em;
-					padding: 0.3em 0.4em;
-					font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-					font-size: 0.95em;
+					&::-webkit-slider-runnable-track {
+						height: 4px;
+						border-radius: 2px;
+						background: linear-gradient(
+							to right,
+							var(--fill) var(--val, 0%),
+							var(--line) var(--val, 0%)
+						);
+					}
 
-					&.invalid {
-						border-color: #b45309;
+					&::-moz-range-track {
+						height: 4px;
+						border-radius: 2px;
+						background: var(--line);
+					}
+
+					&::-moz-range-progress {
+						height: 4px;
+						border-radius: 2px;
+						background: var(--fill);
+					}
+
+					&::-webkit-slider-thumb {
+						-webkit-appearance: none;
+						width: 14px;
+						height: 14px;
+						margin-top: -5px;
+						border-radius: 50%;
+						background: #fff;
+						box-shadow:
+							0 0 0 1px rgba(16, 24, 40, 0.22),
+							0 1px 3px rgba(16, 24, 40, 0.25);
+					}
+
+					&::-moz-range-thumb {
+						width: 14px;
+						height: 14px;
+						border: none;
+						border-radius: 50%;
+						background: #fff;
+						box-shadow:
+							0 0 0 1px rgba(16, 24, 40, 0.22),
+							0 1px 3px rgba(16, 24, 40, 0.25);
+					}
+
+					&:hover,
+					&:focus-visible {
+						--fill: var(--accent);
+					}
+
+					&:focus-visible::-webkit-slider-thumb {
+						box-shadow: 0 0 0 3px var(--ring);
+					}
+
+					&:disabled {
+						cursor: default;
+						opacity: 0.5;
 					}
 				}
 
+				// A switch for on/off options.
 				&[type='checkbox'] {
+					position: relative;
 					flex: 0 0 auto;
-					width: 1.1em;
-					height: 1.1em;
+					width: 30px;
+					height: 18px;
+					border-radius: 9px;
+					background: var(--line);
+					appearance: none;
+					-webkit-appearance: none;
 					cursor: pointer;
-					accent-color: var(--primary-color);
+					transition: background-color 0.15s ease;
+
+					&::before {
+						content: '';
+						position: absolute;
+						top: 2px;
+						left: 2px;
+						width: 14px;
+						height: 14px;
+						border-radius: 50%;
+						background: #fff;
+						box-shadow: 0 1px 2px rgba(16, 24, 40, 0.3);
+						transition: transform 0.15s ease;
+					}
+
+					&:checked {
+						background: var(--accent);
+
+						&::before {
+							transform: translateX(12px);
+						}
+					}
+
+					&:indeterminate {
+						background: color-mix(in srgb, var(--accent) 45%, var(--line));
+
+						&::before {
+							transform: translateX(6px);
+						}
+					}
+
+					&:focus-visible {
+						box-shadow: 0 0 0 3px var(--ring);
+					}
+
+					&:disabled {
+						cursor: default;
+						opacity: 0.45;
+					}
 				}
 			}
 
 			.value {
 				flex: 0 0 auto;
-				min-width: 3em;
-				text-align: right;
+				min-width: 3.4em;
+				color: var(--muted);
+				font: 400 12px/1 var(--font-mono);
 				font-variant-numeric: tabular-nums;
-				opacity: 0.8;
+				text-align: right;
 			}
 
 			button {
 				// The value next to a slider: a button that turns into a small text field to type a value.
 				&.value {
-					min-width: 3em;
-					padding: 0 0.1em;
-					border-bottom: 1px dotted transparent;
+					padding: 2px 0;
+					border-bottom: 1px dashed transparent;
 					border-radius: 0;
 					cursor: text;
-					text-align: right;
 
 					&:hover:not(:disabled) {
-						opacity: 1;
-						border-bottom-color: currentColor;
+						color: var(--ink);
+						border-bottom-color: var(--subtle);
 					}
 
 					&:disabled {
 						visibility: visible;
-						opacity: 0.8;
 						cursor: default;
 					}
 				}
@@ -273,19 +396,17 @@
 				// A color: the left half opaque, the right half as it is, over a checkerboard. Opens the picker.
 				&.color-swatch {
 					flex: 0 0 auto;
-					width: 1.9em;
-					height: 1.5em;
-					box-sizing: border-box;
-					border: 1px solid var(--border-color);
-					border-radius: 0.2em;
-					opacity: 1;
+					width: 22px;
+					height: 22px;
+					border-radius: 5px;
+					box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.14);
 					cursor: pointer;
 					@include checkerboard(
 						linear-gradient(90deg, var(--swatch-opaque) 50%, var(--swatch) 50%)
 					);
 
 					&:hover:not(:disabled) {
-						border-color: var(--primary-color);
+						box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.35);
 					}
 
 					&:disabled {
@@ -300,40 +421,59 @@
 				max-width: 7em;
 			}
 
+			// Boxed fields: text, colors, selects and the font button share one shape.
 			input[type='text'],
-			select {
+			select,
+			button.font-button {
 				flex: 1;
 				min-width: 0;
+				height: 28px;
+				box-sizing: border-box;
+				padding: 0 8px;
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				background-color: var(--bg);
 				text-align: left;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				padding: 0.3em 0.4em;
+
+				&:hover:not(:disabled) {
+					border-color: color-mix(in srgb, var(--line) 45%, var(--muted));
+				}
+
+				&:focus-visible {
+					border-color: var(--accent);
+					box-shadow: 0 0 0 3px var(--ring);
+				}
+			}
+
+			input.color-text {
+				font: 400 12px var(--font-mono);
+
+				&.invalid {
+					border-color: var(--warn);
+				}
 			}
 
 			select {
+				padding-right: 26px;
+				appearance: none;
+				-webkit-appearance: none;
+				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='%236b7583' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+				background-position: right 6px center;
+				background-size: 16px;
+				background-repeat: no-repeat;
 				cursor: pointer;
+				text-overflow: ellipsis;
 			}
 
 			// A font: a button showing the face in itself, opening the font picker.
 			button.font-button {
-				flex: 1;
-				min-width: 0;
-				height: 1.9em;
 				display: flex;
+				padding-right: 6px;
 				align-items: center;
 				justify-content: space-between;
-				gap: 0.3em;
-				padding: 0 0.4em;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				background: var(--bg-color);
-				opacity: 1;
+				gap: 6px;
 				overflow: hidden;
 				cursor: pointer;
-
-				&:hover:not(:disabled) {
-					border-color: var(--primary-color);
-				}
 
 				&:disabled {
 					visibility: visible;
@@ -346,27 +486,77 @@
 				}
 
 				.font-button-mixed {
-					opacity: 0.7;
+					color: var(--muted);
 				}
 
+				// The "▾" of the markup, drawn as the chevron of the selects.
 				.font-button-caret {
+					display: flex;
 					flex: 0 0 auto;
-					opacity: 0.6;
+					color: var(--subtle);
+					font-size: 0;
+
+					&::after {
+						@include icon($chevron-down);
+					}
 				}
 			}
 
 			// After `input[type='text']`, which it overrides.
 			input.value-input {
-				flex: 0 0 3.4em;
-				width: 3.4em;
-				min-width: 0;
-				padding: 0 0.2em;
+				flex: 0 0 3.6em;
+				width: 3.6em;
+				height: 24px;
+				padding: 0 4px;
+				border-color: var(--accent);
+				font: 400 12px var(--font-mono);
 				text-align: right;
-				border: 1px solid var(--primary-color);
-				border-radius: 0.2em;
-				opacity: 1;
 			}
 
+			// Two or three short options side by side.
+			.segmented {
+				flex: 1;
+				display: grid;
+				grid-auto-flow: column;
+				grid-auto-columns: 1fr;
+				min-width: 0;
+				padding: 2px;
+				border-radius: 7px;
+				background: var(--sunken);
+
+				button {
+					height: 24px;
+					min-width: 0;
+					padding: 0 6px;
+					border-radius: 5px;
+					color: var(--muted);
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+
+					&:hover:not(:disabled) {
+						color: var(--ink);
+					}
+
+					&[aria-checked='true'] {
+						background: var(--bg);
+						color: var(--ink);
+						box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14);
+					}
+
+					&:focus-visible {
+						outline: 2px solid var(--accent);
+						outline-offset: -2px;
+					}
+
+					&:disabled {
+						visibility: visible;
+						cursor: default;
+					}
+				}
+			}
+
+			// The reset button of a row, and other small buttons.
 			button {
 				flex: 0 0 auto;
 				width: unset;
@@ -374,12 +564,12 @@
 				padding: 0;
 				background: none;
 				border: none;
-				color: inherit;
+				color: var(--subtle);
+				font: inherit;
 				cursor: pointer;
-				opacity: 0.55;
 
 				&:hover {
-					opacity: 1;
+					color: var(--ink);
 				}
 
 				&:disabled {
@@ -389,42 +579,62 @@
 			}
 
 			&.text-container {
-				grid-template-columns: 1fr;
-				row-gap: 0.3em;
+				grid-template-columns: minmax(0, 1fr);
+				row-gap: 6px;
 			}
 
 			&.button-container {
 				display: flex;
-				column-gap: 0.7em;
-				margin-top: 0.6em;
+				gap: 8px;
 
 				button {
 					flex: 1;
-					width: unset;
-					height: unset;
-					border: 1px solid var(--primary-color);
-					background-color: var(--bg-color);
-					color: var(--fg-color);
-					border-radius: 0.3em;
-					padding: 0.45em;
-					opacity: 1;
+					min-height: 30px;
+					padding: 5px 10px;
+					line-height: 1.25;
+					border: 1px solid var(--line);
+					border-radius: 6px;
+					background: var(--bg);
+					color: var(--ink);
+					font-weight: 600;
 
 					&:hover {
-						background-color: var(--primary-color);
-						color: var(--bg-color);
+						border-color: color-mix(in srgb, var(--line) 45%, var(--muted));
+					}
+
+					&:first-child {
+						border-color: var(--accent);
+						background: var(--accent);
+						color: #fff;
+
+						&:hover {
+							background: color-mix(in srgb, var(--accent) 88%, #000);
+						}
 					}
 				}
 			}
 
-			// A slider for a group whose topics differ: the thumb stands at the default, faded.
+			// A slider for a group whose topics differ: a dashed track, the thumb at the default.
 			&.mixed input[type='range'] {
-				opacity: 0.4;
+				&::-webkit-slider-runnable-track {
+					background: repeating-linear-gradient(90deg, var(--line) 0 4px, transparent 4px 7px);
+				}
+
+				&::-moz-range-progress {
+					background: transparent;
+				}
+
+				&::-webkit-slider-thumb {
+					background: var(--sunken);
+				}
 			}
 
 			&.disabled {
-				opacity: 0.45;
+				label {
+					color: var(--subtle);
+					cursor: default;
+				}
 
-				label,
 				input,
 				select {
 					cursor: default;
@@ -432,34 +642,48 @@
 			}
 
 			&.modified label {
-				font-weight: 700;
+				font-weight: 600;
 			}
 		}
 
 		.nested {
-			padding-left: 0.8em;
-			margin-left: 0.1em;
-			border-left: 2px solid var(--border-color);
+			display: grid;
+			gap: 10px;
+			margin-left: 2px;
+			padding-left: 12px;
+			border-left: 1px solid var(--line);
+
+			.entry {
+				grid-template-columns: 104px minmax(0, 1fr);
+			}
 		}
 
+		// A heading inside a section, e.g. "Label style" or "Nature", with a line to the edge.
 		.subsection-title {
-			margin: 0.9em 0 0.2em;
-			font-size: 0.85em;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin: 6px 0 0;
+			font-size: 12px;
 			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-			opacity: 0.6;
+			color: var(--ink);
+
+			&::after {
+				content: '';
+				flex: 1;
+				border-top: 1px solid var(--line);
+			}
 
 			&:first-of-type {
-				margin-top: 0.2em;
+				margin-top: 0;
 			}
 		}
 
 		.section-description {
-			margin: 0 0 0.7em;
-			font-size: 0.9em;
+			margin: 0;
+			font-size: 12px;
 			line-height: 1.4;
-			opacity: 0.7;
+			color: var(--muted);
 		}
 
 		&.style-list {
@@ -474,15 +698,15 @@
 				}
 
 				thead th {
-					font-size: 0.85em;
+					font-size: 11px;
 					font-weight: 600;
 					text-align: center;
-					opacity: 0.6;
+					color: var(--subtle);
 				}
 
 				tbody th {
 					text-align: left;
-					font-weight: 500;
+					font-weight: 400;
 				}
 
 				td {
@@ -498,56 +722,54 @@
 			label {
 				display: flex;
 				cursor: pointer;
-				font-weight: 500;
 				position: relative;
 				overflow: hidden;
 
 				&.satellite {
-					margin-top: 0.3em;
-					padding-top: 0.3em;
-					border-top: 1px solid var(--border-color);
-					color: color-mix(in srgb, var(--primary-color) 50%, var(--fg-color) 50%);
+					margin-top: 4px;
+					padding-top: 6px;
+					border-top: 1px solid var(--line);
+					font-weight: 600;
 				}
 
 				input {
 					position: absolute;
 					left: -9999px;
 
-					&:checked + span:before {
-						box-shadow: inset 0 0 0 0.4375em var(--primary-color);
+					&:checked + span::before {
+						box-shadow: inset 0 0 0 5px var(--accent);
 					}
 
-					&:focus-visible + span:before {
-						outline: 2px solid var(--primary-color);
-						outline-offset: 1px;
+					&:focus-visible + span::before {
+						outline: 2px solid var(--accent);
+						outline-offset: 2px;
 					}
 				}
 
 				span {
 					display: flex;
 					align-items: center;
-					padding: 0.3em 1em 0.3em 0.3em;
+					padding: 4px 12px 4px 4px;
 					border-radius: 99em;
-					transition: 0.1s ease;
 
-					&:before {
+					&::before {
 						display: flex;
 						flex-shrink: 0;
 						content: '';
-						background-color: var(--bg-color);
-						width: 1.5em;
-						height: 1.5em;
+						width: 16px;
+						height: 16px;
+						margin-right: 6px;
 						border-radius: 50%;
-						margin-right: 0.375em;
-						transition: 0.1s ease;
-						box-shadow: inset 0 0 0 0.125em var(--primary-color);
+						background-color: var(--bg);
+						box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--line) 30%, var(--muted));
+						transition: box-shadow 0.1s ease;
 					}
 
 					// A radio without a text, in the theme table.
 					&:empty {
-						padding: 0.3em;
+						padding: 4px;
 
-						&:before {
+						&::before {
 							margin-right: 0;
 						}
 					}
@@ -577,70 +799,90 @@
 		}
 
 		&:not(.missing) .font-preview-text {
-			opacity: 0.5;
+			color: var(--subtle);
+		}
+	}
+
+	// What both popups share: surface, shape, header and close button.
+	.color-picker,
+	.font-picker {
+		position: fixed;
+		z-index: 10;
+		display: flex;
+		flex-direction: column;
+		box-sizing: border-box;
+		background: var(--bg);
+		color: var(--ink);
+		font: 400 13px/1.35 var(--font-ui);
+		border-radius: 10px;
+		box-shadow:
+			0 1px 2px rgba(16, 24, 40, 0.1),
+			0 14px 36px rgba(16, 24, 40, 0.22);
+		overflow: hidden;
+		outline: none;
+
+		button {
+			font: inherit;
+			color: inherit;
+			cursor: pointer;
+		}
+
+		.color-picker-header,
+		.font-picker-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding: 10px 8px 8px 12px;
+			font-weight: 600;
+		}
+
+		.color-picker-close,
+		.font-picker-close {
+			display: grid;
+			place-items: center;
+			width: 26px;
+			height: 26px;
+			padding: 0;
+			border: none;
+			border-radius: 6px;
+			background: none;
+			color: var(--muted);
+			font-size: 18px;
+			line-height: 1;
+
+			&:hover {
+				background: var(--sunken);
+				color: var(--ink);
+			}
 		}
 	}
 
 	// The color picker: a popup next to the sidebar.
 	.color-picker {
-		position: fixed;
-		z-index: 10;
-		width: 250px;
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: column;
-		background: var(--bg-color);
-		color: var(--fg-color);
-		border-radius: 4px;
-		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-		font-size: 12px;
-		overflow: hidden;
-		outline: none;
-
-		.color-picker-header {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 6px 8px 4px;
-			font-weight: 600;
-
-			.color-picker-close {
-				border: none;
-				background: none;
-				color: inherit;
-				font-size: 1.4em;
-				line-height: 1;
-				padding: 0 4px;
-				opacity: 0.6;
-				cursor: pointer;
-
-				&:hover {
-					opacity: 1;
-				}
-			}
-		}
+		width: 256px;
 
 		// Scrolls when the window is shorter than the picker.
 		.color-picker-body {
 			display: flex;
 			flex-direction: column;
-			gap: 8px;
+			gap: 10px;
 			min-height: 0;
 			overflow-y: auto;
-			padding: 0 8px 10px;
+			padding: 0 12px 12px;
 		}
 
 		.color-picker-top {
 			display: flex;
-			gap: 6px;
+			gap: 8px;
 		}
 
 		// Saturation from left to right, brightness from bottom to top, at the hue of `--hue`.
 		.color-area {
 			position: relative;
 			flex: 1;
-			height: 140px;
-			border-radius: 3px;
+			height: 132px;
+			border-radius: 6px;
 			cursor: crosshair;
 			touch-action: none;
 			outline: none;
@@ -649,18 +891,18 @@
 				linear-gradient(to right, #fff, hsl(calc(var(--hue) * 1deg) 100% 50%));
 
 			&:focus-visible {
-				box-shadow: 0 0 0 2px var(--primary-color);
+				box-shadow: 0 0 0 3px var(--ring);
 			}
 
 			.color-area-thumb {
 				position: absolute;
-				width: 12px;
-				height: 12px;
-				margin: -6px 0 0 -6px;
+				width: 14px;
+				height: 14px;
+				margin: -7px 0 0 -7px;
 				box-sizing: border-box;
 				border: 2px solid #fff;
 				border-radius: 50%;
-				box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+				box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
 				pointer-events: none;
 			}
 		}
@@ -669,10 +911,10 @@
 		.color-picker-compare {
 			display: flex;
 			flex-direction: column;
-			width: 34px;
-			border: 1px solid var(--border-color);
-			border-radius: 3px;
+			width: 30px;
+			border-radius: 6px;
 			overflow: hidden;
+			box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.14);
 
 			.color-picker-old {
 				flex: 1;
@@ -693,20 +935,24 @@
 			display: grid;
 			grid-template-columns: 3em 1fr 3em;
 			align-items: center;
-			gap: 6px;
+			gap: 8px;
+			color: var(--muted);
+			font-size: 12px;
 
 			output {
 				text-align: right;
+				color: var(--ink);
+				font: 400 12px var(--font-mono);
 				font-variant-numeric: tabular-nums;
 			}
 
 			input.color-track {
 				appearance: none;
 				-webkit-appearance: none;
-				height: 12px;
+				height: 10px;
 				margin: 0;
-				border-radius: 6px;
-				box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+				border-radius: 5px;
+				box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.12);
 				cursor: pointer;
 
 				&::-webkit-slider-thumb {
@@ -716,8 +962,8 @@
 					border-radius: 50%;
 					background: #fff;
 					box-shadow:
-						0 0 0 1px rgba(0, 0, 0, 0.5),
-						0 1px 3px rgba(0, 0, 0, 0.3);
+						0 0 0 1px rgba(16, 24, 40, 0.3),
+						0 1px 3px rgba(16, 24, 40, 0.3);
 				}
 
 				&::-moz-range-thumb {
@@ -727,8 +973,8 @@
 					border-radius: 50%;
 					background: #fff;
 					box-shadow:
-						0 0 0 1px rgba(0, 0, 0, 0.5),
-						0 1px 3px rgba(0, 0, 0, 0.3);
+						0 0 0 1px rgba(16, 24, 40, 0.3),
+						0 1px 3px rgba(16, 24, 40, 0.3);
 				}
 
 				&::-moz-range-track {
@@ -736,7 +982,7 @@
 				}
 
 				&:focus-visible {
-					outline: 2px solid var(--primary-color);
+					outline: 2px solid var(--accent);
 					outline-offset: 2px;
 				}
 
@@ -761,51 +1007,61 @@
 			.value {
 				justify-self: end;
 				min-width: 3em;
-				padding: 0;
+				padding: 2px 0;
 				border: none;
-				border-bottom: 1px dotted transparent;
+				border-bottom: 1px dashed transparent;
 				background: none;
-				color: inherit;
-				font: inherit;
-				text-align: right;
+				color: var(--ink);
+				font: 400 12px var(--font-mono);
 				font-variant-numeric: tabular-nums;
+				text-align: right;
 				cursor: text;
 
 				&:hover {
-					border-bottom-color: currentColor;
+					border-bottom-color: var(--subtle);
 				}
 			}
 
 			input.value-input {
 				width: 100%;
+				height: 22px;
 				box-sizing: border-box;
-				padding: 0 0.2em;
-				border: 1px solid var(--primary-color);
-				border-radius: 0.2em;
+				padding: 0 4px;
+				border: 1px solid var(--accent);
+				border-radius: 5px;
+				background: var(--bg);
+				color: var(--ink);
 				cursor: text;
 			}
 		}
 
+		// The channel tabs as a segmented control.
 		.color-picker-tabs {
-			display: flex;
-			margin-top: 2px;
-			border-bottom: 1px solid var(--border-color);
+			display: grid;
+			grid-auto-flow: column;
+			grid-auto-columns: 1fr;
+			padding: 2px;
+			border-radius: 7px;
+			background: var(--sunken);
 
 			button {
-				padding: 3px 10px;
+				height: 22px;
+				padding: 0;
 				border: none;
-				border-bottom: 2px solid transparent;
-				margin-bottom: -1px;
+				border-radius: 5px;
 				background: none;
-				color: inherit;
-				font: inherit;
-				opacity: 0.7;
-				cursor: pointer;
+				color: var(--muted);
+				font-size: 12px;
 
 				&[aria-selected='true'] {
-					border-bottom-color: var(--primary-color);
-					opacity: 1;
-					font-weight: 600;
+					background: var(--bg);
+					color: var(--ink);
+					box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14);
+				}
+
+				&:focus-visible {
+					outline: 2px solid var(--accent);
+					outline-offset: -2px;
 				}
 			}
 		}
@@ -813,95 +1069,79 @@
 		.color-picker-channels {
 			display: flex;
 			flex-direction: column;
-			gap: 8px;
+			gap: 10px;
 
 			input.color-picker-hex {
 				box-sizing: border-box;
 				width: 100%;
-				padding: 0.3em 0.4em;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				background: var(--bg-color);
+				height: 28px;
+				padding: 0 8px;
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				background: var(--bg);
 				color: inherit;
-				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font: 400 12px var(--font-mono);
+				outline: none;
+
+				&:focus-visible {
+					border-color: var(--accent);
+					box-shadow: 0 0 0 3px var(--ring);
+				}
 			}
 		}
 	}
 
 	// The font picker: a popup next to the sidebar.
 	.font-picker {
-		position: fixed;
-		z-index: 10;
 		width: 340px;
-		display: flex;
-		flex-direction: column;
-		box-sizing: border-box;
-		background: var(--bg-color);
-		color: var(--fg-color);
-		border-radius: 4px;
-		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-		font-size: 12px;
-		overflow: hidden;
-
-		button {
-			font: inherit;
-			color: inherit;
-			cursor: pointer;
-		}
-
-		.font-picker-header {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 6px 8px 4px;
-			font-weight: 600;
-
-			.font-picker-close {
-				border: none;
-				background: none;
-				font-size: 1.4em;
-				line-height: 1;
-				padding: 0 4px;
-				opacity: 0.6;
-
-				&:hover {
-					opacity: 1;
-				}
-			}
-		}
 
 		.font-picker-tools {
 			display: flex;
 			gap: 6px;
-			margin: 0 8px 6px;
+			margin: 0 12px 8px;
 
 			.font-picker-search {
 				flex: 1;
 				min-width: 0;
-				padding: 0.35em 0.5em;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				background: transparent;
+				height: 30px;
+				box-sizing: border-box;
+				padding: 0 9px;
+				border: 1px solid transparent;
+				border-radius: 6px;
+				background: var(--sunken);
 				color: inherit;
 				font: inherit;
 				outline: none;
 
+				&::placeholder {
+					color: var(--subtle);
+				}
+
 				&:focus {
-					border-color: var(--primary-color);
+					border-color: var(--accent);
+					background: var(--bg);
+					box-shadow: 0 0 0 3px var(--ring);
 				}
 			}
 
 			.font-picker-filter-button {
 				flex: 0 0 auto;
-				padding: 0.35em 0.6em;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				background: var(--bg-color);
+				height: 30px;
+				padding: 0 10px;
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				background: var(--bg);
+				color: var(--ink);
+
+				&:hover {
+					border-color: color-mix(in srgb, var(--line) 45%, var(--muted));
+				}
 
 				&.active {
-					border-color: var(--primary-color);
-					background: var(--primary-color);
-					color: var(--bg-color);
+					border-color: var(--accent);
+					background: var(--accent-soft);
+					color: var(--accent);
+					font-weight: 600;
 				}
 			}
 		}
@@ -911,39 +1151,42 @@
 			flex: 0 1 auto;
 			min-height: 3em;
 			overflow-y: auto;
-			margin: 0 8px 6px;
-			padding: 6px 8px;
-			border: 1px solid var(--border-color);
-			border-radius: 0.2em;
+			margin: 0 12px 8px;
+			padding: 8px 10px;
+			border-radius: 8px;
+			background: var(--sunken);
 
 			p {
-				margin: 0 0 4px;
-				opacity: 0.7;
+				margin: 0 0 6px;
+				color: var(--muted);
 
 				&.font-picker-status {
-					opacity: 1;
-					color: #b45309;
+					color: var(--warn);
 				}
 			}
 
 			.font-picker-quick {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 3px 10px;
-				margin-bottom: 4px;
+				gap: 4px 12px;
+				margin-bottom: 6px;
 
 				button {
 					padding: 0;
 					border: none;
 					background: none;
-					color: var(--primary-color);
+					color: var(--accent);
 					font: inherit;
-					text-decoration: underline;
+					font-weight: 600;
 					cursor: pointer;
 
+					&:hover {
+						text-decoration: underline;
+					}
+
 					&:disabled {
-						color: inherit;
-						opacity: 0.4;
+						color: var(--subtle);
+						font-weight: 400;
 						text-decoration: none;
 						cursor: default;
 					}
@@ -952,109 +1195,116 @@
 
 			// The region name with its checkbox, and its script chips below it.
 			.font-picker-region {
-				padding: 3px 0;
+				padding: 4px 0;
 
 				.font-picker-region-name {
 					display: flex;
 					align-items: center;
-					gap: 3px;
+					gap: 4px;
 					cursor: pointer;
-					font-size: 0.8em;
+					font-size: 11px;
 					font-weight: 600;
 					text-transform: uppercase;
-					letter-spacing: 0.03em;
-					opacity: 0.6;
+					letter-spacing: 0.06em;
+					color: var(--subtle);
+
+					input {
+						margin: 0;
+						accent-color: var(--accent);
+					}
 				}
 
 				.font-picker-chips {
-					margin-top: 2px;
-					margin-left: 1.5em;
 					display: flex;
 					flex-wrap: wrap;
-					gap: 3px;
+					gap: 4px;
+					margin-top: 4px;
+					margin-left: 18px;
 
 					.font-picker-chip {
 						display: inline-flex;
 						align-items: baseline;
 						gap: 4px;
-						padding: 1px 7px;
-						border: 1px solid var(--border-color);
-						border-radius: 1em;
-						background: var(--bg-color);
-						color: inherit;
+						padding: 2px 8px;
+						border: 1px solid var(--line);
+						border-radius: 12px;
+						background: var(--bg);
+						color: var(--ink);
 						font: inherit;
 						cursor: pointer;
 
 						&:hover {
-							border-color: var(--primary-color);
+							border-color: var(--accent);
 						}
 
 						&[aria-pressed='true'] {
-							border-color: var(--primary-color);
-							background: var(--primary-color);
-							color: var(--bg-color);
+							border-color: var(--accent);
+							background: var(--accent);
+							color: #fff;
 						}
 
 						&.muted {
-							opacity: 0.45;
+							color: var(--subtle);
 						}
 
 						.font-picker-count {
-							font-size: 0.85em;
-							opacity: 0.6;
+							font-size: 11px;
+							color: var(--subtle);
 						}
 					}
 				}
 
 				.font-picker-note {
-					margin-left: 1.5em;
+					margin-left: 18px;
 				}
 			}
 
 			.font-picker-note {
-				margin: 2px 0 0;
-				font-size: 0.85em;
+				margin: 4px 0 0;
+				font-size: 12px;
+				color: var(--muted);
 			}
 
 			.font-picker-uncovered {
-				margin-top: 4px;
-				font-size: 0.9em;
+				margin-top: 6px;
+				font-size: 12px;
 
 				summary {
 					cursor: pointer;
-					opacity: 0.7;
+					color: var(--muted);
 				}
 
 				p {
-					margin: 2px 0 0 1em;
+					margin: 4px 0 0 1em;
 				}
 			}
 		}
 
 		.font-picker-list {
 			margin: 0;
-			padding: 0 0 6px;
+			padding: 0 0 8px;
 			list-style: none;
 			overflow-y: auto;
 			min-height: 0;
 			// Rows scrolled into view stop below the sticky heading, not under it.
-			scroll-padding-top: 24px;
+			scroll-padding-top: 26px;
 
 			.font-picker-heading {
 				position: sticky;
 				top: 0;
 				z-index: 1;
-				padding: 6px 8px 2px;
-				// Opaque while sticky, so no entry shows through: a muted text color instead of opacity.
-				background: var(--bg-color);
-				color: color-mix(in srgb, var(--fg-color) 60%, var(--bg-color) 40%);
-				font-size: 0.85em;
+				padding: 8px 12px 4px;
+				background: var(--bg);
+				color: var(--subtle);
+				font-size: 11px;
 				font-weight: 600;
 				text-transform: uppercase;
-				letter-spacing: 0.04em;
+				letter-spacing: 0.08em;
 
 				// "No font writes all 4 scripts. Closest:" is a sentence, not a heading label.
 				&.font-picker-closest {
+					color: var(--muted);
+					font-size: 12px;
 					text-transform: none;
 					letter-spacing: normal;
 				}
@@ -1064,17 +1314,18 @@
 				display: flex;
 				flex-direction: column;
 				gap: 1px;
-				padding: 4px 8px;
-				cursor: pointer;
+				padding: 6px 12px 6px 9px;
 				border-left: 3px solid transparent;
+				cursor: pointer;
 
 				&.active,
 				&:hover {
-					background: var(--btn-color);
+					background: var(--sunken);
 				}
 
 				&.selected {
-					border-left-color: var(--primary-color);
+					border-left-color: var(--accent);
+					background: var(--accent-soft);
 				}
 
 				.font-preview {
@@ -1082,18 +1333,17 @@
 				}
 
 				.font-picker-caption {
-					font-size: 0.85em;
-					color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
+					font-size: 12px;
+					color: var(--muted);
 
 					.font-picker-badge {
 						display: block;
-						font-size: 0.9em;
-						opacity: 0.75;
+						color: var(--muted);
 					}
 
 					.font-picker-warning {
 						margin-left: 4px;
-						color: #b45309;
+						color: var(--warn);
 					}
 				}
 			}
@@ -1101,27 +1351,32 @@
 			.font-picker-styles {
 				display: flex;
 				flex-direction: column;
-				gap: 4px;
-				padding: 2px 8px 8px 11px;
-				border-left: 3px solid var(--primary-color);
-				background: var(--btn-color);
+				gap: 6px;
+				padding: 4px 12px 10px 9px;
+				border-left: 3px solid var(--accent);
+				background: var(--accent-soft);
 
 				.font-picker-style-row {
 					display: flex;
 					flex-wrap: wrap;
-					gap: 3px;
+					gap: 4px;
 
 					button {
-						padding: 2px 6px;
-						border: 1px solid var(--border-color);
-						border-radius: 0.2em;
-						background: var(--bg-color);
-						font-size: 0.9em;
+						height: 24px;
+						padding: 0 8px;
+						border: 1px solid var(--line);
+						border-radius: 5px;
+						background: var(--bg);
+						font-size: 12px;
+
+						&:hover {
+							border-color: var(--accent);
+						}
 
 						&[aria-pressed='true'] {
-							border-color: var(--primary-color);
-							background: var(--primary-color);
-							color: var(--bg-color);
+							border-color: var(--accent);
+							background: var(--accent);
+							color: #fff;
 						}
 					}
 				}
@@ -1129,15 +1384,20 @@
 				.font-picker-italic {
 					display: flex;
 					align-items: center;
-					gap: 4px;
+					gap: 6px;
 					cursor: pointer;
+
+					input {
+						margin: 0;
+						accent-color: var(--accent);
+					}
 				}
 			}
 
 			.font-picker-empty,
 			.font-picker-hidden {
-				padding: 8px;
-				color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
+				padding: 8px 12px;
+				color: var(--muted);
 			}
 
 			.font-picker-hidden button {
@@ -1145,8 +1405,8 @@
 				padding: 0;
 				border: none;
 				background: none;
-				color: var(--primary-color);
-				text-decoration: underline;
+				color: var(--accent);
+				font-weight: 600;
 			}
 		}
 	}
