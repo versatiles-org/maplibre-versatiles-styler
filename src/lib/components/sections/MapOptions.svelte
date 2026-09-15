@@ -27,9 +27,6 @@
 
 	const skyDefaults = osm.resolveOptions({ sky: true }).sky as Sky;
 	const sunDefaults = osm.resolveOptions({ sun: true }).sun as Sun;
-	// `sun.color` and `sun.intensity` stay unset unless set: MapLibre's own `light` defaults apply.
-	const SUN_COLOR = '#ffffff';
-	const SUN_INTENSITY = 0.5;
 
 	const PROJECTIONS = [
 		{ value: 'globe', label: 'Globe' },
@@ -155,31 +152,12 @@
 			defaultValue={sunDefaults.anchor}
 			options={ANCHORS}
 		/>
-		<InputColor
-			label="Color"
-			{disabled}
-			bind:value={
-				() => sun?.color ?? SUN_COLOR,
-				(v) => {
-					if (!sun) return;
-					if (sameColor(v, SUN_COLOR)) delete sun.color;
-					else sun.color = v;
-				}
-			}
-			defaultValue={SUN_COLOR}
-		/>
+		<InputColor label="Color" {disabled} bind:value={sun.color} defaultValue={sunDefaults.color} />
 		<InputNumber
 			label="Intensity"
 			{disabled}
-			bind:value={
-				() => sun?.intensity ?? SUN_INTENSITY,
-				(v) => {
-					if (!sun) return;
-					if (v === SUN_INTENSITY) delete sun.intensity;
-					else sun.intensity = v;
-				}
-			}
-			defaultValue={SUN_INTENSITY}
+			bind:value={sun.intensity}
+			defaultValue={sunDefaults.intensity}
 			min={0}
 			max={1}
 			scale={100}

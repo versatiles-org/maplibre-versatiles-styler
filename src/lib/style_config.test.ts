@@ -231,7 +231,13 @@ describe('minimalConfig', () => {
 		state.osmOverlay = overlay;
 		state.projection = 'mercator';
 		state.sky = { ...(state.sky as object), skyColor: '#123456' } as typeof state.sky;
-		state.sun = { direction: 90, altitude: 60, anchor: 'viewport', intensity: 0.8 };
+		state.sun = {
+			direction: 90,
+			altitude: 60,
+			anchor: 'viewport',
+			color: '#ffffff',
+			intensity: 0.8,
+		};
 		const config = minimalConfig('satellite', vectorDefaults('colorful'), state);
 		expect(config).toEqual({
 			osmOverlay: {

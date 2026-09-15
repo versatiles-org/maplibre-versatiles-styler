@@ -89,10 +89,9 @@ test('sun', async ({ page }) => {
 	await setRange(row(map, 'Intensity').locator('input[type="range"]'), 80);
 	await expect
 		.poll(async () => (await style(page)).light)
-		.toMatchObject({ position: [1.15, 90, 30], intensity: 0.8 });
+		.toMatchObject({ position: [1.15, 90, 30], color: '#ffffff', intensity: 0.8 });
 	await expect.poll(() => hashConfig(page)).toEqual({ sun: { direction: 90, intensity: 0.8 } });
 
-	// resetting an optional value removes it instead of pinning MapLibre's default
 	await row(map, 'Intensity').locator('.input > button').click();
 	await expect.poll(() => hashConfig(page)).toEqual({ sun: { direction: 90 } });
 });
