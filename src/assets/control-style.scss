@@ -608,10 +608,13 @@
 			}
 		}
 
+		// Scrolls when the window is shorter than the picker.
 		.color-picker-body {
 			display: flex;
 			flex-direction: column;
 			gap: 8px;
+			min-height: 0;
+			overflow-y: auto;
 			padding: 0 8px 10px;
 		}
 
@@ -775,7 +778,7 @@
 		}
 
 		.color-picker-slider input.value-input {
-			width: 3.4em;
+			width: 100%;
 			box-sizing: border-box;
 			padding: 0 0.2em;
 			border: 1px solid var(--primary-color);
@@ -889,7 +892,11 @@
 			}
 		}
 
+		// In a short window the filter panel and the list share the height, and both scroll.
 		.font-picker-filter {
+			flex: 0 1 auto;
+			min-height: 3em;
+			overflow-y: auto;
 			margin: 0 8px 6px;
 			padding: 6px 8px;
 			border: 1px solid var(--border-color);
@@ -1027,6 +1034,8 @@
 			list-style: none;
 			overflow-y: auto;
 			min-height: 0;
+			// Rows scrolled into view stop below the sticky heading, not under it.
+			scroll-padding-top: 24px;
 		}
 
 		.font-picker-heading {

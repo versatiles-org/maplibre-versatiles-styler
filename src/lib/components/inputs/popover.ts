@@ -66,11 +66,15 @@ export function placeBesidePane(options: PlacementOptions) {
 			}
 		};
 		update();
+		// The popover changes its size while open (a panel opens, a field appears): place it again.
+		const resize = new ResizeObserver(update);
+		resize.observe(popup);
 		window.addEventListener('resize', update);
 		window.addEventListener('scroll', update, true);
 		document.addEventListener('pointerdown', closeOutside, true);
 		document.addEventListener('keydown', handleEscape);
 		return () => {
+			resize.disconnect();
 			document.removeEventListener('keydown', handleEscape);
 			window.removeEventListener('resize', update);
 			window.removeEventListener('scroll', update, true);
