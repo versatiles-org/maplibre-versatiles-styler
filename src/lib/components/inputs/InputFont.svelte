@@ -18,6 +18,7 @@
 		sample,
 		pickerTitle,
 		language,
+		layers = [],
 		usage,
 		expanded,
 		onToggle,
@@ -38,6 +39,8 @@
 		/** What the picker is for, "Font for …". Default: `label`. */
 		pickerTitle?: string;
 		language: string;
+		/** The text layers the font is for, to read the scripts of their labels in view. */
+		layers?: string[];
 		/** The faces in use in this style, for the picker's "Used in this style". */
 		usage: FontUse[];
 		expanded?: boolean;
@@ -123,6 +126,7 @@
 				{origin}
 				{sample}
 				{language}
+				{layers}
 				{usage}
 				anchor={trigger}
 				onselect={select}

@@ -131,3 +131,16 @@ export function resetNode(text: ResolvedText, defaults: ResolvedText, node: Labe
 export function topicFonts(text: ResolvedText, nodes: readonly LabelNode[]): string[] {
 	return nodes[0].topics.map((topic) => topicStyle(text, topic).font);
 }
+
+/** The text layers a node styles, from `textGroups` (`osm.textGroups`). */
+export function nodeLayers(textGroups: TextGroupMap, node: LabelNode): string[] {
+	return node.topics.flatMap((topic) => {
+		const layers = topic
+			.split('.')
+			.reduce<unknown>(
+				(group, key) => (group as Record<string, unknown> | undefined)?.[key],
+				textGroups
+			);
+		return Array.isArray(layers) ? (layers as string[]) : [];
+	});
+}

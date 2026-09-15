@@ -444,6 +444,45 @@ test.describe('script filter', () => {
 		await expect(labelLanguage).toBeDisabled();
 	});
 
+	test('"Scripts in view" selects the scripts of the labels on the map', async ({ page }) => {
+		await useCoverageFixture(page);
+		// Greece, Bulgaria, North Macedonia, Turkey: Greek, Cyrillic and Latin names
+		await page.goto('/#map=6/41.5/25');
+		await labelsSection(page).locator('summary').click();
+		await expect(fontButton(page)).toBeAttached({ timeout: 10_000 });
+		await page.waitForFunction(() =>
+			(window as unknown as { _map: { loaded(): boolean } })._map.loaded()
+		);
+
+		const dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		await dialog.getByRole('button', { name: 'Scripts in view' }).click();
+		for (const script of ['Latin', 'Greek', 'Cyrillic']) {
+			await expect(chip(dialog, script)).toHaveAttribute('aria-pressed', 'true');
+		}
+		await expect(chip(dialog, 'Hebrew')).toHaveAttribute('aria-pressed', 'false');
+	});
+
+	test('"Scripts in view" reads only the labels the font is for', async ({ page }) => {
+		await useCoverageFixture(page);
+		await page.goto('/#map=6/41.5/25');
+		await labelsSection(page).locator('summary').click();
+		await expect(fontButton(page)).toBeAttached({ timeout: 10_000 });
+		await page.waitForFunction(() =>
+			(window as unknown as { _map: { loaded(): boolean } })._map.loaded()
+		);
+		await applyTo(page, 'addresses');
+
+		const dialog = await openPicker(page, 'House numbers');
+		await scriptsButton(dialog).click();
+		await dialog.getByRole('button', { name: 'Scripts in view' }).click();
+		await expect(dialog.getByRole('status')).toHaveText('No labels in view for House numbers.');
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts');
+
+		await chip(dialog, 'Greek').click();
+		await expect(dialog.getByRole('status')).toHaveCount(0);
+	});
+
 	test('a new origin clears the filter', async ({ page }) => {
 		await useCoverageFixture(page);
 		await openFonts(page);

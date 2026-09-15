@@ -10,6 +10,11 @@ export class FontPickerState {
 	scripts = $state<string[]>([]);
 	/** The face id copied from a font row. */
 	clipboard = $state<string | undefined>();
+	/**
+	 * The texts of the labels the map shows now, of the given text layers — set by the styler, which has
+	 * the map. `undefined` outside a styler.
+	 */
+	labelTexts: ((layerIds: readonly string[]) => string[]) | undefined;
 
 	toggleScript(code: string): void {
 		this.scripts = this.scripts.includes(code)

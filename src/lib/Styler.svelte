@@ -27,6 +27,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from './hash';
 	import { provideFontPickerState } from './font_picker_state.svelte';
+	import { labelTexts } from './map_labels';
 	import { setStyleOptions, styleForEditing, type RenderedStyle } from './style_update';
 	import SidebarSection from './components/SidebarSection.svelte';
 	import VectorStylePanel from './components/VectorStylePanel.svelte';
@@ -34,8 +35,9 @@
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
-	// The font pickers of this styler share their language filter and copied font.
+	// The font pickers of this styler share their script filter and copied font, and read the map's labels.
 	const fontPicker = provideFontPickerState();
+	fontPicker.labelTexts = (layerIds) => labelTexts(map, layerIds);
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
 

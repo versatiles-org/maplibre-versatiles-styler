@@ -10,6 +10,7 @@
 	import {
 		ALL_LABELS,
 		labelNodes,
+		nodeLayers,
 		nodeModified,
 		nodeValue,
 		resetNode,
@@ -194,6 +195,7 @@
 				{origin}
 				sample={fontSample(node.path)}
 				language={text.language}
+				layers={nodeLayers(textGroups, node)}
 				{usage}
 				warning={coverageWarning(faces, get('font'), text.language)}
 			/>

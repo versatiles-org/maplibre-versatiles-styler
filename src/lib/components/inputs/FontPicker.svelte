@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { FONT_SCRIPTS, fontCovers, languageScript, type FontFaceInfo } from '@versatiles/style';
+	import {
+		FONT_SCRIPTS,
+		fontCovers,
+		languageScript,
+		textScripts,
+		type FontFaceInfo,
+	} from '@versatiles/style';
 	import {
 		closestFace,
 		fontFamilies,
@@ -40,6 +46,7 @@
 		origin,
 		sample,
 		language,
+		layers = [],
 		usage,
 		anchor,
 		onselect,
@@ -55,6 +62,8 @@
 		sample: string;
 		/** `text.language`, to mark families without its letters. */
 		language: string;
+		/** The text layers the font is for: "Scripts in view" reads their labels. */
+		layers?: string[];
 		/** The faces in use in this style, with the rows that use them. */
 		usage: FontUse[];
 		/** The button that opened the picker: it is placed next to it, and clicks on it do not close it. */
@@ -89,6 +98,13 @@
 		FONT_SCRIPTS.filter((s) => !available.includes(s) && !shared.scripts.includes(s))
 	);
 	let labelScript = $derived(languageScript(language));
+	/** Why "Scripts in view" did not change the selection. */
+	let inViewStatus = $state<string | undefined>();
+	// The message is about the selection it left unchanged: it goes with the next change.
+	$effect(() => {
+		void shared.scripts;
+		inViewStatus = undefined;
+	});
 	/** No family whose coverage is known writes all selected scripts: the closest ones are offered. */
 	let noMatch = $derived(
 		shared.scripts.length > 0 &&
@@ -257,6 +273,21 @@
 		);
 	}
 
+	/** Selects the scripts of the labels this font is for that the map shows now. */
+	function selectScriptsInView() {
+		const texts = shared.labelTexts?.(layers) ?? [];
+		const scripts = textScripts(texts.join('\n'));
+		if (texts.length === 0) {
+			inViewStatus =
+				title === 'All labels' ? 'No labels in view.' : `No labels in view for ${title}.`;
+		} else if (scripts.length === 0) {
+			inViewStatus = 'The labels in view have no letters of a known script.';
+		} else {
+			inViewStatus = undefined;
+			shared.setScripts(scripts);
+		}
+	}
+
 	/** Escape in the filter panel closes the panel, not the picker. */
 	function handleFilterKeydown(e: KeyboardEvent) {
 		if (e.key !== 'Escape') return;
@@ -327,6 +358,14 @@
 							>Label language: {scriptName(labelScript)}</button
 						>
 					{/if}
+					{#if shared.labelTexts}
+						<button
+							type="button"
+							title="The scripts of the labels the map shows now"
+							disabled={layers.length === 0}
+							onclick={selectScriptsInView}>Scripts in view</button
+						>
+					{/if}
 					<button
 						type="button"
 						title="Every script some font on this server can write"
@@ -339,6 +378,9 @@
 						onclick={() => shared.clearScripts()}>Clear</button
 					>
 				</div>
+				{#if inViewStatus}
+					<p class="font-picker-status" role="status">{inViewStatus}</p>
+				{/if}
 				{#each regions as region (region.name)}
 					{@const selection = regionSelection(region.scripts, available, shared.scripts)}
 					<div class="font-picker-region" role="group" aria-label={region.name}>

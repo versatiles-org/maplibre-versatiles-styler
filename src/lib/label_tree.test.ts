@@ -3,6 +3,7 @@ import { osm } from '@versatiles/style';
 import {
 	ALL_LABELS,
 	labelNodes,
+	nodeLayers,
 	nodeModified,
 	nodeValue,
 	resetNode,
@@ -107,5 +108,19 @@ describe('node values', () => {
 		const fonts = topicFonts(defaults, nodes);
 		expect(fonts).toHaveLength(14);
 		expect(new Set(fonts)).toEqual(new Set(['noto_sans_regular', 'noto_sans_bold']));
+	});
+});
+
+describe('nodeLayers', () => {
+	it('lists the text layers of a node', () => {
+		expect(nodeLayers(osm.textGroups, nodeAt('water.rivers'))).toEqual([
+			'label-water-river',
+			'label-water-stream',
+		]);
+		expect(nodeLayers(osm.textGroups, nodeAt('addresses'))).toEqual(['label-address-housenumber']);
+		const all = nodeLayers(osm.textGroups, nodeAt(ALL_LABELS));
+		expect(all).toContain('label-place-city');
+		expect(all).toContain('label-motorway-shield');
+		expect(new Set(all).size).toBe(all.length);
 	});
 });
