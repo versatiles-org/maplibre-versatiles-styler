@@ -1,4 +1,4 @@
-import { fontCovers } from '@versatiles/style';
+import { fontCovers, labelLanguage } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
 import { englishLanguageName } from './languages';
 
@@ -54,12 +54,6 @@ export function fontSample(path: string): string {
 	return FONT_SAMPLES[path] ?? FONT_SAMPLES.all;
 }
 
-/** The language labels are drawn in: `'user'` stands for the browser language. */
-export function labelLanguage(language: string): string {
-	if (language !== 'user') return language;
-	return (typeof navigator !== 'undefined' && navigator.language?.split('-')[0]) || 'local';
-}
-
 /**
  * A warning when `faceId` lacks the letters of `language` (any `text.language`, `'user'` included), or
  * `undefined` when there is nothing to warn about — including faces the server does not list and
@@ -71,9 +65,8 @@ export function coverageWarning(
 	language: string
 ): string | undefined {
 	const face = faces.find((f) => f.id === faceId);
-	// Faces the server does not list have no coverage to check.
-	if (!face || face.codeblocks === '') return undefined;
-	if (fontCovers(face, language) !== false) return undefined;
+	// fontCovers is undefined for faces the server does not list, which have no codeblocks.
+	if (!face || fontCovers(face, language) !== false) return undefined;
 	return `${face.title} may lack ${lettersOf(language)}.`;
 }
 

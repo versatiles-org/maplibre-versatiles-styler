@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { osm } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import { pickerFaces, fontSample, labelLanguage, coverageWarning } from './font_tree';
+import { pickerFaces, fontSample, coverageWarning } from './font_tree';
 import { labelNodes } from './label_tree';
 
 const defaults = osm.resolveOptions().text;
@@ -37,15 +37,6 @@ describe('fontSample', () => {
 			expect(fontSample(node.path), node.path).not.toBe(fontSample('all'));
 		}
 		expect(fontSample('unknown')).toBe(fontSample('all'));
-	});
-});
-
-describe('labelLanguage', () => {
-	it('reads the browser language for "user"', () => {
-		vi.stubGlobal('navigator', { language: 'de-AT' });
-		expect(labelLanguage('user')).toBe('de');
-		expect(labelLanguage('fr')).toBe('fr');
-		expect(labelLanguage('local')).toBe('local');
 	});
 });
 
