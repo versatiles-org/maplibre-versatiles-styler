@@ -29,12 +29,12 @@
 	}
 
 	.hide-scrollbar {
+		-ms-overflow-style: none; /* IE and Edge */
+		scrollbar-width: none; /* Firefox */
+
 		&::-webkit-scrollbar {
 			display: none;
 		}
-
-		-ms-overflow-style: none; /* IE and Edge */
-		scrollbar-width: none; /* Firefox */
 	}
 
 	.maplibregl-pane {
@@ -209,11 +209,35 @@
 				font: inherit;
 			}
 
-			input[type='range'] {
-				flex: 1;
-				min-width: 0;
-				height: 1em;
-				cursor: pointer;
+			input {
+				&[type='range'] {
+					flex: 1;
+					min-width: 0;
+					height: 1em;
+					cursor: pointer;
+				}
+
+				&.color-text {
+					flex: 1;
+					min-width: 0;
+					border: 1px solid var(--border-color);
+					border-radius: 0.2em;
+					padding: 0.3em 0.4em;
+					font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+					font-size: 0.95em;
+
+					&.invalid {
+						border-color: #b45309;
+					}
+				}
+
+				&[type='checkbox'] {
+					flex: 0 0 auto;
+					width: 1.1em;
+					height: 1.1em;
+					cursor: pointer;
+					accent-color: var(--primary-color);
+				}
 			}
 
 			.value {
@@ -224,74 +248,56 @@
 				opacity: 0.8;
 			}
 
-			// The value next to a slider: a button that turns into a small text field to type a value.
-			button.value {
-				min-width: 3em;
-				padding: 0 0.1em;
-				border-bottom: 1px dotted transparent;
-				border-radius: 0;
-				cursor: text;
-				text-align: right;
+			button {
+				// The value next to a slider: a button that turns into a small text field to type a value.
+				&.value {
+					min-width: 3em;
+					padding: 0 0.1em;
+					border-bottom: 1px dotted transparent;
+					border-radius: 0;
+					cursor: text;
+					text-align: right;
 
-				&:hover:not(:disabled) {
+					&:hover:not(:disabled) {
+						opacity: 1;
+						border-bottom-color: currentColor;
+					}
+
+					&:disabled {
+						visibility: visible;
+						opacity: 0.8;
+						cursor: default;
+					}
+				}
+
+				// A color: the left half opaque, the right half as it is, over a checkerboard. Opens the picker.
+				&.color-swatch {
+					flex: 0 0 auto;
+					width: 1.9em;
+					height: 1.5em;
+					box-sizing: border-box;
+					border: 1px solid var(--border-color);
+					border-radius: 0.2em;
 					opacity: 1;
-					border-bottom-color: currentColor;
-				}
+					cursor: pointer;
+					@include checkerboard(
+						linear-gradient(90deg, var(--swatch-opaque) 50%, var(--swatch) 50%)
+					);
 
-				&:disabled {
-					visibility: visible;
-					opacity: 0.8;
-					cursor: default;
-				}
-			}
+					&:hover:not(:disabled) {
+						border-color: var(--primary-color);
+					}
 
-			// A color: the left half opaque, the right half as it is, over a checkerboard. Opens the picker.
-			button.color-swatch {
-				flex: 0 0 auto;
-				width: 1.9em;
-				height: 1.5em;
-				box-sizing: border-box;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				opacity: 1;
-				cursor: pointer;
-				@include checkerboard(linear-gradient(90deg, var(--swatch-opaque) 50%, var(--swatch) 50%));
-
-				&:hover:not(:disabled) {
-					border-color: var(--primary-color);
-				}
-
-				&:disabled {
-					visibility: visible;
-					opacity: 0.45;
-					cursor: default;
-				}
-			}
-
-			input.color-text {
-				flex: 1;
-				min-width: 0;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
-				padding: 0.3em 0.4em;
-				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-				font-size: 0.95em;
-
-				&.invalid {
-					border-color: #b45309;
+					&:disabled {
+						visibility: visible;
+						opacity: 0.45;
+						cursor: default;
+					}
 				}
 			}
 
 			&.visibility-container input[type='range'] {
 				max-width: 7em;
-			}
-
-			input[type='checkbox'] {
-				flex: 0 0 auto;
-				width: 1.1em;
-				height: 1.1em;
-				cursor: pointer;
-				accent-color: var(--primary-color);
 			}
 
 			input[type='text'],
@@ -349,6 +355,7 @@
 				}
 			}
 
+			// After `input[type='text']`, which it overrides.
 			input.value-input {
 				flex: 0 0 3.4em;
 				width: 3.4em;
@@ -380,43 +387,53 @@
 					cursor: default;
 				}
 			}
-		}
 
-		.entry.text-container {
-			grid-template-columns: 1fr;
-			row-gap: 0.3em;
-		}
+			&.text-container {
+				grid-template-columns: 1fr;
+				row-gap: 0.3em;
+			}
 
-		.entry.button-container {
-			display: flex;
-			column-gap: 0.7em;
-			margin-top: 0.6em;
+			&.button-container {
+				display: flex;
+				column-gap: 0.7em;
+				margin-top: 0.6em;
 
-			button {
-				flex: 1;
-				width: unset;
-				height: unset;
-				border: 1px solid var(--primary-color);
-				background-color: var(--bg-color);
-				color: var(--fg-color);
-				border-radius: 0.3em;
-				padding: 0.45em;
-				opacity: 1;
+				button {
+					flex: 1;
+					width: unset;
+					height: unset;
+					border: 1px solid var(--primary-color);
+					background-color: var(--bg-color);
+					color: var(--fg-color);
+					border-radius: 0.3em;
+					padding: 0.45em;
+					opacity: 1;
 
-				&:hover {
-					background-color: var(--primary-color);
-					color: var(--bg-color);
+					&:hover {
+						background-color: var(--primary-color);
+						color: var(--bg-color);
+					}
 				}
 			}
-		}
 
-		.entry.active {
-			font-weight: bold;
-		}
+			// A slider for a group whose topics differ: the thumb stands at the default, faded.
+			&.mixed input[type='range'] {
+				opacity: 0.4;
+			}
 
-		// A slider for a group whose topics differ: the thumb stands at the default, faded.
-		.entry.mixed input[type='range'] {
-			opacity: 0.4;
+			&.disabled {
+				opacity: 0.45;
+
+				label,
+				input,
+				select {
+					cursor: default;
+				}
+			}
+
+			&.modified label {
+				font-weight: 700;
+			}
 		}
 
 		.nested {
@@ -445,114 +462,94 @@
 			opacity: 0.7;
 		}
 
-		.entry.disabled {
-			opacity: 0.45;
+		&.style-list {
+			// The themes as a table: the theme's name, then a radio for its light and for its dark variant.
+			.theme-table {
+				width: 100%;
+				border-collapse: collapse;
 
-			label,
-			input,
-			select {
-				cursor: default;
-			}
-		}
+				th,
+				td {
+					padding: 0;
+				}
 
-		.entry.modified label {
-			font-weight: 700;
-		}
-	}
+				thead th {
+					font-size: 0.85em;
+					font-weight: 600;
+					text-align: center;
+					opacity: 0.6;
+				}
 
-	.range-container {
-		width: 100%;
-	}
+				tbody th {
+					text-align: left;
+					font-weight: 500;
+				}
 
-	.maplibregl-list.style-list {
-		// The themes as a table: the theme's name, then a radio for its light and for its dark variant.
-		.theme-table {
-			width: 100%;
-			border-collapse: collapse;
+				td {
+					width: 4em;
+					text-align: center;
+				}
 
-			th,
-			td {
-				padding: 0;
-			}
-
-			thead th {
-				font-size: 0.85em;
-				font-weight: 600;
-				text-align: center;
-				opacity: 0.6;
-			}
-
-			tbody th {
-				text-align: left;
-				font-weight: 500;
-			}
-
-			td {
-				width: 4em;
-				text-align: center;
+				label {
+					display: inline-flex;
+				}
 			}
 
 			label {
-				display: inline-flex;
-			}
-		}
+				display: flex;
+				cursor: pointer;
+				font-weight: 500;
+				position: relative;
+				overflow: hidden;
 
-		label {
-			display: flex;
-			cursor: pointer;
-			font-weight: 500;
-			position: relative;
-			overflow: hidden;
+				&.satellite {
+					margin-top: 0.3em;
+					padding-top: 0.3em;
+					border-top: 1px solid var(--border-color);
+					color: color-mix(in srgb, var(--primary-color) 50%, var(--fg-color) 50%);
+				}
 
-			&.satellite {
-				margin-top: 0.3em;
-				padding-top: 0.3em;
-				border-top: 1px solid var(--border-color);
-				color: color-mix(in srgb, var(--primary-color) 50%, var(--fg-color) 50%);
-			}
+				input {
+					position: absolute;
+					left: -9999px;
 
-			input {
-				position: absolute;
-				left: -9999px;
-
-				&:checked + span {
-					&:before {
+					&:checked + span:before {
 						box-shadow: inset 0 0 0 0.4375em var(--primary-color);
+					}
+
+					&:focus-visible + span:before {
+						outline: 2px solid var(--primary-color);
+						outline-offset: 1px;
 					}
 				}
 
-				&:focus-visible + span:before {
-					outline: 2px solid var(--primary-color);
-					outline-offset: 1px;
-				}
-			}
-
-			span {
-				display: flex;
-				align-items: center;
-				padding: 0.3em 1em 0.3em 0.3em;
-				border-radius: 99em; // or something higher...
-				transition: 0.1s ease;
-
-				&:before {
+				span {
 					display: flex;
-					flex-shrink: 0;
-					content: '';
-					background-color: var(--bg-color);
-					width: 1.5em;
-					height: 1.5em;
-					border-radius: 50%;
-					margin-right: 0.375em;
+					align-items: center;
+					padding: 0.3em 1em 0.3em 0.3em;
+					border-radius: 99em;
 					transition: 0.1s ease;
-					box-shadow: inset 0 0 0 0.125em var(--primary-color);
-				}
-
-				// A radio without a text, in the theme table.
-				&:empty {
-					padding: 0.3em;
 
 					&:before {
-						margin-right: 0;
+						display: flex;
+						flex-shrink: 0;
+						content: '';
+						background-color: var(--bg-color);
+						width: 1.5em;
+						height: 1.5em;
+						border-radius: 50%;
+						margin-right: 0.375em;
+						transition: 0.1s ease;
+						box-shadow: inset 0 0 0 0.125em var(--primary-color);
+					}
+
+					// A radio without a text, in the theme table.
+					&:empty {
+						padding: 0.3em;
+
+						&:before {
+							margin-right: 0;
+						}
 					}
 				}
 			}
@@ -584,7 +581,7 @@
 		}
 	}
 
-	// The font picker: a popup next to the sidebar.
+	// The color picker: a popup next to the sidebar.
 	.color-picker {
 		position: fixed;
 		z-index: 10;
@@ -606,20 +603,20 @@
 			justify-content: space-between;
 			padding: 6px 8px 4px;
 			font-weight: 600;
-		}
 
-		.color-picker-close {
-			border: none;
-			background: none;
-			color: inherit;
-			font-size: 1.4em;
-			line-height: 1;
-			padding: 0 4px;
-			opacity: 0.6;
-			cursor: pointer;
+			.color-picker-close {
+				border: none;
+				background: none;
+				color: inherit;
+				font-size: 1.4em;
+				line-height: 1;
+				padding: 0 4px;
+				opacity: 0.6;
+				cursor: pointer;
 
-			&:hover {
-				opacity: 1;
+				&:hover {
+					opacity: 1;
+				}
 			}
 		}
 
@@ -654,18 +651,18 @@
 			&:focus-visible {
 				box-shadow: 0 0 0 2px var(--primary-color);
 			}
-		}
 
-		.color-area-thumb {
-			position: absolute;
-			width: 12px;
-			height: 12px;
-			margin: -6px 0 0 -6px;
-			box-sizing: border-box;
-			border: 2px solid #fff;
-			border-radius: 50%;
-			box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
-			pointer-events: none;
+			.color-area-thumb {
+				position: absolute;
+				width: 12px;
+				height: 12px;
+				margin: -6px 0 0 -6px;
+				box-sizing: border-box;
+				border: 2px solid #fff;
+				border-radius: 50%;
+				box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+				pointer-events: none;
+			}
 		}
 
 		// The color the picker opened with, above the current one.
@@ -676,21 +673,22 @@
 			border: 1px solid var(--border-color);
 			border-radius: 3px;
 			overflow: hidden;
+
+			.color-picker-old {
+				flex: 1;
+				padding: 0;
+				border: none;
+				cursor: pointer;
+				@include checkerboard(linear-gradient(var(--swatch), var(--swatch)));
+			}
+
+			.color-picker-new {
+				flex: 1;
+				@include checkerboard(linear-gradient(var(--color), var(--color)));
+			}
 		}
 
-		.color-picker-old {
-			flex: 1;
-			padding: 0;
-			border: none;
-			cursor: pointer;
-			@include checkerboard(linear-gradient(var(--swatch), var(--swatch)));
-		}
-
-		.color-picker-new {
-			flex: 1;
-			@include checkerboard(linear-gradient(var(--color), var(--color)));
-		}
-
+		// A label, a slider and its value.
 		.color-picker-slider {
 			display: grid;
 			grid-template-columns: 3em 1fr 3em;
@@ -701,46 +699,90 @@
 				text-align: right;
 				font-variant-numeric: tabular-nums;
 			}
-		}
 
-		input.color-track {
-			appearance: none;
-			-webkit-appearance: none;
-			height: 12px;
-			margin: 0;
-			border-radius: 6px;
-			box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
-			cursor: pointer;
-
-			&::-webkit-slider-thumb {
+			input.color-track {
+				appearance: none;
 				-webkit-appearance: none;
-				width: 14px;
-				height: 14px;
-				border-radius: 50%;
-				background: #fff;
-				box-shadow:
-					0 0 0 1px rgba(0, 0, 0, 0.5),
-					0 1px 3px rgba(0, 0, 0, 0.3);
+				height: 12px;
+				margin: 0;
+				border-radius: 6px;
+				box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+				cursor: pointer;
+
+				&::-webkit-slider-thumb {
+					-webkit-appearance: none;
+					width: 14px;
+					height: 14px;
+					border-radius: 50%;
+					background: #fff;
+					box-shadow:
+						0 0 0 1px rgba(0, 0, 0, 0.5),
+						0 1px 3px rgba(0, 0, 0, 0.3);
+				}
+
+				&::-moz-range-thumb {
+					width: 14px;
+					height: 14px;
+					border: none;
+					border-radius: 50%;
+					background: #fff;
+					box-shadow:
+						0 0 0 1px rgba(0, 0, 0, 0.5),
+						0 1px 3px rgba(0, 0, 0, 0.3);
+				}
+
+				&::-moz-range-track {
+					background: transparent;
+				}
+
+				&:focus-visible {
+					outline: 2px solid var(--primary-color);
+					outline-offset: 2px;
+				}
+
+				&.color-track-hue {
+					background: linear-gradient(
+						to right,
+						#f00 0%,
+						#ff0 16.67%,
+						#0f0 33.33%,
+						#0ff 50%,
+						#00f 66.67%,
+						#f0f 83.33%,
+						#f00 100%
+					);
+				}
+
+				&.color-track-alpha {
+					@include checkerboard(linear-gradient(to right, transparent, var(--color-opaque)));
+				}
 			}
 
-			&::-moz-range-thumb {
-				width: 14px;
-				height: 14px;
+			.value {
+				justify-self: end;
+				min-width: 3em;
+				padding: 0;
 				border: none;
-				border-radius: 50%;
-				background: #fff;
-				box-shadow:
-					0 0 0 1px rgba(0, 0, 0, 0.5),
-					0 1px 3px rgba(0, 0, 0, 0.3);
+				border-bottom: 1px dotted transparent;
+				background: none;
+				color: inherit;
+				font: inherit;
+				text-align: right;
+				font-variant-numeric: tabular-nums;
+				cursor: text;
+
+				&:hover {
+					border-bottom-color: currentColor;
+				}
 			}
 
-			&::-moz-range-track {
-				background: transparent;
-			}
-
-			&:focus-visible {
-				outline: 2px solid var(--primary-color);
-				outline-offset: 2px;
+			input.value-input {
+				width: 100%;
+				box-sizing: border-box;
+				padding: 0 0.2em;
+				border: 1px solid var(--primary-color);
+				border-radius: 0.2em;
+				cursor: text;
 			}
 		}
 
@@ -772,64 +814,21 @@
 			display: flex;
 			flex-direction: column;
 			gap: 8px;
-		}
 
-		.color-picker-slider .value {
-			justify-self: end;
-			min-width: 3em;
-			padding: 0;
-			border: none;
-			border-bottom: 1px dotted transparent;
-			background: none;
-			color: inherit;
-			font: inherit;
-			text-align: right;
-			font-variant-numeric: tabular-nums;
-			cursor: text;
-
-			&:hover {
-				border-bottom-color: currentColor;
+			input.color-picker-hex {
+				box-sizing: border-box;
+				width: 100%;
+				padding: 0.3em 0.4em;
+				border: 1px solid var(--border-color);
+				border-radius: 0.2em;
+				background: var(--bg-color);
+				color: inherit;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 			}
-		}
-
-		.color-picker-slider input.value-input {
-			width: 100%;
-			box-sizing: border-box;
-			padding: 0 0.2em;
-			border: 1px solid var(--primary-color);
-			border-radius: 0.2em;
-			cursor: text;
-		}
-
-		input.color-picker-hex {
-			box-sizing: border-box;
-			width: 100%;
-			padding: 0.3em 0.4em;
-			border: 1px solid var(--border-color);
-			border-radius: 0.2em;
-			background: var(--bg-color);
-			color: inherit;
-			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-		}
-
-		.color-track-hue {
-			background: linear-gradient(
-				to right,
-				#f00 0%,
-				#ff0 16.67%,
-				#0f0 33.33%,
-				#0ff 50%,
-				#00f 66.67%,
-				#f0f 83.33%,
-				#f00 100%
-			);
-		}
-
-		.color-track-alpha {
-			@include checkerboard(linear-gradient(to right, transparent, var(--color-opaque)));
 		}
 	}
 
+	// The font picker: a popup next to the sidebar.
 	.font-picker {
 		position: fixed;
 		z-index: 10;
@@ -856,18 +855,18 @@
 			justify-content: space-between;
 			padding: 6px 8px 4px;
 			font-weight: 600;
-		}
 
-		.font-picker-close {
-			border: none;
-			background: none;
-			font-size: 1.4em;
-			line-height: 1;
-			padding: 0 4px;
-			opacity: 0.6;
+			.font-picker-close {
+				border: none;
+				background: none;
+				font-size: 1.4em;
+				line-height: 1;
+				padding: 0 4px;
+				opacity: 0.6;
 
-			&:hover {
-				opacity: 1;
+				&:hover {
+					opacity: 1;
+				}
 			}
 		}
 
@@ -875,35 +874,35 @@
 			display: flex;
 			gap: 6px;
 			margin: 0 8px 6px;
-		}
 
-		.font-picker-search {
-			flex: 1;
-			min-width: 0;
-			padding: 0.35em 0.5em;
-			border: 1px solid var(--border-color);
-			border-radius: 0.2em;
-			background: transparent;
-			color: inherit;
-			font: inherit;
-			outline: none;
+			.font-picker-search {
+				flex: 1;
+				min-width: 0;
+				padding: 0.35em 0.5em;
+				border: 1px solid var(--border-color);
+				border-radius: 0.2em;
+				background: transparent;
+				color: inherit;
+				font: inherit;
+				outline: none;
 
-			&:focus {
-				border-color: var(--primary-color);
+				&:focus {
+					border-color: var(--primary-color);
+				}
 			}
-		}
 
-		.font-picker-filter-button {
-			flex: 0 0 auto;
-			padding: 0.35em 0.6em;
-			border: 1px solid var(--border-color);
-			border-radius: 0.2em;
-			background: var(--bg-color);
+			.font-picker-filter-button {
+				flex: 0 0 auto;
+				padding: 0.35em 0.6em;
+				border: 1px solid var(--border-color);
+				border-radius: 0.2em;
+				background: var(--bg-color);
 
-			&.active {
-				border-color: var(--primary-color);
-				background: var(--primary-color);
-				color: var(--bg-color);
+				&.active {
+					border-color: var(--primary-color);
+					background: var(--primary-color);
+					color: var(--bg-color);
+				}
 			}
 		}
 
@@ -920,12 +919,11 @@
 			p {
 				margin: 0 0 4px;
 				opacity: 0.7;
-			}
 
-			p.font-picker-status {
-				margin: 0 0 4px;
-				opacity: 1;
-				color: #b45309;
+				&.font-picker-status {
+					opacity: 1;
+					color: #b45309;
+				}
 			}
 
 			.font-picker-quick {
@@ -956,60 +954,60 @@
 			.font-picker-region {
 				padding: 3px 0;
 
-				.font-picker-chips,
+				.font-picker-region-name {
+					display: flex;
+					align-items: center;
+					gap: 3px;
+					cursor: pointer;
+					font-size: 0.8em;
+					font-weight: 600;
+					text-transform: uppercase;
+					letter-spacing: 0.03em;
+					opacity: 0.6;
+				}
+
+				.font-picker-chips {
+					margin-top: 2px;
+					margin-left: 1.5em;
+					display: flex;
+					flex-wrap: wrap;
+					gap: 3px;
+
+					.font-picker-chip {
+						display: inline-flex;
+						align-items: baseline;
+						gap: 4px;
+						padding: 1px 7px;
+						border: 1px solid var(--border-color);
+						border-radius: 1em;
+						background: var(--bg-color);
+						color: inherit;
+						font: inherit;
+						cursor: pointer;
+
+						&:hover {
+							border-color: var(--primary-color);
+						}
+
+						&[aria-pressed='true'] {
+							border-color: var(--primary-color);
+							background: var(--primary-color);
+							color: var(--bg-color);
+						}
+
+						&.muted {
+							opacity: 0.45;
+						}
+
+						.font-picker-count {
+							font-size: 0.85em;
+							opacity: 0.6;
+						}
+					}
+				}
+
 				.font-picker-note {
 					margin-left: 1.5em;
-				}
-			}
-
-			.font-picker-region-name {
-				display: flex;
-				align-items: center;
-				gap: 3px;
-				cursor: pointer;
-				font-size: 0.8em;
-				font-weight: 600;
-				text-transform: uppercase;
-				letter-spacing: 0.03em;
-				opacity: 0.6;
-			}
-
-			.font-picker-chips {
-				margin-top: 2px;
-				display: flex;
-				flex-wrap: wrap;
-				gap: 3px;
-			}
-
-			.font-picker-chip {
-				display: inline-flex;
-				align-items: baseline;
-				gap: 4px;
-				padding: 1px 7px;
-				border: 1px solid var(--border-color);
-				border-radius: 1em;
-				background: var(--bg-color);
-				color: inherit;
-				font: inherit;
-				cursor: pointer;
-
-				&:hover {
-					border-color: var(--primary-color);
-				}
-
-				&[aria-pressed='true'] {
-					border-color: var(--primary-color);
-					background: var(--primary-color);
-					color: var(--bg-color);
-				}
-
-				&.muted {
-					opacity: 0.45;
-				}
-
-				.font-picker-count {
-					font-size: 0.85em;
-					opacity: 0.6;
 				}
 			}
 
@@ -1033,16 +1031,6 @@
 			}
 		}
 
-		.font-picker-reset,
-		.font-picker-hidden button {
-			margin-top: 4px;
-			padding: 0;
-			border: none;
-			background: none;
-			color: var(--primary-color);
-			text-decoration: underline;
-		}
-
 		.font-picker-list {
 			margin: 0;
 			padding: 0 0 6px;
@@ -1051,106 +1039,115 @@
 			min-height: 0;
 			// Rows scrolled into view stop below the sticky heading, not under it.
 			scroll-padding-top: 24px;
-		}
 
-		.font-picker-heading {
-			position: sticky;
-			top: 0;
-			z-index: 1;
-			padding: 6px 8px 2px;
-			// Opaque while sticky, so no entry shows through: a muted text color instead of opacity.
-			background: var(--bg-color);
-			color: color-mix(in srgb, var(--fg-color) 60%, var(--bg-color) 40%);
-			font-size: 0.85em;
-			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-		}
-
-		.font-picker-option {
-			display: flex;
-			flex-direction: column;
-			gap: 1px;
-			padding: 4px 8px;
-			cursor: pointer;
-			border-left: 3px solid transparent;
-
-			&.active,
-			&:hover {
-				background: var(--btn-color);
-			}
-
-			&.selected {
-				border-left-color: var(--primary-color);
-			}
-
-			.font-preview {
-				height: 22px;
-			}
-		}
-
-		.font-picker-caption {
-			font-size: 0.85em;
-			color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
-		}
-
-		// "No font writes all 4 scripts. Closest:" is a sentence, not a heading label.
-		.font-picker-heading.font-picker-closest {
-			text-transform: none;
-			letter-spacing: normal;
-		}
-
-		.font-picker-badge {
-			display: block;
-			font-size: 0.9em;
-			opacity: 0.75;
-		}
-
-		.font-picker-warning {
-			margin-left: 4px;
-			color: #b45309;
-		}
-
-		.font-picker-styles {
-			display: flex;
-			flex-direction: column;
-			gap: 4px;
-			padding: 2px 8px 8px 11px;
-			border-left: 3px solid var(--primary-color);
-			background: var(--btn-color);
-		}
-
-		.font-picker-style-row {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 3px;
-
-			button {
-				padding: 2px 6px;
-				border: 1px solid var(--border-color);
-				border-radius: 0.2em;
+			.font-picker-heading {
+				position: sticky;
+				top: 0;
+				z-index: 1;
+				padding: 6px 8px 2px;
+				// Opaque while sticky, so no entry shows through: a muted text color instead of opacity.
 				background: var(--bg-color);
-				font-size: 0.9em;
+				color: color-mix(in srgb, var(--fg-color) 60%, var(--bg-color) 40%);
+				font-size: 0.85em;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
 
-				&[aria-pressed='true'] {
-					border-color: var(--primary-color);
-					background: var(--primary-color);
-					color: var(--bg-color);
+				// "No font writes all 4 scripts. Closest:" is a sentence, not a heading label.
+				&.font-picker-closest {
+					text-transform: none;
+					letter-spacing: normal;
 				}
 			}
-		}
 
-		.font-picker-italic {
-			display: flex;
-			align-items: center;
-			gap: 4px;
-			cursor: pointer;
-		}
+			.font-picker-option {
+				display: flex;
+				flex-direction: column;
+				gap: 1px;
+				padding: 4px 8px;
+				cursor: pointer;
+				border-left: 3px solid transparent;
 
-		.font-picker-empty,
-		.font-picker-hidden {
-			padding: 8px;
-			color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
+				&.active,
+				&:hover {
+					background: var(--btn-color);
+				}
+
+				&.selected {
+					border-left-color: var(--primary-color);
+				}
+
+				.font-preview {
+					height: 22px;
+				}
+
+				.font-picker-caption {
+					font-size: 0.85em;
+					color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
+
+					.font-picker-badge {
+						display: block;
+						font-size: 0.9em;
+						opacity: 0.75;
+					}
+
+					.font-picker-warning {
+						margin-left: 4px;
+						color: #b45309;
+					}
+				}
+			}
+
+			.font-picker-styles {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				padding: 2px 8px 8px 11px;
+				border-left: 3px solid var(--primary-color);
+				background: var(--btn-color);
+
+				.font-picker-style-row {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 3px;
+
+					button {
+						padding: 2px 6px;
+						border: 1px solid var(--border-color);
+						border-radius: 0.2em;
+						background: var(--bg-color);
+						font-size: 0.9em;
+
+						&[aria-pressed='true'] {
+							border-color: var(--primary-color);
+							background: var(--primary-color);
+							color: var(--bg-color);
+						}
+					}
+				}
+
+				.font-picker-italic {
+					display: flex;
+					align-items: center;
+					gap: 4px;
+					cursor: pointer;
+				}
+			}
+
+			.font-picker-empty,
+			.font-picker-hidden {
+				padding: 8px;
+				color: color-mix(in srgb, var(--fg-color) 65%, var(--bg-color) 35%);
+			}
+
+			.font-picker-hidden button {
+				margin-top: 4px;
+				padding: 0;
+				border: none;
+				background: none;
+				color: var(--primary-color);
+				text-decoration: underline;
+			}
 		}
 	}
 }

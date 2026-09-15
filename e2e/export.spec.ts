@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getMapStyle } from './helpers';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/');
@@ -10,6 +11,8 @@ test('download triggers with a self-contained style', async ({ page }) => {
 		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
 	);
 	await exportDetails.locator('summary').click();
+	// The style exists once the TileJSONs are in; until then the button has nothing to download.
+	await getMapStyle(page);
 
 	const downloadButton = exportDetails.locator('button', { hasText: 'Download style.json' });
 
