@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { osm, type FontFaceInfo } from '@versatiles/style';
-	import { configChanges, type VectorState } from '../style_config';
+	import { configChangeCount, type VectorState } from '../style_config';
 	import SidebarSection from './SidebarSection.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
 	import RecolorOptions from './sections/RecolorOptions.svelte';
@@ -31,7 +31,7 @@
 		languages: Record<string, string>;
 	} = $props();
 
-	const changed = (...paths: string[]) => configChanges(config, paths);
+	const changes = (...paths: string[]) => configChangeCount(config, paths);
 
 	function resetColorAdjustments() {
 		options.recolor = structuredClone(defaults.recolor);
@@ -65,7 +65,7 @@
 	title="Layers"
 	description="Show, hide or fade groups of map features."
 	onReset={resetLayers}
-	modified={changed('layers', 'features.buildings')}
+	changes={changes('layers', 'features.buildings')}
 >
 	<InputCheckbox
 		label="3D buildings"
@@ -87,7 +87,7 @@
 	title="Color adjustments"
 	description="Transformations applied to every color in the style."
 	onReset={resetColorAdjustments}
-	modified={changed('recolor')}
+	changes={changes('recolor')}
 >
 	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} />
 </SidebarSection>
@@ -95,7 +95,7 @@
 	title="Individual colors"
 	description="Override the color of individual map features."
 	onReset={resetIndividualColors}
-	modified={changed('colors')}
+	changes={changes('colors')}
 >
 	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} />
 </SidebarSection>
@@ -103,7 +103,7 @@
 	title="Labels"
 	description="Language, fonts and the look of labels."
 	onReset={resetLabels}
-	modified={changed('text')}
+	changes={changes('text')}
 >
 	<LabelOptions
 		bind:text={options.text}
@@ -118,7 +118,7 @@
 	title="Icons"
 	description="Size and spacing of POI icons, shields and road markings."
 	onReset={resetIcons}
-	modified={changed('icon')}
+	changes={changes('icon')}
 >
 	<IconOptions bind:icon={options.icon} defaults={defaults.icon} />
 </SidebarSection>
@@ -129,7 +129,7 @@
 		? '3D elevation features rendered from an elevation source.'
 		: 'Unavailable — this server provides no elevation tiles.'}
 	onReset={hasElevation ? resetElevation : undefined}
-	modified={changed('features.terrain', 'features.hillshade')}
+	changes={changes('features.terrain', 'features.hillshade')}
 >
 	<ElevationOptions bind:features={options.features} disabled={!hasElevation} />
 </SidebarSection>
@@ -137,7 +137,7 @@
 	title="Map"
 	description="Projection, sky and sun."
 	onReset={resetMap}
-	modified={changed('projection', 'sky', 'sun')}
+	changes={changes('projection', 'sky', 'sun')}
 >
 	<MapOptions
 		bind:projection={options.projection}

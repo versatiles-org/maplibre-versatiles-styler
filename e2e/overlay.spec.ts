@@ -120,7 +120,7 @@ test('overlay layers only list what the overlay draws', async ({ page }) => {
 	await expect(row(layers, 'Water')).toHaveCount(0);
 	await expect(row(layers, 'Buildings')).toHaveCount(0);
 
-	await row(layers, 'Labels').locator('input[type="checkbox"]').uncheck();
+	await layers.getByRole('checkbox', { name: 'Show Labels' }).uncheck();
 	await expect.poll(() => layer(page, 'label-place-city')).toBeUndefined();
 	await expect.poll(() => hashConfig(page)).toEqual({ osmOverlay: { layers: { labels: false } } });
 });

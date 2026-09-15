@@ -11,6 +11,7 @@
 		vectorStateFromConfig,
 		satelliteStateFromConfig,
 		themeRows,
+		themeSwatch,
 		buildVectorStyle,
 		buildSatelliteStyle,
 		containerBackground,
@@ -269,9 +270,17 @@
 								{#each [theme.light, theme.dark] as key, index (index)}
 									<td>
 										{#if key}
+											{@const swatch = themeSwatch(key)}
 											<label title={key}>
 												{@render styleRadio(key, `${theme.name} ${index === 0 ? 'light' : 'dark'}`)}
-												<span></span>
+												<span
+													class="theme-card"
+													style:--land={swatch.land}
+													style:--water={swatch.water}
+													style:--park={swatch.park}
+													style:--street={swatch.street}
+													style:--motorway={swatch.motorway}
+												></span>
 											</label>
 										{/if}
 									</td>
@@ -284,7 +293,7 @@
 			{#if styleKeys.includes('satellite')}
 				<label class="satellite">
 					{@render styleRadio('satellite', 'satellite')}
-					<span>satellite</span>
+					<span class="theme-card satellite-card">satellite</span>
 				</label>
 			{/if}
 		</SidebarSection>

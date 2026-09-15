@@ -7,7 +7,7 @@
 		open = false,
 		listClass = '',
 		onReset,
-		modified = false,
+		changes = 0,
 		children,
 	}: {
 		title: string;
@@ -15,8 +15,8 @@
 		open?: boolean;
 		listClass?: string;
 		onReset?: () => void;
-		/** Whether the section differs from its defaults: only then is its reset button shown. */
-		modified?: boolean;
+		/** How many settings of the section differ from their defaults: shown, with the reset button, when any do. */
+		changes?: number;
 		children: Snippet;
 	} = $props();
 
@@ -29,10 +29,19 @@
 <details {open}>
 	<summary>
 		<span class="section-title">{title}</span>
-		{#if onReset && modified}
-			<button type="button" class="section-reset" title="Reset this section" onclick={handleReset}
-				>&circlearrowleft;</button
+		{#if changes > 0}
+			<span class="section-count" title="{changes} {changes === 1 ? 'change' : 'changes'}"
+				>{changes}</span
 			>
+			{#if onReset}
+				<button
+					type="button"
+					class="section-reset"
+					title="Reset this section"
+					aria-label="Reset {title}"
+					onclick={handleReset}>&circlearrowleft;</button
+				>
+			{/if}
 		{/if}
 	</summary>
 	<div class="maplibregl-list {listClass}">

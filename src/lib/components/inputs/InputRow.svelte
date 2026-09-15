@@ -11,6 +11,7 @@
 		expanded,
 		onToggle,
 		warning,
+		leading,
 		children,
 	}: {
 		label: string;
@@ -24,6 +25,8 @@
 		onToggle?: () => void;
 		/** A notice shown below the row. */
 		warning?: string;
+		/** A control before the label, e.g. a color swatch or a visibility toggle. */
+		leading?: Snippet;
 		children: Snippet<[string]>;
 	} = $props();
 
@@ -45,6 +48,7 @@
 			<!-- Keeps the label in line with rows that have an expander. -->
 			<span class="expander" aria-hidden="true"></span>
 		{/if}
+		{@render leading?.()}
 		<label for={uid} title={hint}>{label}</label>
 	</div>
 	<div class="input">

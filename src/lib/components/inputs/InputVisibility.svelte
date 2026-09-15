@@ -30,8 +30,11 @@
 	let mixed = $derived(value === undefined);
 	let percent = $derived(value === undefined ? 100 : Math.round(valueToOpacity(value) * 100));
 
-	function handleCheckbox(e: Event) {
-		onchange((e.target as HTMLInputElement).checked);
+	let visible = $derived(value !== false && !mixed);
+
+	/** Shows a hidden or partly hidden group, hides a shown one. */
+	function toggle() {
+		onchange(mixed ? true : !visible);
 	}
 
 	function handleTyped(text: string) {
@@ -60,17 +63,21 @@
 	{expanded}
 	{onToggle}
 >
+	{#snippet leading()}
+		<button
+			type="button"
+			class="eye"
+			role="checkbox"
+			aria-checked={mixed ? 'mixed' : visible}
+			aria-label="Show {label}"
+			title={visible ? `Hide ${label}` : `Show ${label}`}
+			{disabled}
+			onclick={toggle}
+		></button>
+	{/snippet}
 	{#snippet children(uid)}
 		<input
 			id={uid}
-			type="checkbox"
-			checked={value !== false && !mixed}
-			indeterminate={mixed}
-			{disabled}
-			aria-label="Show {label}"
-			onchange={handleCheckbox}
-		/>
-		<input
 			type="range"
 			min="0"
 			max="100"

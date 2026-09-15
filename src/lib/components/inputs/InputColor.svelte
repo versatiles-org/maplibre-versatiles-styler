@@ -77,7 +77,7 @@
 </script>
 
 <InputRow {label} {hint} {disabled} containerClass="color-container" {isModified} onReset={reset}>
-	{#snippet children(uid)}
+	{#snippet leading()}
 		<button
 			type="button"
 			class="color-swatch"
@@ -91,6 +91,8 @@
 			bind:this={swatch}
 			onclick={() => (open = !open)}
 		></button>
+	{/snippet}
+	{#snippet children(uid)}
 		<input
 			id={uid}
 			class="color-text"

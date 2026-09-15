@@ -15,6 +15,9 @@
 	mask: url('data:image/svg+xml,#{$svg}') center / 16px no-repeat;
 }
 
+$eye: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z'/%3E%3Ccircle cx='8' cy='8' r='2'/%3E%3C/g%3E%3C/svg%3E";
+$eye-off: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 2.5l11 11M6.6 3.7c.4-.1.9-.2 1.4-.2 4.1 0 6.5 4.5 6.5 4.5a11 11 0 0 1-1.9 2.4M4.2 5.1A10.6 10.6 0 0 0 1.5 8s2.4 4.5 6.5 4.5c1 0 1.9-.3 2.7-.7'/%3E%3C/g%3E%3C/svg%3E";
+$eye-half: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z' stroke-dasharray='2 2'/%3E%3Ccircle cx='8' cy='8' r='2'/%3E%3C/g%3E%3C/svg%3E";
 $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 
 .maplibregl-versatiles-styler {
@@ -124,6 +127,21 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 
 				.section-title {
 					margin-right: auto;
+				}
+
+				// How many settings of the section are changed.
+				.section-count {
+					min-width: 18px;
+					height: 18px;
+					box-sizing: border-box;
+					padding: 0 5px;
+					border-radius: 9px;
+					background: var(--accent-soft);
+					color: var(--accent);
+					font-size: 11px;
+					font-weight: 600;
+					line-height: 18px;
+					text-align: center;
 				}
 
 				.section-reset {
@@ -417,8 +435,94 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				}
 			}
 
-			&.visibility-container input[type='range'] {
-				max-width: 7em;
+			// A layer group: an eye to show or hide it, a slider to fade it.
+			&.visibility-container {
+				input[type='range'] {
+					max-width: 7em;
+				}
+
+				button.eye {
+					display: grid;
+					place-items: center;
+					width: 20px;
+					height: 20px;
+					border-radius: 4px;
+					color: var(--muted);
+
+					&::before {
+						@include icon($eye);
+					}
+
+					&[aria-checked='false']::before {
+						mask-image: url('data:image/svg+xml,#{$eye-off}');
+					}
+
+					&[aria-checked='mixed']::before {
+						mask-image: url('data:image/svg+xml,#{$eye-half}');
+					}
+
+					&:hover:not(:disabled) {
+						background: var(--sunken);
+						color: var(--ink);
+					}
+
+					&:focus-visible {
+						outline: 2px solid var(--accent);
+						outline-offset: 1px;
+					}
+
+					&:disabled {
+						visibility: visible;
+						opacity: 0.45;
+					}
+				}
+
+				// a list of layers, as tight as a list of colors
+				& + .visibility-container,
+				& + .nested {
+					margin-top: -6px;
+				}
+
+				&:has(button.eye[aria-checked='false']) label {
+					color: var(--subtle);
+					text-decoration: line-through;
+					text-decoration-color: color-mix(in srgb, var(--subtle) 60%, transparent);
+				}
+			}
+
+			// A color: the swatch before its name, the value as quiet text that becomes a field on hover.
+			&.color-container {
+				grid-template-columns: minmax(0, 1fr) auto;
+				min-height: 24px;
+
+				.label {
+					gap: 10px;
+				}
+
+				input.color-text {
+					flex: 0 0 auto;
+					width: 8.4em;
+					height: 24px;
+					padding: 0 6px;
+					border-color: transparent;
+					background-color: transparent;
+					color: var(--muted);
+					text-align: right;
+
+					&:hover:not(:disabled) {
+						border-color: var(--line);
+						color: var(--ink);
+					}
+
+					&:focus-visible {
+						background-color: var(--bg);
+						color: var(--ink);
+					}
+				}
+
+				& + .color-container {
+					margin-top: -6px;
+				}
 			}
 
 			// Boxed fields: text, colors, selects and the font button share one shape.
@@ -641,8 +745,17 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				}
 			}
 
-			&.modified label {
-				font-weight: 600;
+			// A changed setting: a dot in the gutter before its label.
+			&.modified::before {
+				content: '';
+				position: absolute;
+				left: -9px;
+				top: 14px;
+				width: 6px;
+				height: 6px;
+				margin-top: -3px;
+				border-radius: 50%;
+				background: var(--accent);
 			}
 		}
 
@@ -704,75 +817,93 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					color: var(--subtle);
 				}
 
+				// the names, then two columns of cards
 				tbody th {
+					width: 64px;
 					text-align: left;
 					font-weight: 400;
 				}
 
-				td {
-					width: 4em;
-					text-align: center;
-				}
-
-				label {
-					display: inline-flex;
+				thead td {
+					width: 64px;
 				}
 			}
 
 			label {
-				display: flex;
-				cursor: pointer;
+				display: block;
 				position: relative;
-				overflow: hidden;
-
-				&.satellite {
-					margin-top: 4px;
-					padding-top: 6px;
-					border-top: 1px solid var(--line);
-					font-weight: 600;
-				}
+				cursor: pointer;
+				// room for the selection ring
+				padding: 4px;
 
 				input {
 					position: absolute;
 					left: -9999px;
 
-					&:checked + span::before {
-						box-shadow: inset 0 0 0 5px var(--accent);
+					&:checked + .theme-card {
+						box-shadow:
+							0 0 0 2px var(--bg),
+							0 0 0 4px var(--accent);
+
+						&::after {
+							content: '';
+							position: absolute;
+							top: 4px;
+							right: 4px;
+							width: 14px;
+							height: 14px;
+							border-radius: 50%;
+							background:
+								url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.8 7.2l2.1 2.1 4.3-4.6' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+									center / 14px no-repeat,
+								var(--accent);
+						}
 					}
 
-					&:focus-visible + span::before {
+					&:focus-visible + .theme-card {
 						outline: 2px solid var(--accent);
-						outline-offset: 2px;
+						outline-offset: 3px;
 					}
 				}
 
-				span {
-					display: flex;
-					align-items: center;
-					padding: 4px 12px 4px 4px;
-					border-radius: 99em;
+				&:hover input:not(:checked) + .theme-card {
+					box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.35);
+				}
 
-					&::before {
-						display: flex;
-						flex-shrink: 0;
-						content: '';
-						width: 16px;
-						height: 16px;
-						margin-right: 6px;
-						border-radius: 50%;
-						background-color: var(--bg);
-						box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--line) 30%, var(--muted));
-						transition: box-shadow 0.1s ease;
-					}
+				&.satellite {
+					margin-top: 2px;
+				}
+			}
 
-					// A radio without a text, in the theme table.
-					&:empty {
-						padding: 4px;
+			// A theme as a small map drawn in its own colors: land, water, a park, a street and a motorway.
+			.theme-card {
+				position: relative;
+				display: flex;
+				align-items: center;
+				height: 30px;
+				border-radius: 6px;
+				box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.14);
+				background:
+					linear-gradient(118deg, transparent 47%, var(--motorway) 47% 53%, transparent 53%),
+					linear-gradient(28deg, transparent 60%, var(--street) 60% 64%, transparent 64%),
+					radial-gradient(circle at 80% 22%, var(--park) 0 20%, transparent 21%),
+					radial-gradient(ellipse at 10% 120%, var(--water) 0 46%, transparent 47%), var(--land);
 
-						&::before {
-							margin-right: 0;
-						}
-					}
+				&.satellite-card {
+					padding: 0 10px;
+					color: #fff;
+					font-weight: 600;
+					text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+					background:
+						linear-gradient(
+							118deg,
+							transparent 47%,
+							rgba(255, 255, 255, 0.5) 47% 49%,
+							transparent 49%
+						),
+						radial-gradient(circle at 70% 40%, #7b7a4d 0 18%, transparent 30%),
+						radial-gradient(ellipse at 15% 110%, #25424f 0 40%, transparent 55%),
+						linear-gradient(135deg, #3f5230, #5f6a3e 45%, #4a4a36);
 				}
 			}
 		}

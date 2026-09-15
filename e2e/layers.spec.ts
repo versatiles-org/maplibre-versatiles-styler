@@ -49,7 +49,7 @@ test.describe('layers', () => {
 		await layers.locator('summary').click();
 		expect(await layer(page, 'label-place-city')).toBeDefined();
 
-		await row(layers, 'Labels').locator('input[type="checkbox"]').uncheck();
+		await layers.getByRole('checkbox', { name: 'Show Labels' }).uncheck();
 		await expect.poll(() => layer(page, 'label-place-city')).toBeUndefined();
 		expect(await layer(page, 'street-motorway')).toBeDefined();
 		await expect.poll(() => hashConfig(page)).toEqual({ layers: { labels: false } });
@@ -73,12 +73,14 @@ test.describe('layers', () => {
 		await layers.locator('summary').click();
 		const roads = row(layers, 'Roads');
 		await roads.locator('button.expander').click();
-		await row(layers, 'Motorways').locator('input[type="checkbox"]').uncheck();
+		await layers.getByRole('checkbox', { name: 'Show Motorways' }).uncheck();
+		await expect(row(layers, 'Motorways').locator('label')).toHaveCSS(
+			'text-decoration-line',
+			'line-through'
+		);
 
-		const roadsCheckbox = roads.locator('input[type="checkbox"]');
-		await expect
-			.poll(() => roadsCheckbox.evaluate((el) => (el as HTMLInputElement).indeterminate))
-			.toBe(true);
+		const roadsCheckbox = layers.getByRole('checkbox', { name: 'Show Roads' });
+		await expect(roadsCheckbox).toBeChecked({ indeterminate: true });
 		await expect(roads.locator('.value')).toHaveText('—');
 		await expect.poll(() => layer(page, 'street-motorway')).toBeUndefined();
 

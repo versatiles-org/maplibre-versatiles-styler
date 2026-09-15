@@ -28,8 +28,8 @@ export type SatelliteState = Omit<ResolvedSatellite, 'urls'>;
 export interface ThemeRow {
 	/** The light theme's name, which names the row. */
 	name: string;
-	light?: StyleKey;
-	dark?: StyleKey;
+	light?: Palette;
+	dark?: Palette;
 }
 
 /** The themes among `keys` as rows of the theme table: each light theme with its `-dark` theme. */
@@ -40,7 +40,7 @@ export function themeRows(keys: readonly StyleKey[]): ThemeRow[] {
 		const name = key.replace(/-dark$/, '');
 		let row = rows.find((r) => r.name === name);
 		if (!row) rows.push((row = { name }));
-		row[key === name ? 'light' : 'dark'] = key;
+		row[key === name ? 'light' : 'dark'] = key as Palette;
 	}
 	return rows;
 }
@@ -216,18 +216,61 @@ export function minimalConfig(
  * case, or a tint with no amount, is no change.
  */
 export function configChanges(config: Record<string, unknown>, paths: readonly string[]): boolean {
-	return paths.some(
-		(path) =>
-			path
-				.split('.')
-				.reduce<unknown>(
-					(node, key) =>
-						node !== null && typeof node === 'object'
-							? (node as Record<string, unknown>)[key]
-							: undefined,
-					config
-				) !== undefined
+	return configChangeCount(config, paths) > 0;
+}
+
+/**
+ * How many settings a minimal config (see `minimalConfig`) changes under `paths`: its values, however
+ * deeply nested — `{ text: { places: { scale: 1.5 } } }` is one change, and so is a group switched off
+ * with `false`.
+ */
+export function configChangeCount(
+	config: Record<string, unknown>,
+	paths: readonly string[]
+): number {
+	const count = (node: unknown): number =>
+		node === undefined
+			? 0
+			: node !== null && typeof node === 'object' && !Array.isArray(node)
+				? Object.values(node).reduce<number>((sum, child) => sum + count(child), 0)
+				: 1;
+	return paths.reduce(
+		(sum, path) =>
+			sum +
+			count(
+				path
+					.split('.')
+					.reduce<unknown>(
+						(node, key) =>
+							node !== null && typeof node === 'object'
+								? (node as Record<string, unknown>)[key]
+								: undefined,
+						config
+					)
+			),
+		0
 	);
+}
+
+/** The colors a theme card is drawn with. */
+export interface ThemeSwatch {
+	land: string;
+	water: string;
+	park: string;
+	street: string;
+	motorway: string;
+}
+
+/** The colors of a theme for its card in the theme table. */
+export function themeSwatch(theme: Palette): ThemeSwatch {
+	const colors = osm.resolveOptions({ theme }).colors;
+	return {
+		land: colors.land,
+		water: colors.water,
+		park: colors.naturePark,
+		street: colors.roadStreet,
+		motorway: colors.roadMotorway,
+	};
 }
 
 /** A runnable `@versatiles/style` snippet for the current style. */

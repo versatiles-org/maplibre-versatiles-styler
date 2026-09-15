@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { satellite, type FontFaceInfo } from '@versatiles/style';
 	import {
-		configChanges,
+		configChangeCount,
 		overlayDefaults,
 		satelliteDefaults,
 		type SatelliteState,
@@ -49,7 +49,7 @@
 	function resetImagery() {
 		options.raster = structuredClone(defaults.raster);
 	}
-	const changed = (...paths: string[]) => configChanges(config, paths);
+	const changes = (...paths: string[]) => configChangeCount(config, paths);
 
 	/** The overlay section covers the overlay switch and its theme; the theme brings its colors. */
 	function resetOverlay() {
@@ -91,7 +91,7 @@
 	title="Satellite imagery"
 	description="Adjust how the raster satellite layer is displayed."
 	onReset={resetImagery}
-	modified={changed('raster')}
+	changes={changes('raster')}
 >
 	<RasterOptions bind:raster={options.raster} defaults={defaults.raster} />
 </SidebarSection>
@@ -101,7 +101,7 @@
 		? 'Draw vector labels and roads over the satellite imagery.'
 		: 'Unavailable — needs both a vector (OSM) and a satellite source.'}
 	onReset={overlayAvailable ? resetOverlay : undefined}
-	modified={config.osmOverlay === false || changed('osmOverlay.theme')}
+	changes={config.osmOverlay === false ? 1 : changes('osmOverlay.theme')}
 >
 	<OverlayOptions bind:overlay={options.osmOverlay} disabled={!overlayAvailable} />
 </SidebarSection>
@@ -110,7 +110,7 @@
 		title="Overlay layers"
 		description="Show, hide or fade the overlay's roads, boundaries and labels."
 		onReset={resetOverlayLayers}
-		modified={changed('osmOverlay.layers')}
+		changes={changes('osmOverlay.layers')}
 	>
 		<LayerOptions
 			bind:layers={options.osmOverlay.layers}
@@ -124,7 +124,7 @@
 		title="Overlay color adjustments"
 		description="Transformations applied to every color of the overlay."
 		onReset={resetOverlayRecolor}
-		modified={changed('osmOverlay.recolor')}
+		changes={changes('osmOverlay.recolor')}
 	>
 		<RecolorOptions bind:recolor={options.osmOverlay.recolor} defaults={overlay.recolor} />
 	</SidebarSection>
@@ -132,7 +132,7 @@
 		title="Overlay colors"
 		description="Override the color of individual overlay features."
 		onReset={resetOverlayColors}
-		modified={changed('osmOverlay.colors')}
+		changes={changes('osmOverlay.colors')}
 	>
 		<ColorOptions bind:colors={options.osmOverlay.colors} defaults={overlay.colors} />
 	</SidebarSection>
@@ -140,7 +140,7 @@
 		title="Overlay labels"
 		description="Language, fonts and the look of the overlay's labels."
 		onReset={resetOverlayLabels}
-		modified={changed('osmOverlay.text')}
+		changes={changes('osmOverlay.text')}
 	>
 		<LabelOptions
 			bind:text={options.osmOverlay.text}
@@ -156,7 +156,7 @@
 		title="Overlay icons"
 		description="Size and spacing of the overlay's icons, shields and road markings."
 		onReset={resetOverlayIcons}
-		modified={changed('osmOverlay.icon')}
+		changes={changes('osmOverlay.icon')}
 	>
 		<IconOptions
 			bind:icon={options.osmOverlay.icon}
@@ -172,7 +172,7 @@
 		? '3D elevation features rendered from an elevation source.'
 		: 'Unavailable — this server provides no elevation tiles.'}
 	onReset={elevationAvailable ? resetElevation : undefined}
-	modified={changed('features.terrain', 'features.hillshade')}
+	changes={changes('features.terrain', 'features.hillshade')}
 >
 	<ElevationOptions bind:features={options.features} disabled={!elevationAvailable} />
 </SidebarSection>
@@ -180,7 +180,7 @@
 	title="Map"
 	description="Projection, sky and sun."
 	onReset={resetMap}
-	modified={changed('projection', 'sky', 'sun')}
+	changes={changes('projection', 'sky', 'sun')}
 >
 	<MapOptions
 		bind:projection={options.projection}

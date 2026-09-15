@@ -42,6 +42,9 @@ test('a change shows the reset button of its section only; resetting hides it', 
 	await labels.locator('summary').click();
 	await type(page, labels, 'Size', '150');
 	await expect.poll(() => changedSections(page)).toEqual(['Labels']);
+	// the section counts its changes, the row gets a dot
+	await expect(labels.locator('summary .section-count')).toHaveText('1');
+	await expect(row(labels, 'Size')).toHaveClass(/\bmodified\b/);
 
 	const layers = section(page, 'Layers');
 	await layers.locator('summary').click();

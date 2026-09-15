@@ -14,7 +14,9 @@ import {
 	buildSatelliteStyle,
 	containerBackground,
 	minimalConfig,
+	configChangeCount,
 	configChanges,
+	themeSwatch,
 	styleCode,
 	type StyleSources,
 } from './style_config';
@@ -341,6 +343,35 @@ describe('styleCode', () => {
 		const code = styleCode('satellite', vectorDefaults('colorful'), state, ORIGIN, allSources);
 		expect(code).toContain("import { satellite, inlineSources } from '@versatiles/style';");
 		expect(code).toContain('opacity: 0.5');
+	});
+});
+
+describe('configChangeCount', () => {
+	it('counts the values set under the paths', () => {
+		const config = {
+			text: { language: 'de', places: { cities: { scale: 1.5, font: 'fira_sans_bold' } } },
+			layers: { labels: false },
+			colors: { water: '#FF0000' },
+		};
+		expect(configChangeCount(config, ['text'])).toBe(3);
+		expect(configChangeCount(config, ['text.places'])).toBe(2);
+		expect(configChangeCount(config, ['layers', 'colors'])).toBe(2);
+		expect(configChangeCount(config, ['icon', 'sky'])).toBe(0);
+		expect(configChangeCount({ osmOverlay: false }, ['osmOverlay'])).toBe(1);
+	});
+});
+
+describe('themeSwatch', () => {
+	it('takes the colors of a card from the theme', () => {
+		const colorful = themeSwatch('colorful');
+		expect(colorful).toEqual({
+			land: vectorDefaults('colorful').colors.land,
+			water: vectorDefaults('colorful').colors.water,
+			park: vectorDefaults('colorful').colors.naturePark,
+			street: vectorDefaults('colorful').colors.roadStreet,
+			motorway: vectorDefaults('colorful').colors.roadMotorway,
+		});
+		expect(themeSwatch('colorful-dark').land).not.toBe(colorful.land);
 	});
 });
 
