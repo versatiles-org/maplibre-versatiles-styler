@@ -266,6 +266,9 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				display: flex;
 				align-items: center;
 				gap: 6px;
+				// Room for the change count and the reset button, so a change moves nothing.
+				min-height: 42px;
+				box-sizing: border-box;
 				padding: 9px 8px 9px 12px;
 				list-style: none;
 				cursor: pointer;
