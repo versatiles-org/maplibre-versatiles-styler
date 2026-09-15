@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { normalizeColor, sameColor } from '../../color_model';
+	import ColorPicker from './ColorPicker.svelte';
 	import InputRow from './InputRow.svelte';
 
 	let {
@@ -26,6 +27,20 @@
 	let opaque = $derived(normalizeColor(value, false) ?? value);
 	let isModified = $derived(!sameColor(value, defaultValue));
 	let invalid = $state(false);
+	let open = $state(false);
+	let swatch = $state<HTMLButtonElement>();
+
+	/** A color from the picker. */
+	function write(color: string) {
+		invalid = false;
+		value = color;
+		onchange?.();
+	}
+
+	function close() {
+		open = false;
+		swatch?.focus();
+	}
 
 	/** Applies the typed text if it is a color, else puts the value back. */
 	function commit(input: HTMLInputElement) {
@@ -63,12 +78,19 @@
 
 <InputRow {label} {hint} {disabled} containerClass="color-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
-		<span
+		<button
+			type="button"
 			class="color-swatch"
 			style:--swatch={shown}
 			style:--swatch-opaque={opaque}
-			aria-hidden="true"
-		></span>
+			{disabled}
+			aria-label="{label}: {shown}"
+			aria-haspopup="dialog"
+			aria-expanded={open}
+			title="Choose a color"
+			bind:this={swatch}
+			onclick={() => (open = !open)}
+		></button>
 		<input
 			id={uid}
 			class="color-text"
@@ -84,5 +106,8 @@
 			onkeydown={handleKeydown}
 			onchange={(e) => commit(e.currentTarget)}
 		/>
+		{#if open && swatch}
+			<ColorPicker title={label} {value} {alpha} anchor={swatch} onwrite={write} onclose={close} />
+		{/if}
 	{/snippet}
 </InputRow>

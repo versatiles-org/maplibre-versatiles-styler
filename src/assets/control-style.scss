@@ -230,15 +230,27 @@
 				}
 			}
 
-			// A color: the left half opaque, the right half as it is, over a checkerboard.
-			.color-swatch {
+			// A color: the left half opaque, the right half as it is, over a checkerboard. Opens the picker.
+			button.color-swatch {
 				flex: 0 0 auto;
 				width: 1.9em;
 				height: 1.5em;
 				box-sizing: border-box;
 				border: 1px solid var(--border-color);
 				border-radius: 0.2em;
+				opacity: 1;
+				cursor: pointer;
 				@include checkerboard(linear-gradient(90deg, var(--swatch-opaque) 50%, var(--swatch) 50%));
+
+				&:hover:not(:disabled) {
+					border-color: var(--primary-color);
+				}
+
+				&:disabled {
+					visibility: visible;
+					opacity: 0.45;
+					cursor: default;
+				}
 			}
 
 			input.color-text {
@@ -558,6 +570,180 @@
 	}
 
 	// The font picker: a popup next to the sidebar.
+	.color-picker {
+		position: fixed;
+		z-index: 10;
+		width: 250px;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		background: var(--bg-color);
+		color: var(--fg-color);
+		border-radius: 4px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+		font-size: 12px;
+		overflow: hidden;
+		outline: none;
+
+		.color-picker-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 6px 8px 4px;
+			font-weight: 600;
+		}
+
+		.color-picker-close {
+			border: none;
+			background: none;
+			color: inherit;
+			font-size: 1.4em;
+			line-height: 1;
+			padding: 0 4px;
+			opacity: 0.6;
+			cursor: pointer;
+
+			&:hover {
+				opacity: 1;
+			}
+		}
+
+		.color-picker-body {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			padding: 0 8px 10px;
+		}
+
+		.color-picker-top {
+			display: flex;
+			gap: 6px;
+		}
+
+		// Saturation from left to right, brightness from bottom to top, at the hue of `--hue`.
+		.color-area {
+			position: relative;
+			flex: 1;
+			height: 140px;
+			border-radius: 3px;
+			cursor: crosshair;
+			touch-action: none;
+			outline: none;
+			background:
+				linear-gradient(to top, #000, transparent),
+				linear-gradient(to right, #fff, hsl(calc(var(--hue) * 1deg) 100% 50%));
+
+			&:focus-visible {
+				box-shadow: 0 0 0 2px var(--primary-color);
+			}
+		}
+
+		.color-area-thumb {
+			position: absolute;
+			width: 12px;
+			height: 12px;
+			margin: -6px 0 0 -6px;
+			box-sizing: border-box;
+			border: 2px solid #fff;
+			border-radius: 50%;
+			box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+			pointer-events: none;
+		}
+
+		// The color the picker opened with, above the current one.
+		.color-picker-compare {
+			display: flex;
+			flex-direction: column;
+			width: 34px;
+			border: 1px solid var(--border-color);
+			border-radius: 3px;
+			overflow: hidden;
+		}
+
+		.color-picker-old {
+			flex: 1;
+			padding: 0;
+			border: none;
+			cursor: pointer;
+			@include checkerboard(linear-gradient(var(--swatch), var(--swatch)));
+		}
+
+		.color-picker-new {
+			flex: 1;
+			@include checkerboard(linear-gradient(var(--color), var(--color)));
+		}
+
+		.color-picker-slider {
+			display: grid;
+			grid-template-columns: 3em 1fr 3em;
+			align-items: center;
+			gap: 6px;
+
+			output {
+				text-align: right;
+				font-variant-numeric: tabular-nums;
+			}
+		}
+
+		input.color-track {
+			appearance: none;
+			-webkit-appearance: none;
+			height: 12px;
+			margin: 0;
+			border-radius: 6px;
+			box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+			cursor: pointer;
+
+			&::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: #fff;
+				box-shadow:
+					0 0 0 1px rgba(0, 0, 0, 0.5),
+					0 1px 3px rgba(0, 0, 0, 0.3);
+			}
+
+			&::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border: none;
+				border-radius: 50%;
+				background: #fff;
+				box-shadow:
+					0 0 0 1px rgba(0, 0, 0, 0.5),
+					0 1px 3px rgba(0, 0, 0, 0.3);
+			}
+
+			&::-moz-range-track {
+				background: transparent;
+			}
+
+			&:focus-visible {
+				outline: 2px solid var(--primary-color);
+				outline-offset: 2px;
+			}
+		}
+
+		.color-track-hue {
+			background: linear-gradient(
+				to right,
+				#f00 0%,
+				#ff0 16.67%,
+				#0f0 33.33%,
+				#0ff 50%,
+				#00f 66.67%,
+				#f0f 83.33%,
+				#f00 100%
+			);
+		}
+
+		.color-track-alpha {
+			@include checkerboard(linear-gradient(to right, transparent, var(--color-opaque)));
+		}
+	}
+
 	.font-picker {
 		position: fixed;
 		z-index: 10;

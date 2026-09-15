@@ -1,6 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { getMapStyle } from './helpers';
 
+function colorsSection(page: import('@playwright/test').Page) {
+	return page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
+	);
+}
+
+/** A color row by its option key, which each row carries as its hint. */
+function colorRow(page: import('@playwright/test').Page, key: string) {
+	return page.locator('.maplibregl-versatiles-styler .color-container', {
+		has: page.locator(`label[title="${key}"]`),
+	});
+}
+
+async function hashConfig(page: import('@playwright/test').Page): Promise<unknown> {
+	const match = page.url().match(/config=([^&]+)/);
+	if (!match) return {};
+	return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
+}
+
 test.beforeEach(async ({ page }) => {
 	await page.goto('/');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
@@ -226,25 +245,6 @@ test.describe('gamma and contrast sliders', () => {
 });
 
 test.describe('color field', () => {
-	function colorsSection(page: import('@playwright/test').Page) {
-		return page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
-		);
-	}
-
-	/** A color row by its option key, which each row carries as its hint. */
-	function colorRow(page: import('@playwright/test').Page, key: string) {
-		return page.locator('.maplibregl-versatiles-styler .color-container', {
-			has: page.locator(`label[title="${key}"]`),
-		});
-	}
-
-	async function hashConfig(page: import('@playwright/test').Page): Promise<unknown> {
-		const match = page.url().match(/config=([^&]+)/);
-		if (!match) return {};
-		return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
-	}
-
 	test.beforeEach(async ({ page }) => {
 		await colorsSection(page).locator('summary').click();
 	});
@@ -303,5 +303,128 @@ test.describe('color field', () => {
 		await tint.fill('#00ff0080');
 		await tint.press('Enter');
 		await expect(tint).toHaveValue('#00FF00');
+	});
+});
+
+test.describe('color picker', () => {
+	type Page = import('@playwright/test').Page;
+
+	async function openPicker(page: Page, key: string, title: string) {
+		await colorRow(page, key).locator('button.color-swatch').click();
+		const dialog = page.getByRole('dialog', { name: `Color for ${title}` });
+		await expect(dialog).toBeVisible();
+		return dialog;
+	}
+
+	/** The paint of the water layers, to see the map change. */
+	async function waterPaint(page: Page): Promise<string> {
+		const style = await getMapStyle(page);
+		return JSON.stringify(style.layers.filter((l) => l.id.startsWith('water')).map((l) => l.paint));
+	}
+
+	async function areaPoint(dialog: import('@playwright/test').Locator, x: number, y: number) {
+		const box = (await dialog.locator('.color-area').boundingBox())!;
+		return { x: box.x + box.width * x, y: box.y + box.height * y };
+	}
+
+	test.beforeEach(async ({ page }) => {
+		await colorsSection(page).locator('summary').click();
+	});
+
+	test('dragging in the area updates the map before the pointer is released', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const before = await waterPaint(page);
+		const dialog = await openPicker(page, 'water', 'Water');
+
+		const start = await areaPoint(dialog, 0.2, 0.2);
+		const end = await areaPoint(dialog, 0.9, 0.4);
+		await page.mouse.move(start.x, start.y);
+		await page.mouse.down();
+		await page.mouse.move(end.x, end.y, { steps: 10 });
+
+		// still dragging
+		await expect.poll(() => waterPaint(page)).not.toBe(before);
+		const dragged = await field.inputValue();
+		expect(dragged).not.toBe('#BFD9F2');
+
+		await page.mouse.up();
+		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: dragged } });
+	});
+
+	test('hue and alpha sliders; no alpha slider for colors without alpha', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const dialog = await openPicker(page, 'water', 'Water');
+		await dialog.getByRole('slider', { name: 'Hue' }).fill('0');
+		await expect(field).toHaveValue(/^#F2/);
+		await dialog.getByRole('slider', { name: 'Alpha' }).fill('50');
+		await expect(field).toHaveValue(/80$/);
+		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50 %');
+		await dialog.getByRole('button', { name: 'Close' }).click();
+
+		const recolor = page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
+		);
+		await recolor.locator('summary').click();
+		await recolor
+			.locator('.entry', { has: page.locator('label:text-is("Tint Color")') })
+			.locator('button.color-swatch')
+			.click();
+		const tint = page.getByRole('dialog', { name: 'Color for Tint Color' });
+		await expect(tint.getByRole('slider', { name: 'Hue' })).toBeVisible();
+		await expect(tint.getByRole('slider', { name: 'Alpha' })).toHaveCount(0);
+	});
+
+	test('Escape restores the old color on the map and in the hash', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const before = await waterPaint(page);
+		const dialog = await openPicker(page, 'water', 'Water');
+		const point = await areaPoint(dialog, 0.9, 0.1);
+		await page.mouse.click(point.x, point.y);
+		await expect(field).not.toHaveValue('#BFD9F2');
+		await expect.poll(() => waterPaint(page)).not.toBe(before);
+
+		await page.keyboard.press('Escape');
+		await expect(dialog).toHaveCount(0);
+		await expect(field).toHaveValue('#BFD9F2');
+		await expect.poll(() => waterPaint(page)).toBe(before);
+		await expect.poll(() => hashConfig(page)).toEqual({});
+		await expect(colorRow(page, 'water').locator('button.color-swatch')).toBeFocused();
+	});
+
+	test('the old swatch reverts; Close keeps the new color', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const dialog = await openPicker(page, 'water', 'Water');
+		let point = await areaPoint(dialog, 0.9, 0.1);
+		await page.mouse.click(point.x, point.y);
+		await expect(field).not.toHaveValue('#BFD9F2');
+
+		await dialog.getByRole('button', { name: 'Back to the old color, #BFD9F2' }).click();
+		await expect(field).toHaveValue('#BFD9F2');
+
+		point = await areaPoint(dialog, 0.5, 0.5);
+		await page.mouse.click(point.x, point.y);
+		const chosen = await field.inputValue();
+		expect(chosen).not.toBe('#BFD9F2');
+		await dialog.getByRole('button', { name: 'Close' }).click();
+		await expect(dialog).toHaveCount(0);
+		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: chosen } });
+	});
+
+	test('the area works with the keyboard; Enter keeps the color', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const dialog = await openPicker(page, 'water', 'Water');
+		const area = dialog.getByRole('slider', { name: 'Saturation and brightness' });
+		await expect(area).toBeFocused();
+		const before = await area.getAttribute('aria-valuetext');
+
+		await page.keyboard.press('Shift+ArrowRight');
+		await page.keyboard.press('ArrowDown');
+		await expect(area).not.toHaveAttribute('aria-valuetext', before!);
+		await expect(field).not.toHaveValue('#BFD9F2');
+		const chosen = await field.inputValue();
+
+		await page.keyboard.press('Enter');
+		await expect(dialog).toHaveCount(0);
+		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: chosen } });
 	});
 });
