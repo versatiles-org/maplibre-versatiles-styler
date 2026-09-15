@@ -14,6 +14,7 @@ import {
 	buildSatelliteStyle,
 	containerBackground,
 	minimalConfig,
+	configChanges,
 	styleCode,
 	type StyleSources,
 } from './style_config';
@@ -326,5 +327,30 @@ describe('styleCode', () => {
 		const code = styleCode('satellite', vectorDefaults('colorful'), state, ORIGIN, allSources);
 		expect(code).toContain("import { satellite, inlineSources } from '@versatiles/style';");
 		expect(code).toContain('opacity: 0.5');
+	});
+});
+
+describe('configChanges', () => {
+	it('finds set paths, at any depth', () => {
+		const config = { recolor: { rotateHue: 90 }, text: { fonts: 'fira_sans_regular' } };
+		expect(configChanges(config, ['recolor'])).toBe(true);
+		expect(configChanges(config, ['text.fonts', 'layout'])).toBe(true);
+		expect(configChanges(config, ['text.language'])).toBe(false);
+		expect(configChanges(config, ['colors', 'layers'])).toBe(false);
+		expect(configChanges({}, ['recolor'])).toBe(false);
+	});
+
+	it('sees a switched-off overlay, but nothing below it', () => {
+		const config = { osmOverlay: false };
+		expect(configChanges(config, ['osmOverlay'])).toBe(true);
+		expect(configChanges(config, ['osmOverlay.colors'])).toBe(false);
+	});
+
+	it('follows the hash: changes without effect are no changes', () => {
+		const state = vectorDefaults('colorful');
+		state.colors.water = state.colors.water.toLowerCase();
+		state.recolor.tint = { color: '#00ff00', amount: 0 };
+		const config = minimalConfig('colorful', state, satelliteDefaults());
+		expect(configChanges(config, ['colors', 'recolor'])).toBe(false);
 	});
 });

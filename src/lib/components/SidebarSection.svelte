@@ -7,6 +7,7 @@
 		open = false,
 		listClass = '',
 		onReset,
+		modified = false,
 		children,
 	}: {
 		title: string;
@@ -14,6 +15,8 @@
 		open?: boolean;
 		listClass?: string;
 		onReset?: () => void;
+		/** Whether the section differs from its defaults: only then is its reset button shown. */
+		modified?: boolean;
 		children: Snippet;
 	} = $props();
 
@@ -26,7 +29,7 @@
 <details {open}>
 	<summary>
 		<span class="section-title">{title}</span>
-		{#if onReset}
+		{#if onReset && modified}
 			<button type="button" class="section-reset" title="Reset this section" onclick={handleReset}
 				>&circlearrowleft;</button
 			>

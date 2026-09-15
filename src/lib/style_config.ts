@@ -210,6 +210,26 @@ export function minimalConfig(
 	return config as Record<string, unknown>;
 }
 
+/**
+ * Whether a minimal config (see `minimalConfig`) sets anything under one of `paths`, e.g.
+ * `['text.fonts', 'layout']`. It judges changes the way the URL hash stores them: a color in other letter
+ * case, or a tint with no amount, is no change.
+ */
+export function configChanges(config: Record<string, unknown>, paths: readonly string[]): boolean {
+	return paths.some(
+		(path) =>
+			path
+				.split('.')
+				.reduce<unknown>(
+					(node, key) =>
+						node !== null && typeof node === 'object'
+							? (node as Record<string, unknown>)[key]
+							: undefined,
+					config
+				) !== undefined
+	);
+}
+
 /** A runnable `@versatiles/style` snippet for the current style. */
 export function styleCode(
 	styleKey: StyleKey,

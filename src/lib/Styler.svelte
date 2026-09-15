@@ -132,6 +132,16 @@
 		return result;
 	}
 
+	// The options that differ from the defaults: stored in the URL hash, and they tell the panels which
+	// sections have changes.
+	let minimal = $derived(
+		minimalConfig(
+			currentStyleKey,
+			$state.snapshot(vectorState) as VectorState,
+			$state.snapshot(satelliteState) as SatelliteState
+		)
+	);
+
 	// What the style on the map was built from, to decide how the next one is applied.
 	let rendered: RenderedStyle | undefined;
 
@@ -143,7 +153,7 @@
 			// requests. Changes it cannot apply reload the style in full (see `style_update.ts`).
 			map.setStyle(styleForEditing(next.style), setStyleOptions(rendered, next.rendered));
 			rendered = next.rendered;
-			hashManager?.setConfig(minimalConfig(currentStyleKey, vectorState, satelliteState));
+			hashManager?.setConfig(minimal);
 		});
 	});
 
@@ -278,6 +288,7 @@
 		{#if isSatellite}
 			<SatelliteStylePanel
 				bind:options={satelliteState}
+				config={minimal}
 				{overlayAvailable}
 				elevationAvailable={hasElevation}
 				fontFaces={sources.fontFaces()}
@@ -286,6 +297,7 @@
 		{:else if currentVectorDefaults}
 			<VectorStylePanel
 				bind:options={vectorState}
+				config={minimal}
 				defaults={currentVectorDefaults}
 				{hasElevation}
 				fontFaces={sources.fontFaces()}
