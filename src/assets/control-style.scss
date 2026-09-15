@@ -110,6 +110,21 @@
 			}
 		}
 
+		// A heading above a group of sections: Style, Content, Appearance, Scene, Setup.
+		h4.section-group {
+			margin: 0;
+			padding: 12px 8px 2px;
+			font-size: 0.8em;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			color: color-mix(in srgb, var(--fg-color) 55%, var(--bg-color) 45%);
+
+			&:first-child {
+				padding-top: 6px;
+			}
+		}
+
 		.github-link {
 			margin: 0em;
 			font-size: 0.7em;

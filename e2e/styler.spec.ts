@@ -28,21 +28,50 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 	);
 
 	const expectedTitles = [
-		'Origin',
 		'Base style',
+		'Layers',
 		'Color adjustments',
 		'Individual colors',
 		'Labels',
 		'Icons',
-		'Layers',
 		'Terrain & hillshade',
 		'Map',
+		'Tile server',
 		'Export',
 	];
 	await expect(titles).toHaveCount(expectedTitles.length);
 	for (let i = 0; i < expectedTitles.length; i++) {
 		await expect(titles.nth(i)).toHaveText(expectedTitles[i]);
 	}
+});
+
+test('sections are grouped under headings', async ({ page }) => {
+	const outline = await page
+		.locator('.maplibregl-pane > h4.section-group, .maplibregl-pane > details')
+		.evaluateAll((elements) =>
+			elements.map((el) =>
+				el.tagName === 'H4'
+					? `# ${el.textContent}`
+					: el.querySelector('.section-title')?.textContent
+			)
+		);
+	expect(outline).toEqual([
+		'# Style',
+		'Base style',
+		'# Content',
+		'Layers',
+		'# Appearance',
+		'Color adjustments',
+		'Individual colors',
+		'Labels',
+		'Icons',
+		'# Scene',
+		'Terrain & hillshade',
+		'Map',
+		'# Setup',
+		'Tile server',
+		'Export',
+	]);
 });
 
 test('sections expand and collapse on click', async ({ page }) => {

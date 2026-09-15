@@ -60,6 +60,29 @@
 	}
 </script>
 
+<h4 class="section-group">Content</h4>
+<SidebarSection
+	title="Layers"
+	description="Show, hide or fade groups of map features."
+	onReset={resetLayers}
+	modified={changed('layers', 'features.buildings')}
+>
+	<InputCheckbox
+		label="3D buildings"
+		hint="Extrude buildings by their height when the map is tilted."
+		bind:value={
+			() => options.features.buildings === 'extruded',
+			(v) => (options.features.buildings = v ? 'extruded' : 'flat')
+		}
+		defaultValue={defaults.features.buildings === 'extruded'}
+	/>
+	<LayerOptions
+		bind:layers={options.layers}
+		defaults={defaults.layers}
+		layerGroups={osm.layerGroups}
+	/>
+</SidebarSection>
+<h4 class="section-group">Appearance</h4>
 <SidebarSection
 	title="Color adjustments"
 	description="Transformations applied to every color in the style."
@@ -99,27 +122,7 @@
 >
 	<IconOptions bind:icon={options.icon} defaults={defaults.icon} />
 </SidebarSection>
-<SidebarSection
-	title="Layers"
-	description="Show, hide or fade groups of map features."
-	onReset={resetLayers}
-	modified={changed('layers', 'features.buildings')}
->
-	<InputCheckbox
-		label="3D buildings"
-		hint="Extrude buildings by their height when the map is tilted."
-		bind:value={
-			() => options.features.buildings === 'extruded',
-			(v) => (options.features.buildings = v ? 'extruded' : 'flat')
-		}
-		defaultValue={defaults.features.buildings === 'extruded'}
-	/>
-	<LayerOptions
-		bind:layers={options.layers}
-		defaults={defaults.layers}
-		layerGroups={osm.layerGroups}
-	/>
-</SidebarSection>
+<h4 class="section-group">Scene</h4>
 <SidebarSection
 	title="Terrain & hillshade"
 	description={hasElevation

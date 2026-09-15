@@ -198,7 +198,7 @@ test.describe('style updates', () => {
 		await page.goto('/' + `#${VIEW}`);
 		await settle(page, 1);
 		const origin = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:has-text("Origin"))'
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Tile server"))'
 		);
 		await origin.locator('summary').click();
 		const input = origin.locator('input[type="text"]');

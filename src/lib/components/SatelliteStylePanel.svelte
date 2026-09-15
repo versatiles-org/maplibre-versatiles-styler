@@ -86,6 +86,7 @@
 	}
 </script>
 
+<h4 class="section-group">Content</h4>
 <SidebarSection
 	title="Satellite imagery"
 	description="Adjust how the raster satellite layer is displayed."
@@ -105,6 +106,20 @@
 	<OverlayOptions bind:overlay={options.osmOverlay} disabled={!overlayAvailable} />
 </SidebarSection>
 {#if options.osmOverlay && overlay}
+	<SidebarSection
+		title="Overlay layers"
+		description="Show, hide or fade the overlay's roads, boundaries and labels."
+		onReset={resetOverlayLayers}
+		modified={changed('osmOverlay.layers')}
+	>
+		<LayerOptions
+			bind:layers={options.osmOverlay.layers}
+			defaults={overlay.layers}
+			layerGroups={satellite.layerGroups}
+			disabled={!overlayAvailable}
+		/>
+	</SidebarSection>
+	<h4 class="section-group">Appearance</h4>
 	<SidebarSection
 		title="Overlay color adjustments"
 		description="Transformations applied to every color of the overlay."
@@ -149,20 +164,8 @@
 			disabled={!overlayAvailable}
 		/>
 	</SidebarSection>
-	<SidebarSection
-		title="Overlay layers"
-		description="Show, hide or fade the overlay's roads, boundaries and labels."
-		onReset={resetOverlayLayers}
-		modified={changed('osmOverlay.layers')}
-	>
-		<LayerOptions
-			bind:layers={options.osmOverlay.layers}
-			defaults={overlay.layers}
-			layerGroups={satellite.layerGroups}
-			disabled={!overlayAvailable}
-		/>
-	</SidebarSection>
 {/if}
+<h4 class="section-group">Scene</h4>
 <SidebarSection
 	title="Terrain & hillshade"
 	description={elevationAvailable

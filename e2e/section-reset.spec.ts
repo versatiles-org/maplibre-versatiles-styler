@@ -46,7 +46,7 @@ test('a change shows the reset button of its section only; resetting hides it', 
 	const layers = section(page, 'Layers');
 	await layers.locator('summary').click();
 	await row(layers, '3D buildings').locator('input[type="checkbox"]').check();
-	await expect.poll(() => changedSections(page)).toEqual(['Labels', 'Layers']);
+	await expect.poll(() => changedSections(page)).toEqual(['Layers', 'Labels']);
 
 	await labels.locator('.section-reset').click();
 	await expect.poll(() => changedSections(page)).toEqual(['Layers']);

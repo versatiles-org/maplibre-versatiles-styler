@@ -251,14 +251,7 @@
 </div>
 {#if paneOpen}
 	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
-		<SidebarSection title="Origin">
-			<div class="entry text-container">
-				<label for="{uid}-origin">Origin</label>
-				<div class="input">
-					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
-				</div>
-			</div>
-		</SidebarSection>
+		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" open listClass="style-list">
 			{#if themes.length > 0}
 				<table class="theme-table">
@@ -316,6 +309,18 @@
 				{languages}
 			/>
 		{/if}
+		<h4 class="section-group">Setup</h4>
+		<SidebarSection
+			title="Tile server"
+			description="The server the tiles, fonts and sprites come from."
+		>
+			<div class="entry text-container">
+				<label for="{uid}-origin">Origin</label>
+				<div class="input">
+					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
+				</div>
+			</div>
+		</SidebarSection>
 		<SidebarSection title="Export">
 			<div class="entry button-container">
 				<button onclick={handleDownload}>Download style.json</button>
