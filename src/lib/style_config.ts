@@ -65,8 +65,12 @@ export function toStyleKey(key: string | null | undefined): StyleKey | undefined
  * what shows around the globe, where MapLibre leaves the canvas transparent — a style cannot set it,
  * so it goes on the map container as CSS.
  */
-export function containerBackground(key: StyleKey): string {
-	return key === 'satellite' || key.endsWith('-dark') ? '#000000' : '#ffffff';
+export function isDarkStyle(styleKey: StyleKey): boolean {
+	return styleKey === 'satellite' || styleKey.endsWith('-dark');
+}
+
+export function containerBackground(styleKey: StyleKey): string {
+	return isDarkStyle(styleKey) ? '#000000' : '#ffffff';
 }
 
 export function vectorDefaults(theme: Palette): VectorState {

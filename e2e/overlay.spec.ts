@@ -55,7 +55,6 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 		'Terrain & hillshade',
 		'Map',
 		'Tile server',
-		'Export',
 	]);
 
 	const overlay = await open(page, 'Overlay');

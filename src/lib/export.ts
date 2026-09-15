@@ -13,5 +13,4 @@ export function downloadStyle(style: StyleSpecification): void {
 
 export async function copyStyleCode(code: string): Promise<void> {
 	await navigator.clipboard.writeText(code);
-	alert('Style code copied to clipboard');
 }

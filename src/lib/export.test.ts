@@ -62,23 +62,15 @@ describe('copyStyleCode', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('copies the code to the clipboard', async () => {
-		const writeText = vi.fn().mockResolvedValue(undefined);
-		Object.assign(navigator, { clipboard: { writeText } });
-		vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-		await copyStyleCode("import { osm } from '@versatiles/style';");
-
-		expect(writeText).toHaveBeenCalledWith("import { osm } from '@versatiles/style';");
-	});
-
-	it('shows alert after copying', async () => {
+	it('copies the code to the clipboard, and says nothing itself', async () => {
 		const writeText = vi.fn().mockResolvedValue(undefined);
 		Object.assign(navigator, { clipboard: { writeText } });
 		const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-		await copyStyleCode('');
+		await copyStyleCode("import { osm } from '@versatiles/style';");
 
-		expect(alertSpy).toHaveBeenCalledWith('Style code copied to clipboard');
+		expect(writeText).toHaveBeenCalledWith("import { osm } from '@versatiles/style';");
+		// the styler reports it in its header instead of interrupting with a dialog
+		expect(alertSpy).not.toHaveBeenCalled();
 	});
 });

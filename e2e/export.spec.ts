@@ -7,14 +7,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('download triggers with a self-contained style', async ({ page }) => {
-	const exportDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
-	);
-	await exportDetails.locator('summary').click();
 	// The style exists once the TileJSONs are in; until then the button has nothing to download.
 	await getMapStyle(page);
+	await page.getByRole('button', { name: 'Export' }).click();
 
-	const downloadButton = exportDetails.locator('button', { hasText: 'Download style.json' });
+	const downloadButton = page.getByRole('menuitem', { name: 'Download style.json' });
 
 	const [download] = await Promise.all([page.waitForEvent('download'), downloadButton.click()]);
 
@@ -39,13 +36,10 @@ test('copy writes a v6 snippet to the clipboard', async ({ context, page }) => {
 	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
 	await styleList.locator('label:has(input[value="gray-dark"])').click();
 
-	const exportDetails = page.locator(
-		'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
-	);
-	await exportDetails.locator('summary').click();
-
-	page.once('dialog', (dialog) => dialog.dismiss());
-	await exportDetails.locator('button', { hasText: 'Copy style code' }).click();
+	await page.getByRole('button', { name: 'Export' }).click();
+	await page.getByRole('menuitem', { name: 'Copy style code' }).click();
+	// the styler says so in its header instead of opening a dialog
+	await expect(page.getByRole('status')).toHaveText('Style code copied');
 
 	const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
 	expect(clipboardText).toContain("import { osm, inlineSources } from '@versatiles/style';");

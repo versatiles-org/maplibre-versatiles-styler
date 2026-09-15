@@ -26,7 +26,8 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Terrain and hillshade, projection (globe, Mercator), sky and sun
 - Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, labels, icons, layers)
 - The whole configuration is kept in the URL hash, so a styled map can be shared as a link
-- Export styles as `style.json` download or copy `@versatiles/style` code to clipboard
+- Panel header with Reset all (undoable) and Export: `style.json` download or `@versatiles/style` code to the clipboard
+- Dark panel and pickers on dark themes and satellite
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite

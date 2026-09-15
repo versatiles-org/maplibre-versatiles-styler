@@ -37,7 +37,6 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 		'Terrain & hillshade',
 		'Map',
 		'Tile server',
-		'Export',
 	];
 	await expect(titles).toHaveCount(expectedTitles.length);
 	for (let i = 0; i < expectedTitles.length; i++) {
@@ -70,13 +69,12 @@ test('sections are grouped under headings', async ({ page }) => {
 		'Map',
 		'# Setup',
 		'Tile server',
-		'Export',
 	]);
 });
 
 test('sections expand and collapse on click', async ({ page }) => {
 	const details = page.locator(
-		'.maplibregl-versatiles-styler .maplibregl-pane details:has(summary:has-text("Export"))'
+		'.maplibregl-versatiles-styler .maplibregl-pane details:has(summary:has-text("Tile server"))'
 	);
 
 	await expect(details).not.toHaveAttribute('open', '');
@@ -86,11 +84,51 @@ test('sections expand and collapse on click', async ({ page }) => {
 	await expect(details).not.toHaveAttribute('open', '');
 });
 
-test('GitHub footer link is present', async ({ page }) => {
-	const link = page.locator('.maplibregl-versatiles-styler .github-link a');
+test('the header links to GitHub', async ({ page }) => {
+	const link = page.getByRole('link', { name: 'Improve me on GitHub' });
 	await expect(link).toHaveAttribute(
 		'href',
 		'https://github.com/versatiles-org/maplibre-versatiles-styler'
 	);
-	await expect(link).toHaveText('Improve me on GitHub');
+	await expect(link).toHaveAttribute('target', '_blank');
+});
+
+test('the header resets every change, and can undo it', async ({ page }) => {
+	const labels = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary .section-title:text-is("Labels"))'
+	);
+	await labels.locator('summary').click();
+	await labels.locator('.entry:has(label:text-is("Language")) select').selectOption('de');
+	await expect(page).toHaveURL(/config=/);
+
+	const resetAll = page.getByRole('button', { name: 'Reset all changes' });
+	await expect(resetAll).toHaveAttribute('title', 'Reset all 1 changes');
+	await resetAll.click();
+	await expect(page).not.toHaveURL(/config=/);
+	await expect(resetAll).toHaveCount(0);
+
+	await page.getByRole('button', { name: 'Undo reset' }).click();
+	await expect(page).toHaveURL(/config=/);
+	await expect(labels.locator('.entry:has(label:text-is("Language")) select')).toHaveValue('de');
+});
+
+test('the header closes the pane; the control button opens it again', async ({ page }) => {
+	const pane = page.locator('.maplibregl-versatiles-styler .maplibregl-pane');
+	await expect(pane).toBeAttached();
+	await page.getByRole('button', { name: 'Close the style editor' }).click();
+	await expect(pane).not.toBeAttached();
+	await page.locator('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon').click();
+	await expect(pane).toBeAttached();
+});
+
+test('a dark theme gives the panel dark colors', async ({ page }) => {
+	const pane = page.locator('.maplibregl-versatiles-styler .maplibregl-pane');
+	const background = () => pane.evaluate((el) => getComputedStyle(el).backgroundColor);
+	const light = await background();
+
+	await page
+		.locator('.maplibregl-versatiles-styler .style-list label:has(input[value="toner-dark"])')
+		.click();
+	await expect.poll(background).not.toBe(light);
+	await expect(page.locator('.maplibregl-map.versatiles-styler-dark')).toHaveCount(1);
 });

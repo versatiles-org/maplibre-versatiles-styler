@@ -73,7 +73,13 @@
 	let lastHsl = $state<Hsla | undefined>();
 	/** Once closed, late events (a field's `change` on blur) write nothing. */
 	let closed = false;
-	let position = $state<PopoverPosition>({ left: 0, top: 0, maxHeight: 520 });
+	let position = $state<PopoverPosition>({
+		left: 0,
+		top: 0,
+		maxHeight: 520,
+		pointer: 0,
+		beside: true,
+	});
 
 	let current = $derived(formatHex(hsva, alpha));
 	let opaque = $derived(formatHex(hsva, false));
@@ -217,6 +223,14 @@
 </script>
 
 <div class="maplibregl-versatiles-styler color-picker-layer" {@attach portalToMap(anchor)}>
+	{#if position.beside}
+		<!-- points at the row that opened the picker -->
+		<span
+			class="popover-arrow"
+			style:left="{position.left - 6}px"
+			style:top="{position.top + position.pointer - 6}px"
+		></span>
+	{/if}
 	<div
 		class="color-picker"
 		role="dialog"

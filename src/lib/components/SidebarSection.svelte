@@ -3,6 +3,7 @@
 
 	let {
 		title,
+		value,
 		description,
 		open = false,
 		listClass = '',
@@ -11,6 +12,8 @@
 		children,
 	}: {
 		title: string;
+		/** The current setting, shown next to the title while the section is closed. */
+		value?: string;
 		description?: string;
 		open?: boolean;
 		listClass?: string;
@@ -29,6 +32,7 @@
 <details {open}>
 	<summary>
 		<span class="section-title">{title}</span>
+		{#if value}<span class="section-value">{value}</span>{/if}
 		{#if changes > 0}
 			<span class="section-count" title="{changes} {changes === 1 ? 'change' : 'changes'}"
 				>{changes}</span

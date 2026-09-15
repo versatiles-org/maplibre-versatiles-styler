@@ -37,12 +37,8 @@ test.describe('landcover detection', () => {
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
 
-		const exportDetails = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:has-text("Export"))'
-		);
-		await exportDetails.locator('summary').click();
-		page.once('dialog', (dialog) => dialog.dismiss());
-		await exportDetails.locator('button', { hasText: 'Copy style code' }).click();
+		await page.getByRole('button', { name: 'Export' }).click();
+		await page.getByRole('menuitem', { name: 'Copy style code' }).click();
 
 		const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
 		expect(clipboardText).toContain('landcover: true');

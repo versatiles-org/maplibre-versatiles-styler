@@ -3,6 +3,10 @@ export interface PopoverPosition {
 	left: number;
 	top: number;
 	maxHeight: number;
+	/** Where the pointer sits on the popover's left edge, measured from its top. */
+	pointer: number;
+	/** Whether the popover stands beside its anchor, so a pointer to it makes sense. */
+	beside: boolean;
 }
 
 /**
@@ -43,15 +47,18 @@ export function placeBesidePane(options: PlacementOptions) {
 			const anchorRect = anchor.getBoundingClientRect();
 			const maxHeight = Math.min(limit, window.innerHeight - 2 * margin);
 			const height = Math.min(popup.offsetHeight, maxHeight);
-			let left = paneRect.right + margin;
-			if (left + popup.offsetWidth > window.innerWidth - margin) {
-				left = Math.max(margin, window.innerWidth - popup.offsetWidth - margin);
-			}
-			const top = Math.min(
-				Math.max(margin, anchorRect.top - 48),
-				window.innerHeight - height - margin
+			const beside = paneRect.right + margin + popup.offsetWidth <= window.innerWidth - margin;
+			const left = beside
+				? paneRect.right + margin
+				: Math.max(margin, window.innerWidth - popup.offsetWidth - margin);
+			// Level with the row that opened it, as far as the window allows.
+			const anchorCenter = anchorRect.top + anchorRect.height / 2;
+			const top = Math.max(
+				margin,
+				Math.min(anchorCenter - 40, window.innerHeight - height - margin)
 			);
-			onplace({ left, top: Math.max(margin, top), maxHeight });
+			const pointer = Math.min(Math.max(anchorCenter - top, 14), height - 14);
+			onplace({ left, top, maxHeight, pointer, beside });
 		};
 		const closeOutside = (event: PointerEvent) => {
 			const target = event.target as Node;

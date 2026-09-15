@@ -14,7 +14,9 @@
 		themeSwatch,
 		buildVectorStyle,
 		buildSatelliteStyle,
+		configChangeCount,
 		containerBackground,
+		isDarkStyle,
 		minimalConfig,
 		styleCode,
 		type StyleKey,
@@ -43,6 +45,13 @@
 	// The color pickers share their channel tab.
 	provideColorPickerState();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
+	let originHost = $derived.by(() => {
+		try {
+			return new URL(origin).host;
+		} catch {
+			return origin;
+		}
+	});
 	let paneOpen = $state(untrack(() => config.open ?? false));
 
 	// ── Sources ──────────────────────────────────────────────────────────────────
@@ -172,6 +181,8 @@
 	const hostBackground = container.style.backgroundColor;
 	$effect(() => {
 		container.style.backgroundColor = containerBackground(currentStyleKey);
+		// A dark map gets a dark panel; the pickers are inside the container too.
+		container.classList.toggle('versatiles-styler-dark', isDarkStyle(currentStyleKey));
 	});
 
 	// Switch away from a style only once its source is known to be missing, not while it loads.
@@ -183,14 +194,51 @@
 		}
 	});
 
-	// ── Export ───────────────────────────────────────────────────────────────────
+	// ── Header actions ───────────────────────────────────────────────────────────
+
+	let totalChanges = $derived(configChangeCount(minimal, Object.keys(minimal)));
+	let menuOpen = $state(false);
+	/** A short message after an action, e.g. "Style code copied". */
+	let status = $state<string | undefined>();
+	let statusTimer: ReturnType<typeof setTimeout> | undefined;
+	/** The options before "Reset all", while the reset can still be undone. */
+	let undoState = $state<{ vector: VectorState; satellite: SatelliteState } | undefined>();
+	let undoTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function showStatus(text: string) {
+		status = text;
+		clearTimeout(statusTimer);
+		statusTimer = setTimeout(() => (status = undefined), 4000);
+	}
+
+	/** Back to the defaults of the current style; the header offers to undo it for a while. */
+	function resetAll() {
+		undoState = {
+			vector: $state.snapshot(vectorState) as VectorState,
+			satellite: $state.snapshot(satelliteState) as SatelliteState,
+		};
+		if (isSatellite) satelliteState = satelliteDefaults();
+		else vectorState = vectorDefaults(currentStyleKey as Palette);
+		clearTimeout(undoTimer);
+		undoTimer = setTimeout(() => (undoState = undefined), 15000);
+	}
+
+	function undoReset() {
+		if (!undoState) return;
+		vectorState = undoState.vector;
+		satelliteState = undoState.satellite;
+		undoState = undefined;
+		clearTimeout(undoTimer);
+	}
 
 	function handleDownload() {
+		menuOpen = false;
 		const current = currentStyle();
 		if (current) downloadStyle(current.style);
 	}
 
 	async function handleCopyCode() {
+		menuOpen = false;
 		const loaded: StyleSources = {
 			osm: osmTileJSON ?? undefined,
 			satellite: satelliteTileJSON ?? undefined,
@@ -205,6 +253,25 @@
 				loaded
 			)
 		);
+		showStatus('Style code copied');
+	}
+
+	/** Closes the export menu on a click elsewhere or on Escape. */
+	function menuDismiss(menu: HTMLElement) {
+		const close = (event: Event) => {
+			if (!menu.contains(event.target as Node)) menuOpen = false;
+		};
+		const escape = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return;
+			menuOpen = false;
+			(menu.previousElementSibling as HTMLElement | null)?.focus();
+		};
+		document.addEventListener('pointerdown', close, true);
+		menu.addEventListener('keydown', escape);
+		return () => {
+			document.removeEventListener('pointerdown', close, true);
+			menu.removeEventListener('keydown', escape);
+		};
 	}
 
 	function handleOriginChange(e: Event) {
@@ -227,7 +294,10 @@
 
 	onDestroy(() => {
 		hashManager?.destroy();
+		clearTimeout(statusTimer);
+		clearTimeout(undoTimer);
 		container.style.backgroundColor = hostBackground;
+		container.classList.remove('versatiles-styler-dark');
 	});
 </script>
 
@@ -252,8 +322,59 @@
 </div>
 {#if paneOpen}
 	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
+		<div class="styler-head">
+			<span class="styler-title">Map style</span>
+			{#if undoState}
+				<button type="button" class="text-button" onclick={undoReset}>Undo reset</button>
+			{:else if totalChanges > 0}
+				<button
+					type="button"
+					class="icon-button"
+					aria-label="Reset all changes"
+					title="Reset all {totalChanges} changes"
+					onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
+				>
+			{/if}
+			<div class="menu-anchor">
+				<button
+					type="button"
+					class="primary-button"
+					aria-haspopup="menu"
+					aria-expanded={menuOpen}
+					onclick={() => (menuOpen = !menuOpen)}
+					>Export<span class="icon icon-chevron" aria-hidden="true"></span></button
+				>
+				{#if menuOpen}
+					<div class="menu" role="menu" {@attach menuDismiss}>
+						<button type="button" role="menuitem" onclick={handleDownload}
+							>Download style.json</button
+						>
+						<button type="button" role="menuitem" onclick={handleCopyCode}>Copy style code</button>
+					</div>
+				{/if}
+			</div>
+			<a
+				class="icon-button"
+				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
+				target="_blank"
+				rel="noopener noreferrer"
+				title="Improve me on GitHub"
+				aria-label="Improve me on GitHub"
+				><span class="icon icon-github" aria-hidden="true"></span></a
+			>
+			<button
+				type="button"
+				class="icon-button"
+				aria-label="Close the style editor"
+				onclick={() => (paneOpen = false)}
+				><span class="icon icon-close" aria-hidden="true"></span></button
+			>
+		</div>
+		{#if status}
+			<p class="styler-status" role="status">{status}</p>
+		{/if}
 		<h4 class="section-group">Style</h4>
-		<SidebarSection title="Base style" open listClass="style-list">
+		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
 			{#if themes.length > 0}
 				<table class="theme-table">
 					<thead>
@@ -321,6 +442,7 @@
 		<h4 class="section-group">Setup</h4>
 		<SidebarSection
 			title="Tile server"
+			value={originHost}
 			description="The server the tiles, fonts and sprites come from."
 		>
 			<div class="entry text-container">
@@ -330,18 +452,5 @@
 				</div>
 			</div>
 		</SidebarSection>
-		<SidebarSection title="Export">
-			<div class="entry button-container">
-				<button onclick={handleDownload}>Download style.json</button>
-				<button onclick={handleCopyCode}>Copy style code</button>
-			</div>
-		</SidebarSection>
-		<p class="github-link">
-			<a
-				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
-				target="_blank"
-				rel="noopener noreferrer">Improve me on GitHub</a
-			>
-		</p>
 	</div>
 {/if}

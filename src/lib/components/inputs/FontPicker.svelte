@@ -143,7 +143,13 @@
 	let expanded = $state<string | undefined>();
 	let activeKey = $state<string | undefined>();
 	let list = $state<HTMLElement>();
-	let position = $state<PopoverPosition>({ left: 0, top: 0, maxHeight: 520 });
+	let position = $state<PopoverPosition>({
+		left: 0,
+		top: 0,
+		maxHeight: 520,
+		pointer: 0,
+		beside: true,
+	});
 
 	// Open on the current family, with its styles shown.
 	$effect.pre(() => {
@@ -245,6 +251,14 @@
 </script>
 
 <div class="maplibregl-versatiles-styler font-picker-layer" {@attach portalToMap(anchor)}>
+	{#if position.beside}
+		<!-- points at the row that opened the picker -->
+		<span
+			class="popover-arrow"
+			style:left="{position.left - 6}px"
+			style:top="{position.top + position.pointer - 6}px"
+		></span>
+	{/if}
 	<div
 		class="font-picker"
 		role="dialog"
