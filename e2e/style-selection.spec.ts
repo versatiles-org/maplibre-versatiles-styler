@@ -47,6 +47,20 @@ test('clicking another style changes selection', async ({ page }) => {
 	await expect(colorfulRadio).not.toBeChecked();
 });
 
+test('the map container is white for light themes, black for dark themes and satellite', async ({
+	page,
+}) => {
+	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
+	const background = page.locator('.maplibregl-map');
+	await expect(background).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+	await styleList.locator('label:has(input[value="colorful-dark"])').click();
+	await expect(background).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+	await styleList.locator('label:has(input[value="toner"])').click();
+	await expect(background).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+	await styleList.locator('label:has(input[value="satellite"])').click();
+	await expect(background).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+});
+
 test('style change updates map style', async ({ page }) => {
 	const styleBefore = await getMapStyle(page);
 	expect(styleBefore.name).toBe('versatiles-colorful');

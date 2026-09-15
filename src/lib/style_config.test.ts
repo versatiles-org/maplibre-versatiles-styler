@@ -11,6 +11,7 @@ import {
 	satelliteStateFromConfig,
 	buildVectorStyle,
 	buildSatelliteStyle,
+	containerBackground,
 	minimalConfig,
 	styleCode,
 	type StyleSources,
@@ -65,6 +66,16 @@ describe('toStyleKey', () => {
 		expect(toStyleKey('toString')).toBeUndefined();
 		expect(toStyleKey(null)).toBeUndefined();
 		expect(toStyleKey(undefined)).toBeUndefined();
+	});
+});
+
+describe('containerBackground', () => {
+	it('is white for light themes, black for dark themes and satellite', () => {
+		expect(containerBackground('colorful')).toBe('#ffffff');
+		expect(containerBackground('toner')).toBe('#ffffff');
+		expect(containerBackground('colorful-dark')).toBe('#000000');
+		expect(containerBackground('gray-dark')).toBe('#000000');
+		expect(containerBackground('satellite')).toBe('#000000');
 	});
 });
 

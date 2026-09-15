@@ -40,6 +40,15 @@ export function toStyleKey(key: string | null | undefined): StyleKey | undefined
 	return Object.prototype.hasOwnProperty.call(V5_STYLE_KEYS, key) ? V5_STYLE_KEYS[key] : undefined;
 }
 
+/**
+ * The colour behind the map: black for satellite and the dark themes, white for the light ones. It is
+ * what shows around the globe, where MapLibre leaves the canvas transparent — a style cannot set it,
+ * so it goes on the map container as CSS.
+ */
+export function containerBackground(key: StyleKey): string {
+	return key === 'satellite' || key.endsWith('-dark') ? '#000000' : '#ffffff';
+}
+
 export function vectorDefaults(theme: Palette): VectorState {
 	return toVectorState(osm.resolveOptions({ theme }));
 }

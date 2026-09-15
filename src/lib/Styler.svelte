@@ -12,6 +12,7 @@
 		satelliteStateFromConfig,
 		buildVectorStyle,
 		buildSatelliteStyle,
+		containerBackground,
 		minimalConfig,
 		styleCode,
 		type StyleKey,
@@ -134,6 +135,14 @@
 		});
 	});
 
+	// The container shows around the globe; its colour follows the style key, and the host's own value
+	// comes back when the styler is removed.
+	const container = untrack(() => map.getContainer());
+	const hostBackground = container.style.backgroundColor;
+	$effect(() => {
+		container.style.backgroundColor = containerBackground(currentStyleKey);
+	});
+
 	// Switch away from a style only once its source is known to be missing, not while it loads.
 	$effect(() => {
 		const tileJSON = currentStyleKey === 'satellite' ? satelliteTileJSON : osmTileJSON;
@@ -183,7 +192,10 @@
 		}
 	});
 
-	onDestroy(() => hashManager?.destroy());
+	onDestroy(() => {
+		hashManager?.destroy();
+		container.style.backgroundColor = hostBackground;
+	});
 </script>
 
 <div class="maplibregl-ctrl maplibregl-ctrl-group">
