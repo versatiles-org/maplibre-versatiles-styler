@@ -3,9 +3,6 @@ import { osm } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
 import {
 	closestFace,
-	coversLanguages,
-	filterFamiliesByLanguages,
-	filterLanguageChoices,
 	fontFamilies,
 	fontUsage,
 	matchFace,
@@ -139,23 +136,6 @@ describe('matchFace', () => {
 	});
 });
 
-describe('language filter', () => {
-	it('tells whether a face has the letters of every language', () => {
-		expect(coversLanguages(fira[0], ['de', 'el'])).toBe(true);
-		expect(coversLanguages(baskerville[0], ['de', 'el'])).toBe(false);
-		expect(coversLanguages({ ...fira[0], codeblocks: '' }, ['el'])).toBeUndefined();
-	});
-
-	it('hides families without a matching face, keeps faces of unknown coverage', () => {
-		const unknown = { ...face('Other', 400), family: 'Other', codeblocks: '' };
-		const families = fontFamilies([...all, unknown]);
-		expect(filterFamiliesByLanguages(families, []).hidden).toBe(0);
-		const greek = filterFamiliesByLanguages(families, ['el']);
-		expect(greek.families.map((f) => f.name)).toEqual(['Fira Sans', 'Noto Sans', 'Lato', 'Other']);
-		expect(greek.hidden).toBe(1);
-	});
-});
-
 describe('fontUsage', () => {
 	it('lists the faces in use with their rows, most used first', () => {
 		const defaults = osm.resolveOptions().text;
@@ -168,17 +148,5 @@ describe('fontUsage', () => {
 			'Route numbers',
 			'Points of interest',
 		]);
-	});
-});
-
-describe('filterLanguageChoices', () => {
-	it('offers the tileset languages and other scripts, the label language first', () => {
-		const choices = filterLanguageChoices(['de', 'en', 'int', 'local', 'user', 'el'], 'el');
-		expect(choices[0]).toEqual({ code: 'el', name: 'Ελληνικά' });
-		const codes = choices.map((c) => c.code);
-		expect(codes).toEqual(expect.arrayContaining(['de', 'en', 'ar', 'he', 'ja']));
-		expect(codes).not.toContain('int');
-		expect(codes).not.toContain('local');
-		expect(new Set(codes).size).toBe(codes.length);
 	});
 });

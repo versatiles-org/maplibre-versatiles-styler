@@ -1,7 +1,5 @@
-import { fontCovers } from '@versatiles/style';
 import type { FontFaceInfo, ResolvedText } from '@versatiles/style';
 import { topicStyle, type LabelNode } from './label_tree';
-import { languageTitle } from './languages';
 
 /** A font family with its faces, as the font picker lists it. */
 export interface FontFamily {
@@ -135,38 +133,6 @@ export function matchFace(
 		: undefined;
 }
 
-/** Whether a face has the letters of every language: `undefined` when that cannot be told. */
-export function coversLanguages(
-	face: FontFaceInfo,
-	languages: readonly string[]
-): boolean | undefined {
-	if (face.codeblocks === '') return undefined;
-	let unknown = false;
-	for (const language of languages) {
-		const covers = fontCovers(face, language);
-		if (covers === false) return false;
-		if (covers === undefined) unknown = true;
-	}
-	return unknown ? undefined : true;
-}
-
-/**
- * The families with only the faces that have the letters of `languages`. Faces whose coverage is
- * unknown stay. Families with no face left are counted as hidden.
- */
-export function filterFamiliesByLanguages(
-	families: readonly FontFamily[],
-	languages: readonly string[]
-): { families: FontFamily[]; hidden: number } {
-	if (languages.length === 0) return { families: [...families], hidden: 0 };
-	const result: FontFamily[] = [];
-	for (const family of families) {
-		const faces = family.faces.filter((face) => coversLanguages(face, languages) !== false);
-		if (faces.length > 0) result.push({ name: family.name, faces });
-	}
-	return { families: result, hidden: families.length - result.length };
-}
-
 export interface FontUse {
 	faceId: string;
 	/** The rows that use the face: a group where all its topics do, else its topics. */
@@ -192,24 +158,4 @@ export function fontUsage(text: ResolvedText, nodes: readonly LabelNode[]): Font
 	return [...uses]
 		.map(([faceId, labels]) => ({ faceId, labels }))
 		.sort((a, b) => b.labels.length - a.labels.length);
-}
-
-/** Languages with other scripts, offered in the language filter for maps with local names. */
-const MORE_FILTER_LANGUAGES = ['ar', 'he', 'hi', 'th', 'ka', 'hy', 'ru', 'el', 'zh', 'ja', 'ko'];
-
-/**
- * The languages the font filter offers: the tileset's (`codes`) and a few with other scripts, named in
- * their own language, the label language first and the rest by name.
- */
-export function filterLanguageChoices(
-	codes: readonly string[],
-	labelCode: string
-): { code: string; name: string }[] {
-	const choices = [...new Set([...codes, ...MORE_FILTER_LANGUAGES])].flatMap((code) => {
-		const name = languageTitle(code);
-		return name ? [{ code, name }] : [];
-	});
-	return choices.sort((a, b) =>
-		a.code === labelCode ? -1 : b.code === labelCode ? 1 : a.name.localeCompare(b.name)
-	);
 }

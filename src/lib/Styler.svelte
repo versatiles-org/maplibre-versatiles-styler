@@ -35,7 +35,7 @@
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
 	// The font pickers of this styler share their language filter and copied font.
-	provideFontPickerState();
+	const fontPicker = provideFontPickerState();
 	let origin = $state(untrack(() => config.origin ?? window.location.origin));
 	let paneOpen = $state(untrack(() => config.open ?? false));
 
@@ -203,6 +203,8 @@
 
 	function handleOriginChange(e: Event) {
 		origin = (e.target as HTMLInputElement).value;
+		// Another server has other fonts.
+		fontPicker.clearScripts();
 	}
 
 	// Initialize hash management and style

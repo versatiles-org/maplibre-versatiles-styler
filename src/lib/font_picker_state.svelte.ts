@@ -1,23 +1,24 @@
 import { getContext, setContext } from 'svelte';
+import { inScriptOrder } from './font_scripts';
 
 /**
- * What the font pickers of one styler share: the language filter, kept from one font row to the next
- * until it is reset, and a font copied with Ctrl/Cmd+C for pasting into another row.
+ * What the font pickers of one styler share: the script filter, kept from one picker to the next until
+ * it is changed, and a font copied with Ctrl/Cmd+C for pasting elsewhere.
  */
 export class FontPickerState {
-	/** Show only faces with the letters of all these languages. */
-	languages = $state<string[]>([]);
+	/** Show only faces that can write all these scripts (ISO 15924), in `FONT_SCRIPTS` order. */
+	scripts = $state<string[]>([]);
 	/** The face id copied from a font row. */
 	clipboard = $state<string | undefined>();
 
-	toggleLanguage(code: string): void {
-		this.languages = this.languages.includes(code)
-			? this.languages.filter((language) => language !== code)
-			: [...this.languages, code];
+	toggleScript(code: string): void {
+		this.scripts = this.scripts.includes(code)
+			? this.scripts.filter((script) => script !== code)
+			: inScriptOrder([...this.scripts, code]);
 	}
 
-	resetLanguages(): void {
-		this.languages = [];
+	clearScripts(): void {
+		this.scripts = [];
 	}
 }
 

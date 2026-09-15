@@ -1,10 +1,7 @@
 <script lang="ts">
-	import type { FontFaceInfo } from '@versatiles/style';
+	import { FONT_SCRIPTS, fontCovers, type FontFaceInfo } from '@versatiles/style';
 	import {
 		closestFace,
-		coversLanguages,
-		filterFamiliesByLanguages,
-		filterLanguageChoices,
 		fontFamilies,
 		matchFace,
 		regularFace,
@@ -16,8 +13,18 @@
 		type FontStyle,
 		type FontUse,
 	} from '../../font_families';
-	import { labelLanguage } from '../../font_tree';
-	import { languageTitle } from '../../languages';
+	import { lettersOf } from '../../font_tree';
+	import {
+		EAST_ASIA_NOTE,
+		availableScripts,
+		filterFamiliesByScripts,
+		needsEastAsiaNote,
+		scriptCounts,
+		scriptExamples,
+		scriptName,
+		scriptRegions,
+		scriptSummary,
+	} from '../../font_scripts';
 	import { useFontPickerState } from '../../font_picker_state.svelte';
 	import FontPreview from './FontPreview.svelte';
 
@@ -28,7 +35,6 @@
 		origin,
 		sample,
 		language,
-		languages,
 		usage,
 		anchor,
 		onselect,
@@ -42,10 +48,8 @@
 		origin: string;
 		/** The text faces are previewed with. */
 		sample: string;
-		/** `text.language`, to mark families without its letters and to suggest it in the filter. */
+		/** `text.language`, to mark families without its letters. */
 		language: string;
-		/** The languages of the tileset, as `{ title: code }`, offered in the language filter. */
-		languages: Record<string, string>;
 		/** The faces in use in this style, with the rows that use them. */
 		usage: FontUse[];
 		/** The button that opened the picker: it is placed next to it, and clicks on it do not close it. */
@@ -65,14 +69,23 @@
 	let query = $state('');
 	let searching = $derived(query.trim() !== '');
 	let filterOpen = $state(false);
+	let filterButton = $state<HTMLButtonElement>();
 	let current = $derived(faces.find((face) => face.id === value));
 	let style = $derived(styleOf(current));
-	let labelCode = $derived(labelLanguage(language));
-
-	let languageFilter = $derived(filterFamiliesByLanguages(fontFamilies(faces), shared.languages));
+	let allFamilies = $derived(fontFamilies(faces));
+	let scriptFilter = $derived(filterFamiliesByScripts(allFamilies, shared.scripts));
+	let available = $derived(availableScripts(allFamilies));
+	let counts = $derived(scriptCounts(allFamilies, shared.scripts));
+	/** The scripts to choose from, by region: those some font can write, and those selected. */
+	let regions = $derived(
+		scriptRegions(FONT_SCRIPTS.filter((s) => available.includes(s) || shared.scripts.includes(s)))
+	);
+	let uncovered = $derived(
+		FONT_SCRIPTS.filter((s) => !available.includes(s) && !shared.scripts.includes(s))
+	);
 	/** Families with the face their row previews: the search match closest to the style, or the regular face. */
 	let families = $derived(
-		languageFilter.families.flatMap((family) => {
+		scriptFilter.families.flatMap((family) => {
 			const face = searching ? matchFace(family, query, style) : regularFace(family);
 			return face ? [{ family, face }] : [];
 		})
@@ -94,8 +107,6 @@
 			face,
 		})),
 	]);
-
-	let filterLanguages = $derived(filterLanguageChoices(Object.values(languages), labelCode));
 
 	let expanded = $state<string | undefined>();
 	let activeKey = $state<string | undefined>();
@@ -160,6 +171,8 @@
 		};
 		// Escape closes the picker wherever its focus is, e.g. on a style button.
 		const closeOnEscape = (event: KeyboardEvent) => {
+			// The filter panel handles its own Escape.
+			if (event.defaultPrevented) return;
 			if (event.key === 'Escape' && popup.contains(document.activeElement)) {
 				event.preventDefault();
 				onclose();
@@ -219,11 +232,17 @@
 	/** A note for a family row: unknown coverage, or letters of the label language missing. */
 	function familyNote(family: FontFamily): string | undefined {
 		if (family.faces.every((face) => face.codeblocks === '')) return 'coverage unknown';
-		if (labelCode === 'local') return undefined;
-		if (coversLanguages(regularFace(family), [labelCode]) === false) {
-			return `lacks letters for ${languageTitle(labelCode) ?? labelCode}`;
-		}
+		if (fontCovers(regularFace(family), language) === false) return `lacks ${lettersOf(language)}`;
 		return undefined;
+	}
+
+	/** Escape in the filter panel closes the panel, not the picker. */
+	function handleFilterKeydown(e: KeyboardEvent) {
+		if (e.key !== 'Escape') return;
+		e.preventDefault();
+		e.stopPropagation();
+		filterOpen = false;
+		filterButton?.focus();
 	}
 </script>
 
@@ -259,39 +278,66 @@
 			<button
 				type="button"
 				class="font-picker-filter-button"
-				class:active={shared.languages.length > 0}
+				class:active={shared.scripts.length > 0}
 				aria-expanded={filterOpen}
 				aria-controls="{uid}-filter"
+				title="Show only fonts that can write these scripts"
+				bind:this={filterButton}
 				onclick={() => (filterOpen = !filterOpen)}
-				>Languages{#if shared.languages.length > 0}&nbsp;({shared.languages.length}){/if}</button
+				>{scriptSummary(shared.scripts)}<span aria-hidden="true">&nbsp;▾</span></button
 			>
 		</div>
 		{#if filterOpen}
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 			<div
 				class="font-picker-filter"
 				id="{uid}-filter"
 				role="group"
-				aria-label="Show only fonts with the letters of"
+				aria-label="Scripts"
+				onkeydown={handleFilterKeydown}
 			>
-				<p class="font-picker-filter-hint">Show only fonts with the letters of:</p>
-				<div class="font-picker-filter-options">
-					{#each filterLanguages as { code, name } (code)}
-						<label>
-							<input
-								type="checkbox"
-								checked={shared.languages.includes(code)}
-								onchange={() => shared.toggleLanguage(code)}
-							/>
-							{name}
-							{#if code === labelCode}<span class="font-picker-filter-label">label language</span
-								>{/if}
-						</label>
-					{/each}
+				<div class="font-picker-filter-top">
+					<p class="font-picker-filter-hint">Show fonts that can write all of:</p>
+					{#if shared.scripts.length > 0}
+						<button type="button" class="font-picker-reset" onclick={() => shared.clearScripts()}
+							>Clear</button
+						>
+					{/if}
 				</div>
-				{#if shared.languages.length > 0}
-					<button type="button" class="font-picker-reset" onclick={() => shared.resetLanguages()}
-						>Show all fonts</button
-					>
+				{#each regions as region (region.name)}
+					<div class="font-picker-region" role="group" aria-label={region.name}>
+						<span class="font-picker-region-name">{region.name}</span>
+						<div class="font-picker-chips">
+							{#each region.scripts as script (script)}
+								{@const selected = shared.scripts.includes(script)}
+								{@const examples = scriptExamples(script)}
+								<button
+									type="button"
+									class="font-picker-chip"
+									class:muted={!selected && counts[script] === 0}
+									aria-pressed={selected}
+									title={examples ? `e.g. ${examples}` : undefined}
+									onclick={() => shared.toggleScript(script)}
+									>{#if selected}<span aria-hidden="true">✓&nbsp;</span>{/if}{scriptName(
+										script
+									)}{#if !selected}<span class="font-picker-count">{counts[script]}</span
+										>{/if}</button
+								>
+							{/each}
+						</div>
+						{#if needsEastAsiaNote(region.scripts)}
+							<p class="font-picker-note">{EAST_ASIA_NOTE}</p>
+						{/if}
+					</div>
+				{/each}
+				{#if uncovered.length > 0}
+					<details class="font-picker-uncovered">
+						<summary>No font on this server: {uncovered.length} scripts</summary>
+						<p>{uncovered.map(scriptName).join(', ')}</p>
+						{#if needsEastAsiaNote(uncovered)}
+							<p class="font-picker-note">{EAST_ASIA_NOTE}</p>
+						{/if}
+					</details>
 				{/if}
 			</div>
 		{/if}
@@ -385,16 +431,14 @@
 			{/each}
 			{#if families.length === 0}
 				<li class="font-picker-empty" role="presentation">
-					{searching
-						? `No font matches “${query}”.`
-						: 'No font has the letters of all selected languages.'}
+					{searching ? `No font matches “${query}”.` : 'No font can write all selected scripts.'}
 				</li>
 			{/if}
-			{#if languageFilter.hidden > 0}
+			{#if scriptFilter.hidden > 0}
 				<li class="font-picker-hidden" role="presentation">
-					{languageFilter.hidden}
-					{languageFilter.hidden === 1 ? 'family' : 'families'} hidden by the language filter ·
-					<button type="button" onclick={() => shared.resetLanguages()}>Show all</button>
+					{scriptFilter.hidden}
+					{scriptFilter.hidden === 1 ? 'family' : 'families'} hidden by the script filter ·
+					<button type="button" onclick={() => shared.clearScripts()}>Clear</button>
 				</li>
 			{/if}
 		</ul>

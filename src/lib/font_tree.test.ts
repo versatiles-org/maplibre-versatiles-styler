@@ -55,9 +55,7 @@ describe('coverageWarning', () => {
 	const faces = [latin];
 
 	it('warns when the face lacks the script of the language', () => {
-		expect(coverageWarning(faces, 'latin_only', 'ar')).toBe(
-			'Latin Only may lack the letters for العربية.'
-		);
+		expect(coverageWarning(faces, 'latin_only', 'ar')).toBe('Latin Only may lack Arabic letters.');
 	});
 
 	it('does not warn when the face covers it, or nothing can be checked', () => {
@@ -69,6 +67,6 @@ describe('coverageWarning', () => {
 
 	it('checks "user" against the browser language', () => {
 		vi.stubGlobal('navigator', { language: 'el-GR' });
-		expect(coverageWarning(faces, 'latin_only', 'user')).toMatch(/may lack the letters for/);
+		expect(coverageWarning(faces, 'latin_only', 'user')).toBe('Latin Only may lack Greek letters.');
 	});
 });

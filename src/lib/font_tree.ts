@@ -1,6 +1,6 @@
 import { fontCovers } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import { languageTitle } from './languages';
+import { englishLanguageName } from './languages';
 
 /**
  * The faces to pick from: the server's, plus faces in use that it does not list (`extra`), under
@@ -61,8 +61,9 @@ export function labelLanguage(language: string): string {
 }
 
 /**
- * A warning when `faceId` lacks the glyphs for `language`, or `undefined` when there is nothing to
- * warn about — including faces the server does not list and languages with nothing to check.
+ * A warning when `faceId` lacks the letters of `language` (any `text.language`, `'user'` included), or
+ * `undefined` when there is nothing to warn about — including faces the server does not list and
+ * languages with nothing to check.
  */
 export function coverageWarning(
 	faces: readonly FontFaceInfo[],
@@ -72,7 +73,13 @@ export function coverageWarning(
 	const face = faces.find((f) => f.id === faceId);
 	// Faces the server does not list have no coverage to check.
 	if (!face || face.codeblocks === '') return undefined;
+	if (fontCovers(face, language) !== false) return undefined;
+	return `${face.title} may lack ${lettersOf(language)}.`;
+}
+
+/** "Arabic letters", or "the letters of xx" for a language `Intl` cannot name. */
+export function lettersOf(language: string): string {
 	const code = labelLanguage(language);
-	if (fontCovers(face, code) !== false) return undefined;
-	return `${face.title} may lack the letters for ${languageTitle(code) ?? code}.`;
+	const name = englishLanguageName(code);
+	return name ? `${name} letters` : `the letters of ${code}`;
 }

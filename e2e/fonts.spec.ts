@@ -255,53 +255,154 @@ test.describe('reusing fonts', () => {
 	});
 });
 
-test.describe('language filter', () => {
-	test('hides families without the letters, and stays set for other labels until reset', async ({
+/** Coverage per family for the script filter tests, so they do not change with the live server. */
+const BLOCKS = { Latn: '0-2F', Grek: '37-3F', Cyrl: '40-4F', Hebr: '5D', Deva: '91' };
+const FIXTURE_SCRIPTS: Record<string, (keyof typeof BLOCKS)[]> = {
+	'Fira Sans': ['Latn', 'Grek', 'Cyrl'],
+	'Noto Sans': ['Latn', 'Grek', 'Cyrl', 'Hebr', 'Deva'],
+	'Open Sans': ['Latn', 'Grek', 'Cyrl', 'Hebr'],
+	Roboto: ['Latn', 'Grek', 'Cyrl'],
+	'Libre Baskerville': ['Latn'],
+	Lato: ['Latn'],
+};
+
+/**
+ * Serves the live `font_families.json` with the coverage above: 12 families write Latin, 10 Cyrillic
+ * (unlisted families: Latin and Cyrillic), 4 Greek, 2 Hebrew, 1 Devanagari.
+ */
+async function useCoverageFixture(page: Page) {
+	await page.route('**/assets/glyphs/font_families.json', async (route) => {
+		const response = await route.fetch();
+		const families = (await response.json()) as {
+			name: string;
+			faces: { codeblocks: string }[];
+		}[];
+		for (const family of families) {
+			const scripts = FIXTURE_SCRIPTS[family.name] ?? ['Latn', 'Cyrl'];
+			for (const face of family.faces) {
+				face.codeblocks = scripts.map((script) => BLOCKS[script]).join(',');
+			}
+		}
+		await route.fulfill({ response, json: families });
+	});
+}
+
+function scriptsButton(dialog: Locator): Locator {
+	return dialog.locator('button.font-picker-filter-button');
+}
+
+function chip(dialog: Locator, script: string): Locator {
+	return dialog.getByRole('button', { name: new RegExp(`^${script}\\b`) });
+}
+
+test.describe('script filter', () => {
+	test('lists the scripts fonts can write, by region, with counts; folds the others', async ({
 		page,
 	}) => {
+		await useCoverageFixture(page);
+		await openFonts(page);
+		const dialog = await openPicker(page, 'All labels');
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts');
+		await scriptsButton(dialog).click();
+
+		const europe = dialog.getByRole('group', { name: 'Europe' });
+		await expect(europe.getByRole('button')).toHaveText(['Latin12', 'Greek4', 'Cyrillic10']);
+		await expect(dialog.getByRole('group', { name: 'Middle East & Africa' })).toContainText(
+			'Hebrew2'
+		);
+		await expect(dialog.getByRole('group', { name: 'South Asia' })).toContainText('Devanagari1');
+		await expect(dialog.getByRole('group', { name: 'East Asia' })).toHaveCount(0);
+		await expect(chip(dialog, 'Cyrillic')).toHaveAttribute('title', /Russian, Ukrainian/);
+
+		const uncovered = dialog.locator('.font-picker-uncovered');
+		await expect(uncovered.locator('summary')).toHaveText('No font on this server: 24 scripts');
+		await uncovered.locator('summary').click();
+		await expect(uncovered).toContainText('Arabic');
+		await expect(uncovered).toContainText('browser font');
+	});
+
+	test('a script hides families and updates the counts; the filter stays for other labels', async ({
+		page,
+	}) => {
+		await useCoverageFixture(page);
 		await openFonts(page);
 		await applyTo(page, 'places');
 		let dialog = await openPicker(page, 'Places');
-		await expect(familyOption(dialog, 'Libre Baskerville')).toHaveCount(1);
+		await scriptsButton(dialog).click();
 
-		await dialog.getByRole('button', { name: 'Languages' }).click();
-		await dialog.getByRole('checkbox', { name: 'Ελληνικά' }).check();
+		await chip(dialog, 'Greek').click();
+		await expect(chip(dialog, 'Greek')).toHaveAttribute('aria-pressed', 'true');
 		await expect(familyOption(dialog, 'Libre Baskerville')).toHaveCount(0);
 		await expect(familyOption(dialog, 'Fira Sans')).toHaveCount(1);
-		await expect(dialog.locator('.font-picker-hidden')).toContainText('1 family hidden');
+		await expect(chip(dialog, 'Hebrew')).toHaveText('Hebrew2');
+		await expect(chip(dialog, 'Devanagari')).toHaveText('Devanagari1');
+		await expect(chip(dialog, 'Cyrillic')).toHaveText('Cyrillic4');
+		await expect(dialog.locator('.font-picker-hidden')).toContainText('8 families hidden');
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek');
+
+		await chip(dialog, 'Devanagari').click();
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek, Devanagari');
+		await expect(dialog.getByRole('option', { name: /Sans$/ })).toHaveText([/Noto Sans/]);
+
+		// Escape closes the panel first, then the picker
 		await page.keyboard.press('Escape');
+		await expect(dialog.locator('.font-picker-filter')).toHaveCount(0);
+		await expect(scriptsButton(dialog)).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect(dialog).toHaveCount(0);
 
 		await applyTo(page, 'water');
 		dialog = await openPicker(page, 'Water');
-		await expect(dialog.getByRole('button', { name: 'Languages (1)' })).toBeVisible();
-		await expect(familyOption(dialog, 'Libre Baskerville')).toHaveCount(0);
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts: Greek, Devanagari');
+		await expect(familyOption(dialog, 'Fira Sans')).toHaveCount(0);
 
-		await dialog.locator('.font-picker-hidden').getByRole('button', { name: 'Show all' }).click();
-		await expect(familyOption(dialog, 'Libre Baskerville')).toHaveCount(1);
-		await expect(dialog.getByRole('button', { name: 'Languages', exact: true })).toBeVisible();
+		await dialog.locator('.font-picker-hidden').getByRole('button', { name: 'Clear' }).click();
+		await expect(familyOption(dialog, 'Fira Sans')).toHaveCount(1);
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts');
 	});
 
-	test('offers the label language first, and marks families without its letters', async ({
-		page,
-	}) => {
+	test('a new origin clears the filter', async ({ page }) => {
+		await useCoverageFixture(page);
 		await openFonts(page);
-		await row(page, 'Language').locator('select').selectOption('ar');
+		let dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		await chip(dialog, 'Greek').click();
+		await dialog.getByRole('button', { name: 'Close' }).click();
 
-		const dialog = await openPicker(page, 'All labels');
-		await expect(familyOption(dialog, 'Fira Sans').locator('.font-picker-warning')).toContainText(
-			'lacks letters for'
+		const origin = page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Origin"))'
 		);
-		await dialog.getByRole('button', { name: 'Languages' }).click();
-		await expect(dialog.locator('.font-picker-filter-options label').first()).toContainText(
-			'label language'
-		);
+		await origin.locator('summary').click();
+		const input = origin.locator('input[type="text"]');
+		await input.fill('https://tiles.versatiles.org/');
+		await input.dispatchEvent('change');
 
-		await familyOption(dialog, 'Fira Sans').click();
-		await page.keyboard.press('Escape');
-		await expect(row(page, 'Font').locator('.warning')).toContainText(
-			'Fira Sans Regular may lack the letters for'
-		);
+		dialog = await openPicker(page, 'All labels');
+		await expect(scriptsButton(dialog)).toHaveAccessibleName('Scripts');
 	});
+
+	test('on the live server, Latin is offered', async ({ page }) => {
+		await openFonts(page);
+		const dialog = await openPicker(page, 'All labels');
+		await scriptsButton(dialog).click();
+		await expect(chip(dialog, 'Latin')).toBeVisible();
+	});
+});
+
+test('names the label language in English where a font lacks its letters', async ({ page }) => {
+	await useCoverageFixture(page);
+	await openFonts(page);
+	await row(page, 'Language').locator('select').selectOption('ar');
+
+	const dialog = await openPicker(page, 'All labels');
+	await expect(familyOption(dialog, 'Fira Sans').locator('.font-picker-warning')).toHaveText(
+		'⚠ lacks Arabic letters'
+	);
+	await familyOption(dialog, 'Fira Sans').click();
+	await page.keyboard.press('Escape');
+	await expect(row(page, 'Font').locator('.warning')).toHaveText(
+		'⚠ Fira Sans Regular may lack Arabic letters.'
+	);
 });
 
 test('resetting the font of a group restores the theme’s faces', async ({ page }) => {

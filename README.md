@@ -19,7 +19,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Ten vector themes — `colorful`, `natural`, `muted`, `gray`, `toner`, each with a `-dark` variant — and satellite imagery
 - Colors: global adjustments (hue, saturation, brightness, contrast, gamma, tint, blend) and every individual color, grouped by feature
 - Labels in any language of the tileset, or in the browser's language; tilt of line labels
-- Label style for all labels, a group or a topic (places, streets, water, …): font, size, spacing, capitalization, letter spacing, line height, wrap width and halo — with a warning when a font lacks the letters of the label language
+- Label style for all labels, a group or a topic (places, streets, water, …): font, size, spacing, capitalization, letter spacing, line height, wrap width and halo — with a font picker that previews each family, filters by writing system and warns when a font lacks the letters of the label language
 - Icon size and spacing
 - Show, hide or fade every layer group; 3D buildings
 - Terrain and hillshade, projection (globe, Mercator), sky and sun

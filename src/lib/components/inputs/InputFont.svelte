@@ -18,7 +18,6 @@
 		sample,
 		pickerTitle,
 		language,
-		languages,
 		usage,
 		expanded,
 		onToggle,
@@ -39,8 +38,6 @@
 		/** What the picker is for, "Font for …". Default: `label`. */
 		pickerTitle?: string;
 		language: string;
-		/** The tileset's languages, `{ title: code }`, for the picker's language filter. */
-		languages: Record<string, string>;
 		/** The faces in use in this style, for the picker's "Used in this style". */
 		usage: FontUse[];
 		expanded?: boolean;
@@ -126,7 +123,6 @@
 				{origin}
 				{sample}
 				{language}
-				{languages}
 				{usage}
 				anchor={trigger}
 				onselect={select}

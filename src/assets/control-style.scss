@@ -637,24 +637,89 @@
 				opacity: 0.7;
 			}
 
-			.font-picker-filter-options {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 2px 8px;
-				max-height: 9em;
-				overflow-y: auto;
+			.font-picker-filter-top {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 8px;
 
-				label {
-					display: flex;
-					align-items: center;
-					gap: 4px;
-					cursor: pointer;
+				.font-picker-reset {
+					margin-top: 0;
 				}
 			}
 
-			.font-picker-filter-label {
-				font-size: 0.85em;
+			.font-picker-region {
+				display: grid;
+				grid-template-columns: 7.5em 1fr;
+				align-items: baseline;
+				gap: 0 6px;
+				padding: 3px 0;
+			}
+
+			.font-picker-region-name {
+				font-size: 0.8em;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.03em;
 				opacity: 0.6;
+			}
+
+			.font-picker-chips {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 3px;
+			}
+
+			.font-picker-chip {
+				display: inline-flex;
+				align-items: baseline;
+				gap: 4px;
+				padding: 1px 7px;
+				border: 1px solid var(--border-color);
+				border-radius: 1em;
+				background: var(--bg-color);
+				color: inherit;
+				font: inherit;
+				cursor: pointer;
+
+				&:hover {
+					border-color: var(--primary-color);
+				}
+
+				&[aria-pressed='true'] {
+					border-color: var(--primary-color);
+					background: var(--primary-color);
+					color: var(--bg-color);
+				}
+
+				&.muted {
+					opacity: 0.45;
+				}
+
+				.font-picker-count {
+					font-size: 0.85em;
+					opacity: 0.6;
+				}
+			}
+
+			.font-picker-note {
+				grid-column: 2;
+				margin: 2px 0 0;
+				font-size: 0.85em;
+			}
+
+			.font-picker-uncovered {
+				margin-top: 4px;
+				font-size: 0.9em;
+
+				summary {
+					cursor: pointer;
+					opacity: 0.7;
+				}
+
+				p {
+					margin: 2px 0 0 1em;
+				}
 			}
 		}
 

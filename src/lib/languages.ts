@@ -29,3 +29,14 @@ export function languageTitle(code: string): string | undefined {
 	if (!title || title === code) return undefined;
 	return title.charAt(0).toLocaleUpperCase(code) + title.slice(1);
 }
+
+/** The English name of a language (`de` → "German"), or `undefined` if `Intl` cannot name it. */
+export function englishLanguageName(code: string): string | undefined {
+	let name: string | undefined;
+	try {
+		name = new Intl.DisplayNames(['en'], { type: 'language' }).of(code);
+	} catch {
+		return undefined;
+	}
+	return name && name !== code ? name : undefined;
+}

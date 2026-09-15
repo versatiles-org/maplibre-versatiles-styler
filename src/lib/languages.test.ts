@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { languageOptions, languageTitle } from './languages';
+import { englishLanguageName, languageOptions, languageTitle } from './languages';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -35,5 +35,14 @@ describe('languageOptions', () => {
 		const options = languageOptions(['fr', 'int', 'de', 'latin', 'de', 'zh-Hant', 'en']);
 		expect(Object.values(options)).toEqual(['local', 'user', 'de', 'en', 'fr']);
 		expect(options['Deutsch']).toBe('de');
+	});
+});
+
+describe('englishLanguageName', () => {
+	it('names a language in English', () => {
+		expect(englishLanguageName('de')).toBe('German');
+		expect(englishLanguageName('vi')).toBe('Vietnamese');
+		expect(englishLanguageName('xx')).toBeUndefined();
+		expect(englishLanguageName('not a code')).toBeUndefined();
 	});
 });

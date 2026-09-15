@@ -194,7 +194,6 @@
 				{origin}
 				sample={fontSample(node.path)}
 				language={text.language}
-				{languages}
 				{usage}
 				warning={coverageWarning(faces, get('font'), text.language)}
 			/>
