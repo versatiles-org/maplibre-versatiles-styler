@@ -83,3 +83,14 @@ function decimals(step: number): number {
 function significantDigits(step: number): number {
 	return decimals(step) + 1;
 }
+
+/**
+ * The option value for a typed number, as the slider shows it: "150", "150%", "0,5". Clamped to the
+ * slider's range and rounded like a slider value, so the label, the slider and the stored value agree.
+ * `undefined` when the text is not a number.
+ */
+export function parseSliderInput(text: string, options: SliderOptions): number | undefined {
+	const shown = parseFloat(text.trim().replace(',', '.'));
+	if (!Number.isFinite(shown)) return undefined;
+	return roundValue(Math.min(Math.max(shown / options.scale, options.min), options.max), options);
+}

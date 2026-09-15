@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	logPositions,
+	parseSliderInput,
 	roundValue,
 	sliderLabel,
 	sliderPosition,
@@ -89,5 +90,36 @@ describe('labels', () => {
 		expect(sliderLabel(0.123, contrast, '%')).toBe('12.3%');
 		expect(sliderLabel(0.1234, gamma, '')).toBe('0.123');
 		expect(sliderLabel(180, degrees, '°')).toBe('180°');
+	});
+});
+
+describe('parseSliderInput', () => {
+	it('reads the number as the slider shows it, with or without its unit', () => {
+		expect(parseSliderInput('150', percent)).toBe(1);
+		expect(parseSliderInput('45', percent)).toBe(0.45);
+		expect(parseSliderInput('45%', percent)).toBe(0.45);
+		expect(parseSliderInput(' 45 % ', percent)).toBe(0.45);
+		expect(parseSliderInput('90°', degrees)).toBe(90);
+		expect(parseSliderInput('250', contrast)).toBe(2.5);
+	});
+
+	it('accepts a decimal comma', () => {
+		expect(parseSliderInput('0,5', gamma)).toBe(0.5);
+		expect(parseSliderInput('1,25', gamma)).toBe(1.25);
+	});
+
+	it('clamps to the range and rounds like the slider', () => {
+		expect(parseSliderInput('20', gamma)).toBe(10);
+		expect(parseSliderInput('0', gamma)).toBe(0.1);
+		expect(parseSliderInput('-30', percent)).toBe(0);
+		expect(parseSliderInput('1.2345', gamma)).toBe(1.23);
+		expect(parseSliderInput('12.6', percent)).toBe(0.13);
+		expect(parseSliderInput('33.3', exaggeration)).toBe(0.33);
+	});
+
+	it('rejects text that is not a number', () => {
+		for (const text of ['', ' ', 'abc', '%', 'Infinity']) {
+			expect(parseSliderInput(text, percent)).toBeUndefined();
+		}
 	});
 });

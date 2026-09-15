@@ -1,6 +1,13 @@
 <script lang="ts">
 	import InputRow from './InputRow.svelte';
-	import { sliderLabel, sliderPosition, sliderRange, sliderValue } from './number_slider';
+	import EditableValue from './EditableValue.svelte';
+	import {
+		parseSliderInput,
+		sliderLabel,
+		sliderPosition,
+		sliderRange,
+		sliderValue,
+	} from './number_slider';
 
 	let {
 		label,
@@ -43,6 +50,13 @@
 		onchange?.();
 	}
 
+	function handleTyped(text: string) {
+		const typed = parseSliderInput(text, options);
+		if (typed === undefined || typed === value) return;
+		value = typed;
+		onchange?.();
+	}
+
 	function reset() {
 		value = defaultValue;
 		onchange?.();
@@ -61,6 +75,12 @@
 			{disabled}
 			onchange={handleChange}
 		/>
-		<span class="value">{sliderLabel(value, options, unit)}</span>
+		<EditableValue
+			{label}
+			{disabled}
+			display={sliderLabel(value, options, unit)}
+			editText={sliderLabel(value, options, '')}
+			oncommit={handleTyped}
+		/>
 	{/snippet}
 </InputRow>

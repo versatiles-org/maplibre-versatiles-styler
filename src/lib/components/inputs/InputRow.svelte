@@ -49,7 +49,7 @@
 	</div>
 	<div class="input">
 		{@render children(uid)}
-		<button type="button" disabled={disabled || !isModified} onclick={onReset}
+		<button type="button" class="reset" disabled={disabled || !isModified} onclick={onReset}
 			>&circlearrowleft;</button
 		>
 	</div>

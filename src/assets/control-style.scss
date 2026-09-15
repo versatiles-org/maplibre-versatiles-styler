@@ -202,6 +202,27 @@
 				opacity: 0.8;
 			}
 
+			// The value next to a slider: a button that turns into a small text field to type a value.
+			button.value {
+				min-width: 3em;
+				padding: 0 0.1em;
+				border-bottom: 1px dotted transparent;
+				border-radius: 0;
+				cursor: text;
+				text-align: right;
+
+				&:hover:not(:disabled) {
+					opacity: 1;
+					border-bottom-color: currentColor;
+				}
+
+				&:disabled {
+					visibility: visible;
+					opacity: 0.8;
+					cursor: default;
+				}
+			}
+
 			input[type='color'] {
 				flex: 1;
 				min-width: 0;
@@ -249,6 +270,17 @@
 
 			select {
 				cursor: pointer;
+			}
+
+			input.value-input {
+				flex: 0 0 3.4em;
+				width: 3.4em;
+				min-width: 0;
+				padding: 0 0.2em;
+				text-align: right;
+				border: 1px solid var(--primary-color);
+				border-radius: 0.2em;
+				opacity: 1;
 			}
 
 			button {

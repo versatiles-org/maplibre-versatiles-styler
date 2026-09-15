@@ -99,7 +99,7 @@ test('resetting a group restores the theme’s faces', async ({ page }) => {
 	await streets.locator('select').selectOption('fira_sans_light');
 	await expect.poll(() => textFont(page, 'label-motorway-shield')).toEqual(['fira_sans_light']);
 
-	await streets.locator('.input > button').click();
+	await streets.locator('button.reset').click();
 	await expect.poll(() => textFont(page, 'label-motorway-shield')).toEqual(refsBefore);
 	await expect.poll(() => hashConfig(page)).toEqual({});
 });

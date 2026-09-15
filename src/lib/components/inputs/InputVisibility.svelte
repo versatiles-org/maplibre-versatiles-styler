@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { opacityToValue, valueToOpacity, type LayerValue } from '../../layer_tree';
+	import EditableValue from './EditableValue.svelte';
 	import InputRow from './InputRow.svelte';
+	import { parseSliderInput } from './number_slider';
 
 	let {
 		label,
@@ -30,6 +32,17 @@
 
 	function handleCheckbox(e: Event) {
 		onchange((e.target as HTMLInputElement).checked);
+	}
+
+	function handleTyped(text: string) {
+		const opacity = parseSliderInput(text, {
+			min: 0,
+			max: 1,
+			scale: 100,
+			step: 0.01,
+			logarithmic: false,
+		});
+		if (opacity !== undefined) onchange(opacityToValue(opacity));
 	}
 
 	function handleRange(e: Event) {
@@ -67,6 +80,12 @@
 			aria-label="{label} opacity"
 			onchange={handleRange}
 		/>
-		<span class="value">{mixed ? '—' : `${percent}%`}</span>
+		<EditableValue
+			label="{label} opacity"
+			{disabled}
+			display={mixed ? '—' : `${percent}%`}
+			editText={mixed ? '' : String(percent)}
+			oncommit={handleTyped}
+		/>
 	{/snippet}
 </InputRow>

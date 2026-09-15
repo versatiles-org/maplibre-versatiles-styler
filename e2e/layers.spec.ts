@@ -82,7 +82,7 @@ test.describe('layers', () => {
 		await expect(roads.locator('.value')).toHaveText('—');
 		await expect.poll(() => layer(page, 'street-motorway')).toBeUndefined();
 
-		await roads.locator('.input > button').last().click();
+		await roads.locator('button.reset').click();
 		await expect.poll(() => layer(page, 'street-motorway')).toBeDefined();
 		await expect(roadsCheckbox).toBeChecked();
 		await expect.poll(() => hashConfig(page)).toEqual({});

@@ -202,7 +202,7 @@ test.describe('gamma and contrast sliders', () => {
 		await page.keyboard.press('ArrowLeft');
 		await expect(gamma.locator('.value')).toHaveText('0.99');
 
-		await gamma.locator('.input > button').click();
+		await gamma.locator('button.reset').click();
 		await expect(gamma.locator('.value')).toHaveText('1');
 		await expect.poll(() => hashConfig(page)).toEqual({});
 	});
