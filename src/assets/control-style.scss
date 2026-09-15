@@ -1,3 +1,10 @@
+/** Layers over a checkerboard, so that transparency shows. */
+@mixin checkerboard($layers) {
+	background:
+		$layers,
+		repeating-conic-gradient(#c8c8c8 0 25%, #fff 0 50%) 0 0 / 8px 8px;
+}
+
 .maplibregl-versatiles-styler {
 	--bg-color: #fff;
 	--fg-color: #000;
@@ -223,26 +230,28 @@
 				}
 			}
 
-			input[type='color'] {
-				flex: 1;
-				min-width: 0;
+			// A color: the left half opaque, the right half as it is, over a checkerboard.
+			.color-swatch {
+				flex: 0 0 auto;
+				width: 1.9em;
 				height: 1.5em;
-				appearance: none;
+				box-sizing: border-box;
 				border: 1px solid var(--border-color);
 				border-radius: 0.2em;
-				cursor: pointer;
+				@include checkerboard(linear-gradient(90deg, var(--swatch-opaque) 50%, var(--swatch) 50%));
+			}
 
-				&::-webkit-color-swatch-wrapper {
-					padding: 0;
-				}
+			input.color-text {
+				flex: 1;
+				min-width: 0;
+				border: 1px solid var(--border-color);
+				border-radius: 0.2em;
+				padding: 0.3em 0.4em;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-size: 0.95em;
 
-				&::-webkit-color-swatch {
-					border: none;
-					border-radius: 0.15em;
-				}
-
-				&::-moz-color-swatch {
-					border: none;
+				&.invalid {
+					border-color: #b45309;
 				}
 			}
 

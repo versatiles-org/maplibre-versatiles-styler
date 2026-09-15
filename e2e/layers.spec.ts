@@ -145,9 +145,9 @@ test.describe('terrain & hillshade', () => {
 		await row(elevation, 'Hillshade').locator('input[type="checkbox"]').check();
 		await expect.poll(() => hashConfig(page)).toEqual({ features: { hillshade: true } });
 
-		const shadow = row(elevation, 'Shadow Color').locator('input[type="color"]');
+		const shadow = row(elevation, 'Shadow Color').locator('input.color-text');
 		await shadow.fill('#ff0000');
-		await shadow.dispatchEvent('change');
+		await shadow.press('Enter');
 		await row(elevation, 'Light Source').locator('select').selectOption('viewport');
 
 		await expect
@@ -158,6 +158,6 @@ test.describe('terrain & hillshade', () => {
 			});
 		await expect
 			.poll(() => hashConfig(page))
-			.toEqual({ features: { hillshade: { shadowColor: '#ff0000', anchor: 'viewport' } } });
+			.toEqual({ features: { hillshade: { shadowColor: '#FF0000', anchor: 'viewport' } } });
 	});
 });

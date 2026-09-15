@@ -59,11 +59,11 @@ test('sky can be turned off', async ({ page }) => {
 test('sky color follows the water color until it is set', async ({ page }) => {
 	const map = section(page, 'Map');
 	const skyColor = row(map, 'Sky Color');
-	await expect(skyColor.locator('input[type="color"]')).toHaveValue('#bfd9f2');
+	await expect(skyColor.locator('input.color-text')).toHaveValue('#BFD9F2');
 
-	await setColor(skyColor.locator('input[type="color"]'), '#ff0000');
-	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('#ff0000');
-	await expect.poll(() => hashConfig(page)).toEqual({ sky: { skyColor: '#ff0000' } });
+	await setColor(skyColor.locator('input.color-text'), '#ff0000');
+	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('#FF0000');
+	await expect.poll(() => hashConfig(page)).toEqual({ sky: { skyColor: '#FF0000' } });
 
 	await skyColor.locator('button.reset').click();
 	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('#BFD9F2');

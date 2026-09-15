@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ResolvedProjection, ResolvedSky, ResolvedSun } from '@versatiles/style';
-	import { Color, osm } from '@versatiles/style';
+	import { osm } from '@versatiles/style';
+	import { sameColor } from '../../color_model';
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputColor from '../inputs/InputColor.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
@@ -37,14 +38,6 @@
 		{ value: 'map', label: 'Map' },
 		{ value: 'viewport', label: 'Screen' },
 	];
-
-	function sameColor(a: string, b: string): boolean {
-		try {
-			return Color.parse(a).asHex() === Color.parse(b).asHex();
-		} catch {
-			return a === b;
-		}
-	}
 
 	function blendOf(value: Sky[Blend], fallback: Sky[Blend]): number {
 		return typeof value === 'number' ? value : (fallback as number);
@@ -152,7 +145,14 @@
 			defaultValue={sunDefaults.anchor}
 			options={ANCHORS}
 		/>
-		<InputColor label="Color" {disabled} bind:value={sun.color} defaultValue={sunDefaults.color} />
+		<!-- MapLibre's light color has no alpha. -->
+		<InputColor
+			label="Color"
+			{disabled}
+			alpha={false}
+			bind:value={sun.color}
+			defaultValue={sunDefaults.color}
+		/>
 		<InputNumber
 			label="Intensity"
 			{disabled}

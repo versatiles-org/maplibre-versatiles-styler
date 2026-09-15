@@ -15,7 +15,7 @@ function row(scope: Locator, label: string): Locator {
 function colorInput(scope: Locator, key: string): Locator {
 	return scope
 		.locator('.color-container', { has: scope.page().locator(`label[title="${key}"]`) })
-		.locator('input[type="color"]');
+		.locator('input.color-text');
 }
 
 async function layer(page: Page, id: string) {
@@ -69,12 +69,12 @@ test('a new overlay theme brings its colors', async ({ page }) => {
 	const overlay = await open(page, 'Overlay');
 	const colors = await open(page, 'Overlay colors');
 	const water = colorInput(colors, 'water');
-	await expect(water).toHaveValue('#d8d8d8'); // gray
+	await expect(water).toHaveValue('#D8D8D8'); // gray
 
 	await row(overlay, 'Theme').locator('select').selectOption('toner');
-	await expect(water).toHaveValue('#d8e7f7');
+	await expect(water).toHaveValue('#D8E7F7');
 	// the imagery treatment stays: white labels
-	await expect(colorInput(colors, 'label')).toHaveValue('#ffffff');
+	await expect(colorInput(colors, 'label')).toHaveValue('#FFFFFF');
 	await expect.poll(() => hashConfig(page)).toEqual({ osmOverlay: { theme: 'toner' } });
 });
 
@@ -85,7 +85,7 @@ test('overlay colors', async ({ page }) => {
 	await input.dispatchEvent('change');
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ osmOverlay: { colors: { labelWater: '#00ff00' } } });
+		.toEqual({ osmOverlay: { colors: { labelWater: '#00FF00' } } });
 });
 
 test('overlay fonts default to bold and can be changed', async ({ page }) => {
@@ -120,7 +120,7 @@ test('overlay layers only list what the overlay draws', async ({ page }) => {
 
 test('the sky follows the overlay water color', async ({ page }) => {
 	const map = await open(page, 'Map');
-	await expect(row(map, 'Sky Color').locator('input[type="color"]')).toHaveValue('#d8d8d8');
+	await expect(row(map, 'Sky Color').locator('input.color-text')).toHaveValue('#D8D8D8');
 	await row(map, 'Projection').locator('select').selectOption('vertical-perspective');
 	await expect.poll(() => hashConfig(page)).toEqual({ projection: 'vertical-perspective' });
 });

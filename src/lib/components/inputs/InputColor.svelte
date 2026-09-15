@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Color } from '@versatiles/style';
+	import { normalizeColor, sameColor } from '../../color_model';
 	import InputRow from './InputRow.svelte';
 
 	let {
@@ -8,6 +8,7 @@
 		disabled = false,
 		value = $bindable(),
 		defaultValue,
+		alpha = true,
 		onchange,
 	}: {
 		label: string;
@@ -15,30 +16,46 @@
 		disabled?: boolean;
 		value: string;
 		defaultValue: string;
+		/** Whether the color has an alpha channel; off for options that ignore it. */
+		alpha?: boolean;
 		onchange?: () => void;
 	} = $props();
 
-	/** `#rrggbbaa`, lowercase, for comparing colours however they are spelled. */
-	function normalize(color: string): string {
-		try {
-			return Color.parse(color).asHex().toLowerCase();
-		} catch {
-			return color;
+	/** The value as shown: `#RRGGBB` or `#RRGGBBAA`; a text that is no color as it is. */
+	let shown = $derived(normalizeColor(value, alpha) ?? value);
+	let opaque = $derived(normalizeColor(value, false) ?? value);
+	let isModified = $derived(!sameColor(value, defaultValue));
+	let invalid = $state(false);
+
+	/** Applies the typed text if it is a color, else puts the value back. */
+	function commit(input: HTMLInputElement) {
+		const color = normalizeColor(input.value, alpha);
+		if (color === undefined) {
+			invalid = input.value.trim() !== '';
+			input.value = shown;
+			return;
 		}
-	}
-
-	let normalized = $derived(normalize(value));
-	let isModified = $derived(normalized !== normalize(defaultValue));
-	// `<input type="color">` only takes `#rrggbb`; the alpha channel is kept from the current value.
-	let inputValue = $derived(normalized.slice(0, 7));
-
-	function handleChange(e: Event) {
-		const input = e.target as HTMLInputElement;
-		value = input.value + normalized.slice(7);
+		invalid = false;
+		input.value = color;
+		if (sameColor(color, value)) return;
+		value = color;
 		onchange?.();
 	}
 
+	function handleKeydown(e: KeyboardEvent) {
+		const input = e.currentTarget as HTMLInputElement;
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			commit(input);
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			invalid = false;
+			input.value = shown;
+		}
+	}
+
 	function reset() {
+		invalid = false;
 		value = defaultValue;
 		onchange?.();
 	}
@@ -46,6 +63,26 @@
 
 <InputRow {label} {hint} {disabled} containerClass="color-container" {isModified} onReset={reset}>
 	{#snippet children(uid)}
-		<input id={uid} type="color" value={inputValue} {disabled} onchange={handleChange} />
+		<span
+			class="color-swatch"
+			style:--swatch={shown}
+			style:--swatch-opaque={opaque}
+			aria-hidden="true"
+		></span>
+		<input
+			id={uid}
+			class="color-text"
+			class:invalid
+			type="text"
+			value={shown}
+			{disabled}
+			spellcheck="false"
+			autocomplete="off"
+			aria-invalid={invalid}
+			title="A color: #RRGGBB{alpha ? ', #RRGGBBAA' : ''}, rgb(…) or hsl(…)"
+			oninput={() => (invalid = false)}
+			onkeydown={handleKeydown}
+			onchange={(e) => commit(e.currentTarget)}
+		/>
 	{/snippet}
 </InputRow>

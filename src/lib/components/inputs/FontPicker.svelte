@@ -38,6 +38,7 @@
 	} from '../../font_scripts';
 	import { useFontPickerState } from '../../font_picker_state.svelte';
 	import FontPreview from './FontPreview.svelte';
+	import { placeBesidePane, portalToMap, type PopoverPosition } from './popover';
 
 	let {
 		title,
@@ -142,7 +143,7 @@
 	let expanded = $state<string | undefined>();
 	let activeKey = $state<string | undefined>();
 	let list = $state<HTMLElement>();
-	let position = $state({ left: 0, top: 0, maxHeight: 520 });
+	let position = $state<PopoverPosition>({ left: 0, top: 0, maxHeight: 520 });
 
 	// Open on the current family, with its styles shown.
 	$effect.pre(() => {
@@ -167,63 +168,8 @@
 		scrolled = true;
 	});
 
-	/**
-	 * Moves the picker to the map container. Inside the control it would be clipped by the sidebar:
-	 * MapLibre gives controls a `transform`, which makes `position: fixed` relative to the control. The
-	 * wrapper carries the control's class, so its styles still apply.
-	 */
-	function portal(layer: HTMLElement) {
-		(anchor.closest('.maplibregl-map') ?? document.body).appendChild(layer);
-		return () => layer.remove();
-	}
-
-	/** Next to the sidebar, level with the button, inside the window; closes on clicks elsewhere. */
-	function place(popup: HTMLElement) {
-		const margin = 8;
-		const update = () => {
-			const pane = anchor.closest('.maplibregl-pane') ?? anchor;
-			const paneRect = pane.getBoundingClientRect();
-			const anchorRect = anchor.getBoundingClientRect();
-			const maxHeight = Math.min(520, window.innerHeight - 2 * margin);
-			const height = Math.min(popup.offsetHeight, maxHeight);
-			let left = paneRect.right + margin;
-			if (left + popup.offsetWidth > window.innerWidth - margin) {
-				left = Math.max(margin, window.innerWidth - popup.offsetWidth - margin);
-			}
-			const top = Math.min(
-				Math.max(margin, anchorRect.top - 48),
-				window.innerHeight - height - margin
-			);
-			position = { left, top: Math.max(margin, top), maxHeight };
-		};
-		const closeOutside = (event: PointerEvent) => {
-			const target = event.target as Node;
-			if (!popup.contains(target) && !anchor.contains(target)) onclose();
-		};
-		// Escape closes the picker wherever its focus is, e.g. on a style button.
-		const closeOnEscape = (event: KeyboardEvent) => {
-			// The filter panel handles its own Escape.
-			if (event.defaultPrevented) return;
-			if (event.key === 'Escape' && popup.contains(document.activeElement)) {
-				event.preventDefault();
-				onclose();
-			}
-		};
-		update();
-		window.addEventListener('resize', update);
-		window.addEventListener('scroll', update, true);
-		document.addEventListener('pointerdown', closeOutside, true);
-		document.addEventListener('keydown', closeOnEscape);
-		return () => {
-			document.removeEventListener('keydown', closeOnEscape);
-			window.removeEventListener('resize', update);
-			window.removeEventListener('scroll', update, true);
-			document.removeEventListener('pointerdown', closeOutside, true);
-		};
-	}
-
 	function focus(input: HTMLInputElement) {
-		// After `portal` has moved the picker: moving a focused element drops its focus.
+		// After `portalToMap` has moved the picker: moving a focused element drops its focus.
 		queueMicrotask(() => input.focus());
 	}
 
@@ -298,7 +244,7 @@
 	}
 </script>
 
-<div class="maplibregl-versatiles-styler font-picker-layer" {@attach portal}>
+<div class="maplibregl-versatiles-styler font-picker-layer" {@attach portalToMap(anchor)}>
 	<div
 		class="font-picker"
 		role="dialog"
@@ -306,7 +252,7 @@
 		style:left="{position.left}px"
 		style:top="{position.top}px"
 		style:max-height="{position.maxHeight}px"
-		{@attach place}
+		{@attach placeBesidePane({ anchor, onclose, onplace: (p) => (position = p) })}
 	>
 		<div class="font-picker-header">
 			<span class="font-picker-title">Font for {title}</span>

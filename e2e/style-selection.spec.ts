@@ -118,7 +118,7 @@ test('style change updates color inputs', async ({ page }) => {
 	);
 	await colorsDetails.locator('summary').click();
 
-	const firstColorInput = colorsDetails.locator('input[type="color"]').first();
+	const firstColorInput = colorsDetails.locator('input.color-text').first();
 	const colorfulValue = await firstColorInput.inputValue();
 
 	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');

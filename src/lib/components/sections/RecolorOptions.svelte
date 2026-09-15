@@ -79,7 +79,13 @@
 	scale={100}
 	unit="%"
 />
-<InputColor label="Tint Color" bind:value={recolor.tint.color} defaultValue={defaults.tint.color} />
+<!-- Tint and blend take the hue and channels of their color, not its alpha. -->
+<InputColor
+	label="Tint Color"
+	alpha={false}
+	bind:value={recolor.tint.color}
+	defaultValue={defaults.tint.color}
+/>
 <InputNumber
 	label="Blend"
 	hint="Blend every color toward the blend color."
@@ -92,6 +98,7 @@
 />
 <InputColor
 	label="Blend Color"
+	alpha={false}
 	bind:value={recolor.blend.color}
 	defaultValue={defaults.blend.color}
 />

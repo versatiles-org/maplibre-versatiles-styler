@@ -12,11 +12,11 @@ test('color inputs render with values and reset buttons disabled', async ({ page
 	);
 	await colorsDetails.locator('summary').click();
 
-	const colorInputs = colorsDetails.locator('input[type="color"]');
+	const colorInputs = colorsDetails.locator('input.color-text');
 	const count = await colorInputs.count();
 	expect(count).toBeGreaterThan(0);
 
-	const resetButtons = colorsDetails.locator('.color-container button');
+	const resetButtons = colorsDetails.locator('.color-container button.reset');
 	for (let i = 0; i < (await resetButtons.count()); i++) {
 		await expect(resetButtons.nth(i)).toBeDisabled();
 	}
@@ -31,8 +31,8 @@ test('modifying a color updates the map style', async ({ page }) => {
 	const styleBefore = await getMapStyle(page);
 
 	const firstEntry = colorsDetails.locator('.color-container').first();
-	const colorInput = firstEntry.locator('input[type="color"]');
-	const resetButton = firstEntry.locator('button');
+	const colorInput = firstEntry.locator('input.color-text');
+	const resetButton = firstEntry.locator('button.reset');
 
 	await expect(resetButton).toBeDisabled();
 
@@ -61,8 +61,8 @@ test('reset restores default map style', async ({ page }) => {
 	const styleBefore = await getMapStyle(page);
 
 	const firstEntry = colorsDetails.locator('.color-container').first();
-	const colorInput = firstEntry.locator('input[type="color"]');
-	const resetButton = firstEntry.locator('button');
+	const colorInput = firstEntry.locator('input.color-text');
+	const resetButton = firstEntry.locator('button.reset');
 
 	const originalValue = await colorInput.inputValue();
 
@@ -82,7 +82,7 @@ test('reset restores default map style', async ({ page }) => {
 	expect(layerPaintsAfterReset).toEqual(layerPaintsBefore);
 });
 
-test('"Color adjustments" has 1 checkbox, 7 ranges, and 2 color pickers', async ({ page }) => {
+test('"Color adjustments" has 1 checkbox, 7 ranges, and 2 color fields', async ({ page }) => {
 	const recolorDetails = page.locator(
 		'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
 	);
@@ -94,7 +94,7 @@ test('"Color adjustments" has 1 checkbox, 7 ranges, and 2 color pickers', async 
 	const ranges = recolorDetails.locator('input[type="range"]');
 	await expect(ranges).toHaveCount(7);
 
-	const colorPickers = recolorDetails.locator('input[type="color"]');
+	const colorPickers = recolorDetails.locator('input.color-text');
 	await expect(colorPickers).toHaveCount(2);
 });
 
@@ -222,5 +222,86 @@ test.describe('gamma and contrast sliders', () => {
 			await expect(row.locator('.value')).toHaveText(high);
 		}
 		await expect.poll(() => hashConfig(page)).toEqual({ recolor: { gamma: 10, contrast: 10 } });
+	});
+});
+
+test.describe('color field', () => {
+	function colorsSection(page: import('@playwright/test').Page) {
+		return page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
+		);
+	}
+
+	/** A color row by its option key, which each row carries as its hint. */
+	function colorRow(page: import('@playwright/test').Page, key: string) {
+		return page.locator('.maplibregl-versatiles-styler .color-container', {
+			has: page.locator(`label[title="${key}"]`),
+		});
+	}
+
+	async function hashConfig(page: import('@playwright/test').Page): Promise<unknown> {
+		const match = page.url().match(/config=([^&]+)/);
+		if (!match) return {};
+		return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
+	}
+
+	test.beforeEach(async ({ page }) => {
+		await colorsSection(page).locator('summary').click();
+	});
+
+	test('takes a color with alpha, and shows it over a checkerboard', async ({ page }) => {
+		const water = colorRow(page, 'water');
+		const field = water.locator('input.color-text');
+		await expect(field).toHaveValue('#BFD9F2');
+
+		await field.fill('rgba(255, 0, 0, 0.5)');
+		await field.press('Enter');
+		await expect(field).toHaveValue('#FF000080');
+		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: '#FF000080' } });
+
+		const swatch = water.locator('.color-swatch');
+		const background = await swatch.evaluate((el) => getComputedStyle(el).backgroundImage);
+		expect(background).toContain('conic-gradient');
+		await expect(swatch).toHaveCSS('--swatch', '#FF000080');
+		await expect(swatch).toHaveCSS('--swatch-opaque', '#FF0000');
+	});
+
+	test('takes hsl() and short hex, and normalizes them', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		await field.fill('hsl(120, 50%, 50%)');
+		await field.press('Enter');
+		await expect(field).toHaveValue('#40BF40');
+		await field.fill('#abc');
+		await field.blur();
+		await expect(field).toHaveValue('#AABBCC');
+		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: '#AABBCC' } });
+	});
+
+	test('rejects text that is no color, and Escape restores the value', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		await field.fill('banana');
+		await field.press('Enter');
+		await expect(field).toHaveValue('#BFD9F2');
+		await expect(field).toHaveAttribute('aria-invalid', 'true');
+		await field.pressSequentially('#1');
+		await expect(field).toHaveAttribute('aria-invalid', 'false');
+
+		await field.fill('#123456');
+		await field.press('Escape');
+		await expect(field).toHaveValue('#BFD9F2');
+		await expect.poll(() => hashConfig(page)).toEqual({});
+	});
+
+	test('colors of options without alpha drop it', async ({ page }) => {
+		const recolor = page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
+		);
+		await recolor.locator('summary').click();
+		const tint = recolor
+			.locator('.entry', { has: page.locator('label:text-is("Tint Color")') })
+			.locator('input.color-text');
+		await tint.fill('#00ff0080');
+		await tint.press('Enter');
+		await expect(tint).toHaveValue('#00FF00');
 	});
 });
