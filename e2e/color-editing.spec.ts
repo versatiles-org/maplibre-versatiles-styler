@@ -435,7 +435,10 @@ test.describe('color picker', () => {
 
 		const red = dialog.getByRole('slider', { name: 'Red' });
 		await expect(red).toHaveValue('191');
-		expect(await red.getAttribute('style')).toContain(
+		const redTrack = dialog.locator('.color-track-slot', {
+			has: page.locator('input[aria-label="Red"]'),
+		});
+		expect(await redTrack.getAttribute('style')).toContain(
 			'--track: linear-gradient(to right, rgb(0 217 242), rgb(255 217 242))'
 		);
 		await red.fill('255');

@@ -25,12 +25,12 @@ export default defineConfig({
 		// Layout and stability in the other engines: form controls and flexbox differ between browsers.
 		{
 			name: 'firefox',
-			testMatch: /(layout|stability)\.spec\.ts/,
+			testMatch: /(layout|stability|paint)\.spec\.ts/,
 			use: { ...devices['Desktop Firefox'] },
 		},
 		{
 			name: 'webkit',
-			testMatch: /(layout|stability)\.spec\.ts/,
+			testMatch: /(layout|stability|paint)\.spec\.ts/,
 			use: { ...devices['Desktop Safari'] },
 		},
 	],
