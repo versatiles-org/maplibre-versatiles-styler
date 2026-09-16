@@ -322,22 +322,23 @@ test.describe('color picker', () => {
 		return JSON.stringify(style.layers.filter((l) => l.id.startsWith('water')).map((l) => l.paint));
 	}
 
-	async function areaPoint(dialog: import('@playwright/test').Locator, x: number, y: number) {
-		const box = (await dialog.locator('.color-area').boundingBox())!;
-		return { x: box.x + box.width * x, y: box.y + box.height * y };
+	/** A point on a channel slider, `x` of the way along it. */
+	async function sliderPoint(dialog: import('@playwright/test').Locator, name: string, x: number) {
+		const box = (await dialog.getByRole('slider', { name }).boundingBox())!;
+		return { x: box.x + box.width * x, y: box.y + box.height / 2 };
 	}
 
 	test.beforeEach(async ({ page }) => {
 		await colorsSection(page).locator('summary').click();
 	});
 
-	test('dragging in the area updates the map before the pointer is released', async ({ page }) => {
+	test('dragging a channel updates the map before the pointer is released', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const before = await waterPaint(page);
 		const dialog = await openPicker(page, 'water', 'Water');
 
-		const start = await areaPoint(dialog, 0.2, 0.2);
-		const end = await areaPoint(dialog, 0.9, 0.4);
+		const start = await sliderPoint(dialog, 'Red', 0.75);
+		const end = await sliderPoint(dialog, 'Red', 0.1);
 		await page.mouse.move(start.x, start.y);
 		await page.mouse.down();
 		await page.mouse.move(end.x, end.y, { steps: 10 });
@@ -351,11 +352,14 @@ test.describe('color picker', () => {
 		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: dragged } });
 	});
 
-	test('hue and alpha sliders; no alpha slider for colors without alpha', async ({ page }) => {
+	test('alpha sits below the channels, and colors without alpha have none', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const dialog = await openPicker(page, 'water', 'Water');
-		await dialog.getByRole('slider', { name: 'Hue' }).fill('0');
-		await expect(field).toHaveValue(/^#F2/);
+		// the sliders in order: the three channels of the space, then alpha
+		await expect(dialog.locator('.color-picker-body input[type="range"]').last()).toHaveAttribute(
+			'aria-label',
+			'Alpha'
+		);
 		await dialog.getByRole('slider', { name: 'Alpha' }).fill('50');
 		await expect(field).toHaveValue(/80$/);
 		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50%');
@@ -370,7 +374,7 @@ test.describe('color picker', () => {
 			.locator('button.color-swatch')
 			.click();
 		const tint = page.getByRole('dialog', { name: 'Color for Tint Color' });
-		await expect(tint.getByRole('slider', { name: 'Hue' })).toBeVisible();
+		await expect(tint.getByRole('slider', { name: 'Red' })).toBeVisible();
 		await expect(tint.getByRole('slider', { name: 'Alpha' })).toHaveCount(0);
 	});
 
@@ -378,8 +382,7 @@ test.describe('color picker', () => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const before = await waterPaint(page);
 		const dialog = await openPicker(page, 'water', 'Water');
-		const point = await areaPoint(dialog, 0.9, 0.1);
-		await page.mouse.click(point.x, point.y);
+		await dialog.getByRole('slider', { name: 'Red' }).fill('20');
 		await expect(field).not.toHaveValue('#BFD9F2');
 		await expect.poll(() => waterPaint(page)).not.toBe(before);
 
@@ -394,15 +397,13 @@ test.describe('color picker', () => {
 	test('the old swatch reverts; Close keeps the new color', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const dialog = await openPicker(page, 'water', 'Water');
-		let point = await areaPoint(dialog, 0.9, 0.1);
-		await page.mouse.click(point.x, point.y);
+		await dialog.getByRole('slider', { name: 'Red' }).fill('20');
 		await expect(field).not.toHaveValue('#BFD9F2');
 
 		await dialog.getByRole('button', { name: 'Back to the old color, #BFD9F2' }).click();
 		await expect(field).toHaveValue('#BFD9F2');
 
-		point = await areaPoint(dialog, 0.5, 0.5);
-		await page.mouse.click(point.x, point.y);
+		await dialog.getByRole('slider', { name: 'Green' }).fill('40');
 		const chosen = await field.inputValue();
 		expect(chosen).not.toBe('#BFD9F2');
 		await dialog.getByRole('button', { name: 'Close' }).click();
@@ -410,16 +411,17 @@ test.describe('color picker', () => {
 		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: chosen } });
 	});
 
-	test('the area works with the keyboard; Enter keeps the color', async ({ page }) => {
+	test('the first channel takes the focus and the keyboard; Enter keeps the color', async ({
+		page,
+	}) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const dialog = await openPicker(page, 'water', 'Water');
-		const area = dialog.getByRole('slider', { name: 'Saturation and brightness' });
-		await expect(area).toBeFocused();
-		const before = await area.getAttribute('aria-valuetext');
+		const red = dialog.getByRole('slider', { name: 'Red' });
+		await expect(red).toBeFocused();
 
-		await page.keyboard.press('Shift+ArrowRight');
-		await page.keyboard.press('ArrowDown');
-		await expect(area).not.toHaveAttribute('aria-valuetext', before!);
+		await page.keyboard.press('ArrowRight');
+		await page.keyboard.press('ArrowRight');
+		await expect(red).toHaveValue('193');
 		await expect(field).not.toHaveValue('#BFD9F2');
 		const chosen = await field.inputValue();
 
@@ -431,7 +433,7 @@ test.describe('color picker', () => {
 	test('RGB channels: slider and typed value', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const dialog = await openPicker(page, 'water', 'Water');
-		await expect(dialog.getByRole('tab', { name: 'RGB' })).toHaveAttribute('aria-selected', 'true');
+		await expect(dialog.getByRole('combobox', { name: 'Color space' })).toHaveValue('srgb');
 
 		const red = dialog.getByRole('slider', { name: 'Red' });
 		await expect(red).toHaveValue('191');
@@ -439,7 +441,7 @@ test.describe('color picker', () => {
 			has: page.locator('input[aria-label="Red"]'),
 		});
 		expect(await redTrack.getAttribute('style')).toContain(
-			'--track: linear-gradient(to right, rgb(0 217 242), rgb(255 217 242))'
+			'--track: linear-gradient(to right, #00D9F2'
 		);
 		await red.fill('255');
 		await expect(field).toHaveValue('#FFD9F2');
@@ -453,45 +455,101 @@ test.describe('color picker', () => {
 		await expect.poll(() => hashConfig(page)).toEqual({ colors: { water: '#FFD900' } });
 	});
 
-	test('HSL channels, and the tab is kept for the next picker', async ({ page }) => {
+	test('every color space of the library can be edited in', async ({ page }) => {
+		const field = colorRow(page, 'water').locator('input.color-text');
+		const dialog = await openPicker(page, 'water', 'Water');
+		const space = dialog.getByRole('combobox', { name: 'Color space' });
+		await expect(space.locator('option')).toHaveText([
+			'RGB',
+			'HSL',
+			'HWB',
+			'HSV',
+			'OKLab',
+			'OKLCh',
+		]);
+
+		// each space offers its own three channels
+		for (const [key, channels] of [
+			['hsl', ['Hue', 'Saturation', 'Lightness']],
+			['hwb', ['Hue', 'Whiteness', 'Blackness']],
+			['hsv', ['Hue', 'Saturation', 'Value']],
+			['oklab', ['Lightness', 'Green to red', 'Blue to yellow']],
+			['oklch', ['Lightness', 'Chroma', 'Hue']],
+		] as [string, string[]][]) {
+			await space.selectOption(key);
+			for (const channel of channels) {
+				await expect(
+					dialog
+						.locator('.color-picker-channels')
+						.getByRole('slider', { name: channel, exact: true })
+				).toHaveCount(1);
+			}
+		}
+
+		// OKLCh: lightness alone, with hue and chroma untouched
+		await space.selectOption('oklch');
+		const lightness = dialog
+			.locator('.color-picker-channels')
+			.getByRole('slider', { name: 'Lightness' });
+		const hue = dialog.locator('.color-picker-channels').getByRole('slider', { name: 'Hue' });
+		const chroma = dialog.getByRole('slider', { name: 'Chroma' });
+		const hueBefore = await hue.inputValue();
+		const chromaBefore = await chroma.inputValue();
+		await lightness.fill('0.5');
+		await expect(hue).toHaveValue(hueBefore);
+		await expect(chroma).toHaveValue(chromaBefore);
+		await expect(field).not.toHaveValue('#BFD9F2');
+	});
+
+	test('the space is kept for the next picker, and keeps its channels', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		let dialog = await openPicker(page, 'water', 'Water');
-		await dialog.getByRole('tab', { name: 'HSL' }).click();
-		await dialog.getByRole('slider', { name: 'Lightness' }).fill('100');
+		await dialog.getByRole('combobox', { name: 'Color space' }).selectOption('hsl');
+		const lightness = dialog
+			.locator('.color-picker-channels')
+			.getByRole('slider', { name: 'Lightness' });
+		const before = await lightness.inputValue();
+		await lightness.fill('100');
 		await expect(field).toHaveValue('#FFFFFF');
-		await dialog.getByRole('slider', { name: 'Lightness' }).fill('50');
+		await lightness.fill(before);
 		// the hue and saturation survive white
-		await expect(dialog.getByRole('slider', { name: 'Hue' }).first()).toHaveValue('209');
-		await expect(field).not.toHaveValue('#808080');
+		await expect(field).toHaveValue('#BFD9F2');
 		await dialog.getByRole('button', { name: 'Close' }).click();
 
 		dialog = await openPicker(page, 'land', 'Land');
-		await expect(dialog.getByRole('tab', { name: 'HSL' })).toHaveAttribute('aria-selected', 'true');
-		await expect(dialog.getByRole('slider', { name: 'Saturation', exact: true })).toBeVisible();
+		await expect(dialog.getByRole('combobox', { name: 'Color space' })).toHaveValue('hsl');
 	});
 
-	test('Hex tab takes a typed color; Escape there restores the text first', async ({ page }) => {
+	test('the color field takes any syntax; Escape restores the text first', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const dialog = await openPicker(page, 'water', 'Water');
-		await dialog.getByRole('tab', { name: 'RGB' }).focus();
-		await page.keyboard.press('ArrowLeft');
-		const hexTab = dialog.getByRole('tab', { name: 'Hex' });
-		await expect(hexTab).toHaveAttribute('aria-selected', 'true');
-		await expect(hexTab).toBeFocused();
+		const text = dialog.getByRole('textbox', { name: 'Hex' });
+		await expect(text).toHaveValue('#BFD9F2');
 
-		const hex = dialog.getByRole('textbox', { name: 'Hex' });
-		await expect(hex).toHaveValue('#BFD9F2');
-		await hex.fill('rgba(18, 52, 86, 0.5)');
-		await hex.press('Enter');
-		await expect(hex).toHaveValue('#12345680');
+		await text.fill('rgba(18, 52, 86, 0.5)');
+		await text.press('Enter');
+		await expect(text).toHaveValue('#12345680');
 		await expect(field).toHaveValue('#12345680');
-		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50%');
+		await expect(dialog.getByRole('slider', { name: 'Alpha' })).toHaveValue('50');
 
-		await hex.fill('#000');
-		await hex.press('Escape');
-		await expect(hex).toHaveValue('#12345680');
+		// any spelling the library reads
+		await text.fill('oklch(0.7 0.15 250)');
+		await text.press('Enter');
+		await expect(field).toHaveValue(/^#[0-9A-F]{6}$/);
+
+		// a text that is no color says why, and changes nothing
+		const kept = await field.inputValue();
+		await text.fill('rebeccapurple');
+		await text.press('Enter');
+		await expect(text).toHaveAttribute('aria-invalid', 'true');
+		await expect(text).toHaveAttribute('title', /rebeccapurple/);
+		await expect(field).toHaveValue(kept);
+
+		await text.fill('#000');
+		await text.press('Escape');
+		await expect(text).toHaveValue(kept);
 		await expect(dialog).toBeVisible();
-		await hex.press('Escape');
+		await text.press('Escape');
 		await expect(dialog).toHaveCount(0);
 		await expect(field).toHaveValue('#BFD9F2');
 	});

@@ -1178,46 +1178,10 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			padding: 0 12px 12px;
 		}
 
-		.color-picker-top {
-			display: flex;
-			gap: 8px;
-		}
-
-		// Saturation from left to right, brightness from bottom to top, at the hue of `--hue`.
-		.color-area {
-			position: relative;
-			flex: 1;
-			height: 132px;
-			border-radius: 6px;
-			cursor: crosshair;
-			touch-action: none;
-			outline: none;
-			background:
-				linear-gradient(to top, #000, transparent),
-				linear-gradient(to right, #fff, hsl(calc(var(--hue) * 1deg) 100% 50%));
-
-			&:focus-visible {
-				box-shadow: 0 0 0 3px var(--ring);
-			}
-
-			.color-area-thumb {
-				position: absolute;
-				width: 14px;
-				height: 14px;
-				margin: -7px 0 0 -7px;
-				box-sizing: border-box;
-				border: 2px solid #fff;
-				border-radius: 50%;
-				box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-				pointer-events: none;
-			}
-		}
-
-		// The color the picker opened with, above the current one.
+		// The color the picker opened with, next to the current one.
 		.color-picker-compare {
 			display: flex;
-			flex-direction: column;
-			width: 30px;
+			height: 40px;
 			border-radius: 6px;
 			overflow: hidden;
 			box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.14);
@@ -1241,7 +1205,8 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			display: grid;
 			// `minmax(0, …)`, and `min-width` on the track: Firefox gives a range input an intrinsic
 			// width, which would push the value out of the row.
-			grid-template-columns: 3em minmax(0, 1fr) 3em;
+			// the third column holds "255", "100%" and OKLab's "0.006"
+			grid-template-columns: 3em minmax(0, 1fr) 3.6em;
 			align-items: center;
 			gap: 8px;
 			color: var(--muted);
@@ -1268,19 +1233,6 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					border-radius: 5px;
 					background: var(--track, var(--line));
 					box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.12);
-				}
-
-				&.color-track-hue {
-					--track: linear-gradient(
-						to right,
-						#f00 0%,
-						#ff0 16.67%,
-						#0f0 33.33%,
-						#0ff 50%,
-						#00f 66.67%,
-						#f0f 83.33%,
-						#f00 100%
-					);
 				}
 
 				&.color-track-alpha {
@@ -1376,46 +1328,52 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			}
 		}
 
-		// The channel tabs as a segmented control.
-		.color-picker-tabs {
+		// Which space the channels below are in.
+		.color-picker-space {
 			display: grid;
-			grid-auto-flow: column;
-			grid-auto-columns: 1fr;
-			padding: 2px;
-			border-radius: 7px;
-			background: var(--sunken);
+			grid-template-columns: 3em minmax(0, 1fr);
+			align-items: center;
+			gap: 8px;
+			color: var(--muted);
+			font-size: 12px;
 
-			button {
-				height: 22px;
-				padding: 0;
-				border: none;
-				border-radius: 5px;
-				background: none;
-				color: var(--muted);
-				font-size: 12px;
-
-				&[aria-selected='true'] {
-					background: var(--bg);
-					color: var(--ink);
-					box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14);
-				}
+			select {
+				height: 26px;
+				box-sizing: border-box;
+				padding: 0 24px 0 8px;
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				background-color: var(--bg);
+				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='%236b7583' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+				background-position: right 5px center;
+				background-size: 16px;
+				background-repeat: no-repeat;
+				color: var(--ink);
+				font: inherit;
+				appearance: none;
+				-webkit-appearance: none;
+				cursor: pointer;
 
 				&:focus-visible {
-					outline: 2px solid var(--accent);
-					outline-offset: -2px;
+					border-color: var(--accent);
+					box-shadow: 0 0 0 3px var(--ring);
 				}
 			}
 		}
 
-		.color-picker-channels {
-			display: flex;
-			flex-direction: column;
-			gap: 10px;
+		// The color as text: hex, or any syntax the library reads.
+		.color-picker-text {
+			display: grid;
+			grid-template-columns: 3em minmax(0, 1fr);
+			align-items: center;
+			gap: 8px;
+			color: var(--muted);
+			font-size: 12px;
 
 			input.color-picker-hex {
 				box-sizing: border-box;
 				width: 100%;
-				height: 28px;
+				height: 26px;
 				padding: 0 8px;
 				border: 1px solid var(--line);
 				border-radius: 6px;
@@ -1428,7 +1386,17 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					border-color: var(--accent);
 					box-shadow: 0 0 0 3px var(--ring);
 				}
+
+				&.invalid {
+					border-color: var(--warn);
+				}
 			}
+		}
+
+		.color-picker-channels {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
 		}
 	}
 

@@ -38,8 +38,15 @@ async function openColorPicker(page: Page) {
 
 test('the hue track shows the whole spectrum', async ({ page }) => {
 	const picker = await openColorPicker(page);
-	const track = picker.locator('.color-track-slot.color-track-hue');
-	const colors = colorsAcross(await shoot(track));
+	await picker.getByRole('combobox', { name: 'Color space' }).selectOption('hsl');
+	// the track shows the hues at the color's own saturation and lightness, so make it a vivid one
+	await picker.getByRole('slider', { name: 'Saturation' }).fill('100');
+	await picker.getByRole('slider', { name: 'Lightness' }).fill('50');
+	await page.waitForTimeout(300);
+	const track = picker.locator('.color-picker-slider', {
+		has: page.locator('input[aria-label="Hue"]'),
+	});
+	const colors = colorsAcross(await shoot(track.locator('.color-track-slot')));
 
 	expect(distinctColors(colors), `hue track: ${colors.map(hex).join(' ')}`).toBeGreaterThanOrEqual(
 		6
@@ -62,18 +69,23 @@ test('the alpha track runs from the checkerboard to the color', async ({ page })
 	expect(distance(left, right), `${hex(left)} → ${hex(right)}`).toBeGreaterThan(30);
 });
 
-test('the color area is drawn in both directions', async ({ page }) => {
+test('the preview shows the old color next to the new one', async ({ page }) => {
 	const picker = await openColorPicker(page);
-	const image = await shoot(picker.locator('.color-area'));
-	const topLeft = colorAt(image, 0.04, 0.04);
-	const topRight = colorAt(image, 0.96, 0.04);
-	const bottom = colorAt(image, 0.5, 0.96);
+	const image = await shoot(picker.locator('.color-picker-compare'));
+	const left = colorAt(image, 0.25, 0.5);
+	const right = colorAt(image, 0.75, 0.5);
 
-	expect(distance(topLeft, { r: 255, g: 255, b: 255 }), `top left ${hex(topLeft)}`).toBeLessThan(
-		40
-	);
-	expect(saturation(topRight), `top right ${hex(topRight)}`).toBeGreaterThan(100);
-	expect(Math.max(bottom.r, bottom.g, bottom.b), `bottom ${hex(bottom)}`).toBeLessThan(40);
+	// both halves are the water color until something changes
+	expect(distance(left, { r: 0xbf, g: 0xd9, b: 0xf2 }), `old ${hex(left)}`).toBeLessThan(24);
+	expect(distance(right, left), `${hex(left)} / ${hex(right)}`).toBeLessThan(24);
+
+	await picker.getByRole('slider', { name: 'Red' }).fill('20');
+	await page.waitForTimeout(300);
+	const changed = await shoot(picker.locator('.color-picker-compare'));
+	expect(
+		distance(colorAt(changed, 0.25, 0.5), colorAt(changed, 0.75, 0.5)),
+		'the halves differ once the color changed'
+	).toBeGreaterThan(30);
 });
 
 test('a slider shows its filled part, and a mixed slider does not', async ({ page }) => {

@@ -1,20 +1,22 @@
 <script lang="ts">
-	import { onDestroy, tick, untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
+	import { Color } from '@versatiles/style';
 	import {
+		SPACES,
+		SPACE_KEYS,
 		channelGradient,
+		channelsOf,
+		colorError,
+		formatChannel,
 		formatHex,
-		hsvaToHsla,
-		hsvaToRgba,
-		hslaToHsva,
+		isSpace,
+		parseChannel,
 		parseColor,
 		sameColor,
-		withRgb,
-		type Hsla,
-		type Hsva,
+		withChannel,
 	} from '../../color_model';
-	import { useColorPickerState, type ColorMode } from '../../color_picker_state.svelte';
+	import { useColorPickerState } from '../../color_picker_state.svelte';
 	import { frameWriter } from '../../frame';
-	import ColorArea from './ColorArea.svelte';
 	import EditableValue from './EditableValue.svelte';
 	import { placeBesidePane, portalToMap, type PopoverPosition } from './popover';
 
@@ -41,36 +43,18 @@
 
 	/** The color the picker opened with: Escape and the "old" swatch go back to it. */
 	const initial = untrack(() => value);
-	const BLACK: Hsva = { h: 0, s: 0, v: 0, a: 1 };
 	const uid = $props.id();
 	const shared = useColorPickerState();
 
-	const MODES: { value: ColorMode; label: string }[] = [
-		{ value: 'rgb', label: 'RGB' },
-		{ value: 'hsl', label: 'HSL' },
-		{ value: 'hex', label: 'Hex' },
-	];
-
-	interface Channel {
-		key: string;
-		label: string;
-		name: string;
-		value: number;
-		max: number;
-		unit: string;
-		gradient: string;
-		set: (value: number) => Hsva;
-	}
-
-	// The color being edited, unrounded. Converting back from the hex value on every change would lose the
-	// hue of gray, black and white, and jitter by rounding.
-	let hsva = $state<Hsva>(untrack(() => parseColor(value) ?? BLACK));
-	let lastWritten = untrack(() => value);
 	/**
-	 * The HSL values last set on the HSL tab. White, black and gray have no saturation in HSV, so without
-	 * them lightness 100 and back would turn the color gray.
+	 * The color being edited, kept in the space it was last edited in. That space's channels then stay
+	 * as they were set: sliding lightness to 100 and back keeps the hue, which a detour through the hex
+	 * value would lose.
 	 */
-	let lastHsl = $state<Hsla | undefined>();
+	let color = $state<Color>(untrack(() => parseColor(value) ?? Color.srgb(0, 0, 0)));
+	let lastWritten = untrack(() => value);
+	/** Why the typed text is no color, while it is wrong. */
+	let hexError = $state<string | undefined>();
 	/** Once closed, late events (a field's `change` on blur) write nothing. */
 	let closed = false;
 	let position = $state<PopoverPosition>({
@@ -81,68 +65,44 @@
 		beside: true,
 	});
 
-	let current = $derived(formatHex(hsva, alpha));
-	let opaque = $derived(formatHex(hsva, false));
+	let current = $derived(formatHex(color, alpha));
+	let opaque = $derived(formatHex(color, false));
 
-	let channels: Channel[] = $derived.by(() => {
-		if (shared.mode === 'rgb') {
-			const rgb = hsvaToRgba(hsva);
-			return (['r', 'g', 'b'] as const).map((key) => ({
-				key,
-				label: key.toUpperCase(),
-				name: { r: 'Red', g: 'Green', b: 'Blue' }[key],
-				value: rgb[key],
-				max: 255,
-				unit: '',
-				gradient: channelGradient(hsva, key),
-				set: (value: number) => withRgb(hsva, { [key]: value }),
-			}));
-		}
-		const hsl =
-			lastHsl && formatHex(hslaToHsva(lastHsl)) === formatHex(hsva) && lastHsl.h === hsva.h
-				? lastHsl
-				: hsvaToHsla(hsva);
-		return (['h', 's', 'l'] as const).map((key) => ({
-			key,
-			label: key.toUpperCase(),
-			name: { h: 'Hue', s: 'Saturation', l: 'Lightness' }[key],
-			value: hsl[key],
-			max: key === 'h' ? 360 : 100,
-			unit: key === 'h' ? '°' : '%',
-			gradient: channelGradient(hsva, `hsl-${key}`),
-			set: (value: number) => {
-				lastHsl = { ...hsl, [key]: value, a: hsva.a };
-				return hslaToHsva(lastHsl);
-			},
+	let channels = $derived.by(() => {
+		const values = channelsOf(color, shared.space);
+		return SPACES[shared.space].channels.map((channel) => ({
+			...channel,
+			value: values[channel.key],
+			gradient: channelGradient(color, shared.space, channel.key),
 		}));
 	});
 
-	const writer = frameWriter<string>((color) => {
+	const writer = frameWriter<string>((written) => {
 		if (closed) return;
-		lastWritten = color;
-		onwrite(color);
+		lastWritten = written;
+		onwrite(written);
 	});
 
-	// A change from outside, e.g. the reset button of the row: follow it, keeping the hue of a gray.
+	// A change from outside, e.g. the reset button of the row.
 	$effect(() => {
 		const outside = value;
 		untrack(() => {
 			if (sameColor(outside, lastWritten)) return;
 			lastWritten = outside;
-			const color = parseColor(outside);
-			if (color) hsva = color.s === 0 || color.v === 0 ? { ...color, h: hsva.h } : color;
+			const parsed = parseColor(outside);
+			if (parsed) color = parsed;
 		});
 	});
 
 	onDestroy(() => writer.flush());
 
-	function update(change: Partial<Hsva>) {
+	function update(next: Color) {
 		if (closed) return;
-		hsva = { ...hsva, ...change };
-		const color = formatHex(hsva, alpha);
+		color = alpha ? next : next.opaque();
+		const written = formatHex(color, alpha);
 		// Back at the written color: a waiting write would now be wrong.
-		if (sameColor(color, lastWritten)) writer.cancel();
-		else writer.schedule(color);
+		if (sameColor(written, lastWritten)) writer.cancel();
+		else writer.schedule(written);
 	}
 
 	function close() {
@@ -163,8 +123,8 @@
 	}
 
 	function revert() {
-		const color = parseColor(initial);
-		if (color) update(color);
+		const parsed = parseColor(initial);
+		if (parsed) update(parsed);
 		writer.flush();
 	}
 
@@ -176,49 +136,41 @@
 	}
 
 	/** A typed channel value: clamped to the channel; text that is no number is ignored. */
-	function commitChannel(channel: Channel, text: string) {
-		const typed = parseFloat(text.trim().replace(',', '.'));
-		if (!Number.isFinite(typed)) return;
-		update(channel.set(Math.min(channel.max, Math.max(0, typed))));
+	function commitChannel(channel: (typeof channels)[number], text: string) {
+		const typed = parseChannel(channel, text);
+		if (typed === undefined) return;
+		update(withChannel(color, shared.space, channel.key, typed));
 		writer.flush();
 	}
 
-	function commitHex(input: HTMLInputElement) {
-		const color = parseColor(input.value);
-		if (color) {
-			const hue = color.s === 0 || color.v === 0 ? hsva.h : color.h;
-			update({ ...color, h: hue, a: alpha ? color.a : 1 });
+	function commitColorText(input: HTMLInputElement) {
+		const parsed = parseColor(input.value);
+		if (parsed) {
+			hexError = undefined;
+			update(parsed);
 			writer.flush();
+		} else {
+			hexError = colorError(input.value);
 		}
-		input.value = formatHex(hsva, alpha);
+		input.value = current;
 	}
 
 	/** Enter applies the text; Escape puts back a changed text, else it cancels the picker as usual. */
-	function handleHexKeydown(e: KeyboardEvent) {
+	function handleColorTextKeydown(e: KeyboardEvent) {
 		const input = e.currentTarget as HTMLInputElement;
 		if (e.key === 'Enter') {
 			e.preventDefault();
-			commitHex(input);
+			commitColorText(input);
 		} else if (e.key === 'Escape' && input.value !== current) {
 			e.preventDefault();
+			hexError = undefined;
 			input.value = current;
 		}
 	}
 
-	/** ←/→ move between the tabs. */
-	function handleTabKeydown(e: KeyboardEvent) {
-		const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-		if (!step) return;
-		e.preventDefault();
-		const index = MODES.findIndex((mode) => mode.value === shared.mode);
-		shared.mode = MODES[(index + step + MODES.length) % MODES.length].value;
-		const tablist = (e.currentTarget as HTMLElement).parentElement;
-		tick().then(() => tablist?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus());
-	}
-
-	function focus(area: HTMLElement) {
+	function focus(picker: HTMLElement) {
 		// After `portalToMap` has moved the picker: moving a focused element drops its focus.
-		queueMicrotask(() => area.querySelector<HTMLElement>('.color-area')?.focus());
+		queueMicrotask(() => picker.querySelector<HTMLElement>('.color-track')?.focus());
 	}
 </script>
 
@@ -239,7 +191,6 @@
 		style:left="{position.left}px"
 		style:top="{position.top}px"
 		style:max-height="{position.maxHeight}px"
-		style:--hue={hsva.h}
 		style:--color={current}
 		style:--color-opaque={opaque}
 		onkeydown={handleKeydown}
@@ -256,43 +207,59 @@
 			<button type="button" class="color-picker-close" aria-label="Close" onclick={close}>×</button>
 		</div>
 		<div class="color-picker-body">
-			<div class="color-picker-top">
-				<ColorArea
-					hue={hsva.h}
-					saturation={hsva.s}
-					value={hsva.v}
-					onchange={(s, v) => update({ s, v })}
-					oncommit={() => writer.flush()}
-				/>
-				<div class="color-picker-compare">
-					<button
-						type="button"
-						class="color-picker-old"
-						style:--swatch={initial}
-						title="Back to {initial}"
-						aria-label="Back to the old color, {initial}"
-						onclick={revert}
-					></button>
-					<span class="color-picker-new" aria-hidden="true"></span>
-				</div>
+			<div class="color-picker-compare">
+				<button
+					type="button"
+					class="color-picker-old"
+					style:--swatch={initial}
+					title="Back to {initial}"
+					aria-label="Back to the old color, {initial}"
+					onclick={revert}
+				></button>
+				<span class="color-picker-new" aria-hidden="true"></span>
 			</div>
-			<label class="color-picker-slider">
-				<span aria-hidden="true">Hue</span>
-				<span class="color-track-slot color-track-hue">
-					<input
-						type="range"
-						class="color-track"
-						aria-label="Hue"
-						min="0"
-						max="360"
-						step="1"
-						value={Math.round(hsva.h)}
-						oninput={(e) => update({ h: Number(e.currentTarget.value) })}
-						onchange={() => writer.flush()}
-					/>
-				</span>
-				<output aria-hidden="true">{Math.round(hsva.h)}°</output>
-			</label>
+			<div class="color-picker-space">
+				<label for="{uid}-space">Space</label>
+				<select
+					id="{uid}-space"
+					aria-label="Color space"
+					value={shared.space}
+					onchange={(e) => isSpace(e.currentTarget.value) && (shared.space = e.currentTarget.value)}
+				>
+					{#each SPACE_KEYS as key (key)}
+						<option value={key}>{SPACES[key].label}</option>
+					{/each}
+				</select>
+			</div>
+			<div class="color-picker-channels">
+				{#each channels as channel (channel.key)}
+					<div class="color-picker-slider">
+						<span aria-hidden="true">{channel.label}</span>
+						<span class="color-track-slot" style:--track={channel.gradient}>
+							<input
+								type="range"
+								class="color-track"
+								min={channel.min}
+								max={channel.max}
+								step={channel.step}
+								value={channel.value}
+								aria-label={channel.name}
+								oninput={(e) =>
+									update(
+										withChannel(color, shared.space, channel.key, Number(e.currentTarget.value))
+									)}
+								onchange={() => writer.flush()}
+							/>
+						</span>
+						<EditableValue
+							label={channel.name}
+							display={formatChannel(channel, channel.value)}
+							editText={formatChannel(channel, channel.value).replace(channel.unit, '')}
+							oncommit={(text) => commitChannel(channel, text)}
+						/>
+					</div>
+				{/each}
+			</div>
 			{#if alpha}
 				<label class="color-picker-slider">
 					<span aria-hidden="true">Alpha</span>
@@ -304,73 +271,31 @@
 							min="0"
 							max="100"
 							step="1"
-							value={Math.round(hsva.a * 100)}
-							oninput={(e) => update({ a: Number(e.currentTarget.value) / 100 })}
+							value={Math.round(color.alpha * 100)}
+							oninput={(e) => update(color.with({ alpha: Number(e.currentTarget.value) / 100 }))}
 							onchange={() => writer.flush()}
 						/>
 					</span>
-					<output aria-hidden="true">{Math.round(hsva.a * 100)}%</output>
+					<output aria-hidden="true">{Math.round(color.alpha * 100)}%</output>
 				</label>
 			{/if}
-			<div class="color-picker-tabs" role="tablist" aria-label="Color channels">
-				{#each MODES as mode (mode.value)}
-					{@const selected = shared.mode === mode.value}
-					<button
-						type="button"
-						role="tab"
-						id="{uid}-tab-{mode.value}"
-						aria-selected={selected}
-						aria-controls="{uid}-channels"
-						tabindex={selected ? 0 : -1}
-						onclick={() => (shared.mode = mode.value)}
-						onkeydown={handleTabKeydown}>{mode.label}</button
-					>
-				{/each}
-			</div>
-			<div
-				class="color-picker-channels"
-				role="tabpanel"
-				id="{uid}-channels"
-				aria-labelledby="{uid}-tab-{shared.mode}"
-			>
-				{#if shared.mode === 'hex'}
-					<input
-						class="color-picker-hex"
-						type="text"
-						aria-label="Hex"
-						value={current}
-						spellcheck="false"
-						autocomplete="off"
-						onkeydown={handleHexKeydown}
-						onchange={(e) => commitHex(e.currentTarget)}
-					/>
-				{:else}
-					{#each channels as channel (channel.key)}
-						<div class="color-picker-slider">
-							<span aria-hidden="true">{channel.label}</span>
-							<span class="color-track-slot" style:--track={channel.gradient}>
-								<input
-									type="range"
-									class="color-track"
-									min="0"
-									max={channel.max}
-									step="1"
-									value={Math.round(channel.value)}
-									aria-label={channel.name}
-									oninput={(e) => update(channel.set(Number(e.currentTarget.value)))}
-									onchange={() => writer.flush()}
-								/>
-							</span>
-							<EditableValue
-								label={channel.name}
-								display="{Math.round(channel.value)}{channel.unit}"
-								editText={String(Math.round(channel.value))}
-								oncommit={(text) => commitChannel(channel, text)}
-							/>
-						</div>
-					{/each}
-				{/if}
-			</div>
+			<label class="color-picker-text">
+				<span aria-hidden="true">Hex</span>
+				<input
+					class="color-picker-hex"
+					class:invalid={hexError !== undefined}
+					type="text"
+					aria-label="Hex"
+					aria-invalid={hexError !== undefined}
+					title={hexError ?? 'A color: hex, rgb(), hsl(), hwb(), oklab() or oklch()'}
+					value={current}
+					spellcheck="false"
+					autocomplete="off"
+					oninput={() => (hexError = undefined)}
+					onkeydown={handleColorTextKeydown}
+					onchange={(e) => commitColorText(e.currentTarget)}
+				/>
+			</label>
 		</div>
 	</div>
 </div>

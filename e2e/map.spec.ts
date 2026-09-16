@@ -62,11 +62,11 @@ test('sky color follows the water color until it is set', async ({ page }) => {
 	await expect(skyColor.locator('input.color-text')).toHaveValue('#BFD9F2');
 
 	await setColor(skyColor.locator('input.color-text'), '#ff0000');
-	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('#FF0000');
+	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('rgb(255,0,0)');
 	await expect.poll(() => hashConfig(page)).toEqual({ sky: { skyColor: '#FF0000' } });
 
 	await skyColor.locator('button.reset').click();
-	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('#BFD9F2');
+	await expect.poll(async () => (await style(page)).sky?.['sky-color']).toBe('rgb(191,217,242)');
 	await expect.poll(() => hashConfig(page)).toEqual({});
 });
 
@@ -89,7 +89,7 @@ test('sun', async ({ page }) => {
 	await setRange(row(map, 'Intensity').locator('input[type="range"]'), 80);
 	await expect
 		.poll(async () => (await style(page)).light)
-		.toMatchObject({ position: [1.15, 90, 30], color: '#ffffff', intensity: 0.8 });
+		.toMatchObject({ position: [1.15, 90, 30], color: 'rgb(255,255,255)', intensity: 0.8 });
 	await expect.poll(() => hashConfig(page)).toEqual({ sun: { direction: 90, intensity: 0.8 } });
 
 	await row(map, 'Intensity').locator('button.reset').click();

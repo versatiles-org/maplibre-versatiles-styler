@@ -14,10 +14,7 @@ const SIZES = [
 ];
 
 /** Elements that stick out on purpose. */
-const ALLOWED = [
-	// centered on the chosen point, so it overhangs the area at its edges
-	'.color-area-thumb',
-];
+const ALLOWED: string[] = [];
 
 /**
  * Layout problems in the sidebar and the popups:
@@ -324,12 +321,13 @@ for (const size of SIZES) {
 			await colors.locator('button.color-swatch').first().click();
 			const dialog = page.getByRole('dialog', { name: /^Color for/ });
 			await expect(dialog).toBeVisible();
-			for (const tab of ['RGB', 'HSL', 'Hex']) {
-				await dialog.getByRole('tab', { name: tab }).click();
-				expect(await layoutProblems(page), tab).toEqual([]);
+			const space = dialog.getByRole('combobox', { name: 'Color space' });
+			for (const key of ['srgb', 'hsl', 'hwb', 'hsv', 'oklab', 'oklch']) {
+				await space.selectOption(key);
+				expect(await layoutProblems(page), key).toEqual([]);
 			}
 			// a channel value while it is typed
-			await dialog.getByRole('tab', { name: 'HSL' }).click();
+			await space.selectOption('hsl');
 			await dialog.getByRole('button', { name: /^Saturation: .* Enter a value$/ }).click();
 			await expect(dialog.getByRole('textbox', { name: 'Saturation' })).toBeFocused();
 			expect(await layoutProblems(page), 'editing a value').toEqual([]);
