@@ -28,6 +28,7 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 	);
 
 	const expectedTitles = [
+		'Tile server',
 		'Base style',
 		'Layers',
 		'Color adjustments',
@@ -36,7 +37,6 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 		'Icons',
 		'Terrain & hillshade',
 		'Map',
-		'Tile server',
 	];
 	await expect(titles).toHaveCount(expectedTitles.length);
 	for (let i = 0; i < expectedTitles.length; i++) {
@@ -55,6 +55,8 @@ test('sections are grouped under headings', async ({ page }) => {
 			)
 		);
 	expect(outline).toEqual([
+		'# Setup',
+		'Tile server',
 		'# Style',
 		'Base style',
 		'# Content',
@@ -67,8 +69,6 @@ test('sections are grouped under headings', async ({ page }) => {
 		'# Scene',
 		'Terrain & hillshade',
 		'Map',
-		'# Setup',
-		'Tile server',
 	]);
 });
 

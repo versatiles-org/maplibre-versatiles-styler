@@ -373,6 +373,19 @@
 		{#if status}
 			<p class="styler-status" role="status">{status}</p>
 		{/if}
+		<h4 class="section-group">Setup</h4>
+		<SidebarSection
+			title="Tile server"
+			value={originHost}
+			description="The server the tiles, fonts and sprites come from."
+		>
+			<div class="entry text-container">
+				<label for="{uid}-origin">Origin</label>
+				<div class="input">
+					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
+				</div>
+			</div>
+		</SidebarSection>
 		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
 			{#if themes.length > 0}
@@ -439,18 +452,5 @@
 				{languages}
 			/>
 		{/if}
-		<h4 class="section-group">Setup</h4>
-		<SidebarSection
-			title="Tile server"
-			value={originHost}
-			description="The server the tiles, fonts and sprites come from."
-		>
-			<div class="entry text-container">
-				<label for="{uid}-origin">Origin</label>
-				<div class="input">
-					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
-				</div>
-			</div>
-		</SidebarSection>
 	</div>
 {/if}

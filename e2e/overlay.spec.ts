@@ -44,6 +44,7 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 		'.maplibregl-versatiles-styler .maplibregl-pane summary .section-title'
 	);
 	await expect(titles).toHaveText([
+		'Tile server',
 		'Base style',
 		'Satellite imagery',
 		'Overlay',
@@ -54,7 +55,6 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 		'Overlay icons',
 		'Terrain & hillshade',
 		'Map',
-		'Tile server',
 	]);
 
 	const overlay = await open(page, 'Overlay');
@@ -62,10 +62,10 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 	await expect(section(page, 'Overlay colors')).toHaveCount(0);
 	// without an overlay there is nothing to style: no "Appearance" group
 	await expect(page.locator('.maplibregl-pane h4.section-group')).toHaveText([
+		'Setup',
 		'Style',
 		'Content',
 		'Scene',
-		'Setup',
 	]);
 	await expect.poll(() => layer(page, 'label-place-city')).toBeUndefined();
 	await expect.poll(() => hashConfig(page)).toEqual({ osmOverlay: false });
