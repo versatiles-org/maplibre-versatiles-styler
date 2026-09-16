@@ -68,7 +68,7 @@ function row(page: Page, scope: ReturnType<typeof section>, label: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-pane button.font-button', {
 		state: 'attached',
 		timeout: 20_000,

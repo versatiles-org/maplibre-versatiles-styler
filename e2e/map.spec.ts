@@ -34,7 +34,7 @@ async function setColor(input: Locator, value: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 	await section(page, 'Map').locator('summary').click();
 });

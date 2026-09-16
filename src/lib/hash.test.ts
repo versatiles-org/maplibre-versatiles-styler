@@ -215,6 +215,102 @@ describe('HashManager', () => {
 		});
 	});
 
+	describe('the panel state', () => {
+		function withPanel(defaultOpen = false) {
+			const onChange = vi.fn();
+			const hm = new HashManager(createMockMap(), vi.fn(), { defaultOpen, onChange });
+			return { hm, onChange };
+		}
+
+		it('reads "open" and "closed" from the hash, and nothing else', () => {
+			const cases: [string, boolean | undefined][] = [
+				['#panel=open', true],
+				['#panel=closed', false],
+				['#panel=yes', undefined],
+				['#map=10/51.5/-0.12', undefined],
+				['', undefined],
+			];
+			for (const [hash, expected] of cases) {
+				window.location.hash = hash;
+				const { hm } = withPanel();
+				expect(hm.initialize().panelOpen, hash).toBe(expected);
+				hm.destroy();
+			}
+		});
+
+		it('writes the state into the hash once it differs from the default', () => {
+			const { hm } = withPanel(false);
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12');
+
+			replaceStateSpy.mockClear();
+			hm.setPanelOpen(true);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12&panel=open');
+
+			replaceStateSpy.mockClear();
+			hm.setPanelOpen(false);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12');
+		});
+
+		it('writes "closed" for a styler that opens by default', () => {
+			const { hm } = withPanel(true);
+			hm.initialize();
+			hm.setPanelOpen(false);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12&panel=closed');
+		});
+
+		it('drops a "panel" that says what the default says anyway', () => {
+			window.location.hash = '#panel=closed';
+			const { hm } = withPanel(false);
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12');
+		});
+
+		it('says nothing about the panel when the styler does not ask for it', () => {
+			const hm = new HashManager(createMockMap(), vi.fn());
+			hm.initialize();
+			hm.setPanelOpen(true);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12');
+		});
+
+		it('skips the update when the state does not change', () => {
+			const { hm } = withPanel(false);
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+			replaceStateSpy.mockClear();
+
+			hm.setPanelOpen(false);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy).not.toHaveBeenCalled();
+		});
+
+		it('reports a panel opened in the hash, back to the default too', () => {
+			const { hm, onChange } = withPanel(false);
+			hm.initialize();
+			vi.advanceTimersByTime(300);
+
+			window.location.hash = '#map=10/51.5/-0.12&panel=open';
+			window.dispatchEvent(new HashChangeEvent('hashchange'));
+			expect(onChange).toHaveBeenCalledWith(true);
+
+			onChange.mockClear();
+			window.location.hash = '#map=10/51.5/-0.12';
+			window.dispatchEvent(new HashChangeEvent('hashchange'));
+			expect(onChange).toHaveBeenCalledWith(false);
+
+			onChange.mockClear();
+			window.location.hash = '#map=10/51.5/-0.12&style=gray';
+			window.dispatchEvent(new HashChangeEvent('hashchange'));
+			expect(onChange).not.toHaveBeenCalled();
+		});
+	});
+
 	describe('setStyleKey', () => {
 		it('updates hash with new style key', () => {
 			const map = createMockMap();

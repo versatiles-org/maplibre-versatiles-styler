@@ -49,7 +49,7 @@ function encodeConfig(config: unknown): string {
 test.describe('startup', () => {
 	test('sets the style exactly once before the map is idle', async ({ page }) => {
 		await recordSetStyle(page);
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		expect(await setStyleCallsUntilIdle(page)).toEqual(['versatiles-colorful']);
 	});
 
@@ -62,7 +62,7 @@ test.describe('startup', () => {
 			if (/tiles\.json|index\.json/.test(path)) requested.push(path);
 		});
 		await recordSetStyle(page);
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		await setStyleCallsUntilIdle(page);
 		expect(requested.sort()).toEqual([
 			'/tiles/elevation/tiles.json',
@@ -73,13 +73,15 @@ test.describe('startup', () => {
 
 	test('opens a satellite link without switching style on the way', async ({ page }) => {
 		await recordSetStyle(page);
-		await page.goto('/#map=5/50/10&style=satellite');
+		await page.goto('/#map=5/50/10&style=satellite&panel=open');
 		expect(await setStyleCallsUntilIdle(page)).toEqual(['versatiles-satellite']);
 	});
 
 	test('opens a link with terrain in one go', async ({ page }) => {
 		await recordSetStyle(page);
-		await page.goto(`/#map=5/50/10&config=${encodeConfig({ features: { terrain: true } })}`);
+		await page.goto(
+			`/#map=5/50/10&config=${encodeConfig({ features: { terrain: true } })}&panel=open`
+		);
 		expect(await setStyleCallsUntilIdle(page)).toEqual(['versatiles-colorful']);
 		const style = await getMapStyle(page);
 		expect(style).toHaveProperty('terrain');
@@ -87,21 +89,23 @@ test.describe('startup', () => {
 
 	test('maps a v5 style key to its theme', async ({ page }) => {
 		await recordSetStyle(page);
-		await page.goto('/#map=5/50/10&style=eclipse');
+		await page.goto('/#map=5/50/10&style=eclipse&panel=open');
 		expect(await setStyleCallsUntilIdle(page)).toEqual(['versatiles-colorful-dark']);
 		await expect(page).toHaveURL(/style=colorful-dark/);
 	});
 
 	test('falls back to the theme defaults for a v5 config', async ({ page }) => {
 		await recordSetStyle(page);
-		await page.goto(`/#map=5/50/10&style=graybeard&config=${encodeConfig({ textScale: 2 })}`);
+		await page.goto(
+			`/#map=5/50/10&style=graybeard&config=${encodeConfig({ textScale: 2 })}&panel=open`
+		);
 		expect(await setStyleCallsUntilIdle(page)).toEqual(['versatiles-gray']);
 		await expect(page).toHaveURL(/style=gray(&|$)/);
 		await expect(page).not.toHaveURL(/config=/);
 	});
 
 	test('keeps options in the hash across a reload', async ({ page }) => {
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 		const recolorDetails = page.locator(
 			'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'

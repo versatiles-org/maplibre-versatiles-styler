@@ -29,7 +29,7 @@ async function type(page: Page, scope: Locator, label: string, text: string) {
 }
 
 test('no section shows a reset button while nothing is changed', async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await expect(section(page, 'Map')).toBeAttached();
 	expect(await changedSections(page)).toEqual([]);
 });
@@ -37,7 +37,7 @@ test('no section shows a reset button while nothing is changed', async ({ page }
 test('a change shows the reset button of its section only; resetting hides it', async ({
 	page,
 }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	const labels = section(page, 'Labels');
 	await labels.locator('summary').click();
 	await type(page, labels, 'Size', '150');
@@ -59,7 +59,7 @@ test('a change shows the reset button of its section only; resetting hides it', 
 });
 
 test('setting a value back by hand hides the reset button too', async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	const map = section(page, 'Map');
 	await map.locator('summary').click();
 	await row(map, 'Projection').locator('select').selectOption('mercator');
@@ -69,7 +69,7 @@ test('setting a value back by hand hides the reset button too', async ({ page })
 });
 
 test('satellite: the overlay sections report their own changes', async ({ page }) => {
-	await page.goto('/#style=satellite');
+	await page.goto('/#style=satellite&panel=open');
 	await expect(section(page, 'Overlay colors')).toBeAttached();
 	expect(await changedSections(page)).toEqual([]);
 

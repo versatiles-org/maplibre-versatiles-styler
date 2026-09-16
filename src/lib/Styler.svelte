@@ -284,13 +284,20 @@
 	let hashManager: HashManager | undefined;
 	untrack(() => {
 		if (config.hash !== false) {
-			hashManager = new HashManager(map, (key, cfg) => setBaseStyle(key, cfg));
-			const { styleKey, config: hashConfig } = hashManager.initialize();
+			hashManager = new HashManager(map, (key, cfg) => setBaseStyle(key, cfg), {
+				defaultOpen: config.open ?? false,
+				onChange: (open) => (paneOpen = open),
+			});
+			const { styleKey, config: hashConfig, panelOpen } = hashManager.initialize();
+			if (panelOpen !== undefined) paneOpen = panelOpen;
 			setBaseStyle(styleKey, hashConfig);
 		} else {
 			setBaseStyle(DEFAULT_STYLE_KEY);
 		}
 	});
+
+	// Opening and closing the panel is part of the shared state: a link shows the map as it was left.
+	$effect(() => hashManager?.setPanelOpen(paneOpen));
 
 	onDestroy(() => {
 		hashManager?.destroy();

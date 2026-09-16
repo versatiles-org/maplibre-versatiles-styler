@@ -23,7 +23,7 @@ async function landForestOpacity(page: import('@playwright/test').Page) {
 test.describe('landcover detection', () => {
 	test('shows the fills from zoom 0 when the tiles carry landcover', async ({ page }) => {
 		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(0) }));
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 
 		// No zoom ramp: the fill is there from the lowest zoom on.
@@ -33,7 +33,7 @@ test.describe('landcover detection', () => {
 	test('carries the detected flag into the exported style code', async ({ context, page }) => {
 		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(0) }));
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
 
@@ -46,7 +46,7 @@ test.describe('landcover detection', () => {
 
 	test('keeps the plain Shortbread zoom ramps when the tiles do not', async ({ page }) => {
 		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(10) }));
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 
 		await expect

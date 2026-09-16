@@ -266,7 +266,7 @@ for (const size of SIZES) {
 		});
 
 		test('sidebar with every section open', async ({ page }) => {
-			await page.goto('/');
+			await page.goto('/#panel=open');
 			await openAllSections(page);
 			// changes add "•" marks and reset buttons
 			const labels = labelsSection(page);
@@ -282,7 +282,7 @@ for (const size of SIZES) {
 		});
 
 		test('satellite sidebar with every section open', async ({ page }) => {
-			await page.goto('/#map=5/50/10&style=satellite');
+			await page.goto('/#map=5/50/10&style=satellite&panel=open');
 			await openAllSections(page);
 			await page.waitForSelector('.maplibregl-pane button.font-button', { state: 'attached' });
 			await openAllSections(page);
@@ -292,7 +292,7 @@ for (const size of SIZES) {
 		test('font picker with the script filter, closest fonts, styles and a search', async ({
 			page,
 		}) => {
-			await page.goto('/');
+			await page.goto('/#panel=open');
 			await labelsSection(page).locator('summary').click();
 			await labelsSection(page).locator('button.font-button').click();
 			const dialog = page.getByRole('dialog', { name: 'Font for All labels' });
@@ -313,7 +313,7 @@ for (const size of SIZES) {
 		});
 
 		test('color picker on every tab', async ({ page }) => {
-			await page.goto('/');
+			await page.goto('/#panel=open');
 			const colors = page.locator(
 				'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
 			);
@@ -336,7 +336,7 @@ for (const size of SIZES) {
 }
 
 test('the layout check finds content that sticks out', async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await openAllSections(page);
 	await page.addStyleTag({
 		content: `
@@ -385,7 +385,7 @@ test.describe('nothing scrolls that is not meant to', () => {
 	const SHORT = [...ALWAYS, 'div.font-picker-filter', 'div.color-picker-body'];
 
 	async function openEverything(page: Page) {
-		await page.goto('/');
+		await page.goto('/#panel=open');
 		await page.waitForSelector('.maplibregl-pane button.font-button', {
 			state: 'attached',
 			timeout: 20_000,

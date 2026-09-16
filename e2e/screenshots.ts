@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 
 test('capture sidebar screenshot', async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 
 	// Open all <details> sections

@@ -35,7 +35,7 @@ async function open(page: Page, title: string): Promise<Locator> {
 }
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/#map=5/50/10&style=satellite');
+	await page.goto('/#map=5/50/10&style=satellite&panel=open');
 	await expect.poll(async () => (await getMapStyle(page)).name).toBe('versatiles-satellite');
 });
 

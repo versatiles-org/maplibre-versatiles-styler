@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { getMapStyle } from './helpers';
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.locator('.maplibregl-versatiles-styler').waitFor({ state: 'attached' });
 });
 

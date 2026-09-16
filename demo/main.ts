@@ -17,7 +17,6 @@ window.addEventListener('DOMContentLoaded', () => {
 	map.addControl(
 		new VersaTilesStylerControl({
 			origin: 'https://tiles.versatiles.org',
-			open: true,
 		}),
 		'top-left'
 	);

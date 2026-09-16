@@ -21,7 +21,7 @@ async function hashConfig(page: import('@playwright/test').Page): Promise<unknow
 }
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 });
 

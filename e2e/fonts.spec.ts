@@ -85,7 +85,7 @@ async function layer(page: Page, layerId: string) {
 }
 
 async function openFonts(page: Page) {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await labelsSection(page).locator('summary').click();
 	await expect(fontButton(page)).toBeAttached({ timeout: 10_000 });
 }
@@ -447,7 +447,7 @@ test.describe('script filter', () => {
 	test('"Scripts in view" selects the scripts of the labels on the map', async ({ page }) => {
 		await useCoverageFixture(page);
 		// Greece, Bulgaria, North Macedonia, Turkey: Greek, Cyrillic and Latin names
-		await page.goto('/#map=6/41.5/25');
+		await page.goto('/#map=6/41.5/25&panel=open');
 		await labelsSection(page).locator('summary').click();
 		await expect(fontButton(page)).toBeAttached({ timeout: 10_000 });
 		await page.waitForFunction(() =>
@@ -465,7 +465,7 @@ test.describe('script filter', () => {
 
 	test('"Scripts in view" reads only the labels the font is for', async ({ page }) => {
 		await useCoverageFixture(page);
-		await page.goto('/#map=6/41.5/25');
+		await page.goto('/#map=6/41.5/25&panel=open');
 		await labelsSection(page).locator('summary').click();
 		await expect(fontButton(page)).toBeAttached({ timeout: 10_000 });
 		await page.waitForFunction(() =>
@@ -558,7 +558,7 @@ test('offers a text field when the server publishes no face list', async ({ page
 	await page.route('**/assets/glyphs/font_families.json', (route) =>
 		route.fulfill({ status: 404, body: 'Not Found' })
 	);
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await labelsSection(page).locator('summary').click();
 
 	const font = row(page, 'Font').locator('input[type="text"]');

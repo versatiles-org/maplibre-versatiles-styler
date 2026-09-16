@@ -106,7 +106,7 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 | Option   | Type      | Default                  | Description                                                                  |
 | -------- | --------- | ------------------------ | ---------------------------------------------------------------------------- |
 | `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.       |
-| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially                                        |
+| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise    |
 | `hash`   | `boolean` | `true`                   | Keep the map view, the style and its options in the URL hash fragment        |
 
 ---
@@ -133,11 +133,14 @@ The three TileJSON files are loaded in parallel when the control is added, and t
 With `hash: true` the styler keeps its state in the URL:
 
 ```
-#map=<zoom>/<lat>/<lng>[/<bearing>/<pitch>]&style=<theme or satellite>&config=<options>
+#map=<zoom>/<lat>/<lng>[/<bearing>/<pitch>]&panel=<open or closed>&style=<theme or satellite>&config=<options>
 ```
 
 `config` is the base64url-encoded JSON of the options that differ from the theme's defaults — the same
 options `@versatiles/style` takes, e.g. `{"layers":{"labels":false}}`.
+
+`panel` says whether the sidebar is open; it appears only when it differs from the `open` option, so a
+link shows the sidebar as it was left.
 
 ---
 

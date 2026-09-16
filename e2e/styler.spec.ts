@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 });
 
@@ -14,12 +14,47 @@ test('toggle button opens and closes the pane', async ({ page }) => {
 	const toggle = page.locator('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon');
 	const pane = page.locator('.maplibregl-versatiles-styler .maplibregl-pane');
 
-	// Demo starts with open: true, so pane is already present
+	// The tests start at "#panel=open", so the pane is already there
 	await expect(pane).toBeAttached();
 	await toggle.click();
 	await expect(pane).not.toBeAttached();
 	await toggle.click();
 	await expect(pane).toBeAttached();
+});
+
+test.describe('the pane is closed until the URL says otherwise', () => {
+	const pane = (page: Page) => page.locator('.maplibregl-versatiles-styler .maplibregl-pane');
+
+	test('a plain link opens the map without the pane', async ({ page }) => {
+		await page.goto('/#map=5/50/10');
+		await page.waitForSelector('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon');
+		await expect(pane(page)).not.toBeAttached();
+		await expect(page).not.toHaveURL(/panel=/);
+	});
+
+	test('"panel=closed" is dropped again, "panel=open" kept', async ({ page }) => {
+		await page.goto('/#map=5/50/10&panel=closed');
+		await page.waitForSelector('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon');
+		await expect(pane(page)).not.toBeAttached();
+		// closed is the default, so the link comes back without it
+		await expect(page).not.toHaveURL(/panel=/);
+
+		await page.locator('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon').click();
+		await expect(pane(page)).toBeAttached();
+		await expect(page).toHaveURL(/panel=open/);
+	});
+
+	test('the URL follows the pane, and the pane follows the URL', async ({ page }) => {
+		await page.goto('/#map=5/50/10&panel=open');
+		await expect(pane(page)).toBeAttached();
+
+		await page.getByRole('button', { name: 'Close the style editor' }).click();
+		await expect(pane(page)).not.toBeAttached();
+		await expect(page).not.toHaveURL(/panel=/);
+
+		await page.evaluate(() => (location.hash = '#map=5/50/10&panel=open'));
+		await expect(pane(page)).toBeAttached();
+	});
 });
 
 test('all sidebar sections are present with correct titles', async ({ page }) => {

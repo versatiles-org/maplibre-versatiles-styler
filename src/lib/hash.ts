@@ -26,11 +26,19 @@ function decodeConfig(str: string): Record<string, unknown> | null {
 	}
 }
 
+/** How the styler's panel is told to the hash, and what it is when the hash says nothing. */
+export interface PanelHash {
+	defaultOpen: boolean;
+	onChange: (open: boolean) => void;
+}
+
 export class HashManager {
 	private map: MLGLMap;
 	private onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void;
+	private panel: PanelHash | undefined;
 	private currentStyleKey: StyleKey = DEFAULT_STYLE_KEY;
 	private currentConfigEncoded: string | null = null;
+	private currentPanelOpen = false;
 	private updating = false;
 	private throttleTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -39,20 +47,28 @@ export class HashManager {
 
 	constructor(
 		map: MLGLMap,
-		onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void
+		onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void,
+		panel?: PanelHash
 	) {
 		this.map = map;
 		this.onStyleChange = onStyleChange;
+		this.panel = panel;
 		this.boundOnMoveEnd = () => this.onMoveEnd();
 		this.boundOnHashChange = () => this.onHashChange();
 	}
 
-	initialize(): { styleKey: StyleKey; config: Record<string, unknown> | null } {
+	initialize(): {
+		styleKey: StyleKey;
+		config: Record<string, unknown> | null;
+		/** Whether the panel is open, when the hash says so. */
+		panelOpen: boolean | undefined;
+	} {
 		this.tryDisableMapHash();
 
-		const { mapView, styleKey, config } = this.parseHash();
+		const { mapView, styleKey, config, panelOpen } = this.parseHash();
 		this.currentStyleKey = styleKey;
 		this.currentConfigEncoded = config ? encodeConfig(config) : null;
+		this.currentPanelOpen = panelOpen ?? this.panel?.defaultOpen ?? false;
 
 		if (mapView) {
 			this.map.jumpTo({
@@ -73,7 +89,14 @@ export class HashManager {
 			this.map.once('load', () => this.updateHash());
 		}
 
-		return { styleKey: this.currentStyleKey, config };
+		return { styleKey: this.currentStyleKey, config, panelOpen };
+	}
+
+	/** The panel was opened or closed: the hash carries it, unless it is the styler's own default. */
+	setPanelOpen(open: boolean): void {
+		if (open === this.currentPanelOpen) return;
+		this.currentPanelOpen = open;
+		this.updateHash();
 	}
 
 	setStyleKey(key: StyleKey): void {
@@ -102,9 +125,11 @@ export class HashManager {
 		mapView: MapView | null;
 		styleKey: StyleKey;
 		config: Record<string, unknown> | null;
+		panelOpen: boolean | undefined;
 	} {
 		const hash = window.location.hash.replace(/^#/, '');
-		if (!hash) return { mapView: null, styleKey: DEFAULT_STYLE_KEY, config: null };
+		if (!hash)
+			return { mapView: null, styleKey: DEFAULT_STYLE_KEY, config: null, panelOpen: undefined };
 
 		const params = new Map<string, string>();
 		for (const segment of hash.split('&')) {
@@ -138,7 +163,10 @@ export class HashManager {
 			config = decodeConfig(configStr);
 		}
 
-		return { mapView, styleKey, config };
+		const panelStr = params.get('panel');
+		const panelOpen = panelStr === 'open' ? true : panelStr === 'closed' ? false : undefined;
+
+		return { mapView, styleKey, config, panelOpen };
 	}
 
 	private buildHash(): string {
@@ -161,6 +189,9 @@ export class HashManager {
 		}
 
 		const parts = [`map=${mapValue}`];
+		if (this.panel && this.currentPanelOpen !== this.panel.defaultOpen) {
+			parts.push(`panel=${this.currentPanelOpen ? 'open' : 'closed'}`);
+		}
 		if (this.currentStyleKey !== DEFAULT_STYLE_KEY) {
 			parts.push(`style=${this.currentStyleKey}`);
 		}
@@ -193,7 +224,7 @@ export class HashManager {
 		if (this.updating) return;
 		this.updating = true;
 
-		const { mapView, styleKey, config } = this.parseHash();
+		const { mapView, styleKey, config, panelOpen } = this.parseHash();
 
 		if (mapView) {
 			this.map.jumpTo({
@@ -202,6 +233,14 @@ export class HashManager {
 				bearing: mapView.bearing,
 				pitch: mapView.pitch,
 			});
+		}
+
+		if (this.panel) {
+			const open = panelOpen ?? this.panel.defaultOpen;
+			if (open !== this.currentPanelOpen) {
+				this.currentPanelOpen = open;
+				this.panel.onChange(open);
+			}
 		}
 
 		const configEncoded = config ? encodeConfig(config) : null;

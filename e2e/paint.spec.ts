@@ -8,7 +8,7 @@ import { colorAt, colorsAcross, distance, distinctColors, hex, saturation, shoot
 
 test.beforeEach(async ({ page }) => {
 	await page.setViewportSize({ width: 1280, height: 900 });
-	await page.goto('/#map=6/48/10');
+	await page.goto('/#map=6/48/10&panel=open');
 	await page.waitForSelector('.maplibregl-pane button.color-swatch', {
 		state: 'attached',
 		timeout: 30_000,

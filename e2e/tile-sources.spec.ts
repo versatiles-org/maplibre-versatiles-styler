@@ -12,7 +12,7 @@ async function withoutSources(page: Page, ...names: SourceName[]) {
 }
 
 async function open(page: Page) {
-	await page.goto('/');
+	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 }
 

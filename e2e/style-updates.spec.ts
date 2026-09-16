@@ -21,7 +21,7 @@ const VIEW = 'map=13/52.52/13.405';
 const CLIP = { x: 420, y: 100, width: 760, height: 520 };
 
 function hashFor(options: { style?: string; config?: object }): string {
-	const parts = [VIEW];
+	const parts = [VIEW, 'panel=open'];
 	if (options.style) parts.push(`style=${options.style}`);
 	if (options.config) {
 		parts.push(`config=${Buffer.from(JSON.stringify(options.config)).toString('base64url')}`);
@@ -86,7 +86,7 @@ async function diffWarnings(page: Page) {
 /** Loads the base view, then applies `hash` as a change to the running map. */
 async function edit(page: Page, hash: string) {
 	await record(page);
-	await page.goto('/' + `#${VIEW}`);
+	await page.goto('/' + `#${VIEW}&panel=open`);
 	await settle(page, 1);
 	await page.evaluate((h) => (location.hash = h), hash);
 	await settle(page, 2);
@@ -156,7 +156,7 @@ test.describe('style updates', () => {
 
 	test('a color edit is final in the first frames: no paint transition', async ({ page }) => {
 		await record(page);
-		await page.goto('/' + `#${VIEW}`);
+		await page.goto('/' + `#${VIEW}&panel=open`);
 		await settle(page, 1);
 		expect(
 			await page.evaluate(() => (window as unknown as UpdatesWindow)._map.getStyle().transition)
@@ -195,7 +195,7 @@ test.describe('style updates', () => {
 
 	test('a new origin is applied as a full reload', async ({ page }) => {
 		await record(page);
-		await page.goto('/' + `#${VIEW}`);
+		await page.goto('/' + `#${VIEW}&panel=open`);
 		await settle(page, 1);
 		const origin = page.locator(
 			'.maplibregl-versatiles-styler details:has(summary:has-text("Tile server"))'
