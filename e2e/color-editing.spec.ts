@@ -358,7 +358,7 @@ test.describe('color picker', () => {
 		await expect(field).toHaveValue(/^#F2/);
 		await dialog.getByRole('slider', { name: 'Alpha' }).fill('50');
 		await expect(field).toHaveValue(/80$/);
-		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50 %');
+		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50%');
 		await dialog.getByRole('button', { name: 'Close' }).click();
 
 		const recolor = page.locator(
@@ -435,7 +435,9 @@ test.describe('color picker', () => {
 
 		const red = dialog.getByRole('slider', { name: 'Red' });
 		await expect(red).toHaveValue('191');
-		expect(await red.getAttribute('style')).toContain('rgb(0, 217, 242), rgb(255, 217, 242)');
+		expect(await red.getAttribute('style')).toContain(
+			'--track: linear-gradient(to right, rgb(0 217 242), rgb(255 217 242))'
+		);
 		await red.fill('255');
 		await expect(field).toHaveValue('#FFD9F2');
 
@@ -480,7 +482,7 @@ test.describe('color picker', () => {
 		await hex.press('Enter');
 		await expect(hex).toHaveValue('#12345680');
 		await expect(field).toHaveValue('#12345680');
-		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50 %');
+		await expect(dialog.locator('.color-picker-slider output').last()).toHaveText('50%');
 
 		await hex.fill('#000');
 		await hex.press('Escape');

@@ -108,7 +108,7 @@
 			name: { h: 'Hue', s: 'Saturation', l: 'Lightness' }[key],
 			value: hsl[key],
 			max: key === 'h' ? 360 : 100,
-			unit: key === 'h' ? '°' : ' %',
+			unit: key === 'h' ? '°' : '%',
 			gradient: channelGradient(hsva, `hsl-${key}`),
 			set: (value: number) => {
 				lastHsl = { ...hsl, [key]: value, a: hsva.a };
@@ -305,7 +305,7 @@
 						oninput={(e) => update({ a: Number(e.currentTarget.value) / 100 })}
 						onchange={() => writer.flush()}
 					/>
-					<output aria-hidden="true">{Math.round(hsva.a * 100)} %</output>
+					<output aria-hidden="true">{Math.round(hsva.a * 100)}%</output>
 				</label>
 			{/if}
 			<div class="color-picker-tabs" role="tablist" aria-label="Color channels">
@@ -347,7 +347,7 @@
 							<input
 								type="range"
 								class="color-track"
-								style:background={channel.gradient}
+								style:--track={channel.gradient}
 								min="0"
 								max={channel.max}
 								step="1"

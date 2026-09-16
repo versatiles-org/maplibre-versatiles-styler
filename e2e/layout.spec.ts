@@ -88,9 +88,10 @@ function findLayoutProblems(allowed: string[]): string[] {
 			const rect = el.getBoundingClientRect();
 			if (isHidden(el, style, rect)) continue;
 
-			// Content larger than the element: cut off, spilling out, or scrolling sideways.
-			if (!isFormControl(el) && el.clientWidth > 0) {
-				const wider = el.scrollWidth > el.clientWidth + TOLERANCE;
+			// Content larger than the element: cut off, spilling out, or scrolling sideways. A text field
+			// scrolls its text sideways by design, but nothing should overflow a control vertically.
+			if (el.clientWidth > 0) {
+				const wider = !isFormControl(el) && el.scrollWidth > el.clientWidth + TOLERANCE;
 				const higher = el.scrollHeight > el.clientHeight + TOLERANCE;
 				const ellipsis = style.textOverflow === 'ellipsis';
 				if (wider && !ellipsis) {

@@ -1252,17 +1252,33 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				font-variant-numeric: tabular-nums;
 			}
 
+			// As high as its thumb, with the gradient of `--track` on the track itself: a background on the
+			// input would be as high as the input, and a 10px input would scroll its 14px thumb.
 			input.color-track {
 				appearance: none;
 				-webkit-appearance: none;
-				height: 10px;
+				height: 14px;
 				margin: 0;
-				border-radius: 5px;
-				box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.12);
+				background: transparent;
 				cursor: pointer;
+
+				&::-webkit-slider-runnable-track {
+					height: 10px;
+					border-radius: 5px;
+					background: var(--track, var(--line));
+					box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.12);
+				}
+
+				&::-moz-range-track {
+					height: 10px;
+					border-radius: 5px;
+					background: var(--track, var(--line));
+					box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.12);
+				}
 
 				&::-webkit-slider-thumb {
 					-webkit-appearance: none;
+					margin-top: -2px;
 					width: 14px;
 					height: 14px;
 					border-radius: 50%;
@@ -1293,7 +1309,7 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				}
 
 				&.color-track-hue {
-					background: linear-gradient(
+					--track: linear-gradient(
 						to right,
 						#f00 0%,
 						#ff0 16.67%,
@@ -1306,7 +1322,9 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				}
 
 				&.color-track-alpha {
-					@include checkerboard(linear-gradient(to right, transparent, var(--color-opaque)));
+					--track:
+						linear-gradient(to right, transparent, var(--color-opaque)),
+						repeating-conic-gradient(#c9ced6 0 25%, #fff 0 50%) 0 0 / 8px 8px;
 				}
 			}
 
