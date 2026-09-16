@@ -1239,7 +1239,9 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 		// A label, a slider and its value.
 		.color-picker-slider {
 			display: grid;
-			grid-template-columns: 3em 1fr 3em;
+			// `minmax(0, …)`, and `min-width` on the track: Firefox gives a range input an intrinsic
+			// width, which would push the value out of the row.
+			grid-template-columns: 3em minmax(0, 1fr) 3em;
 			align-items: center;
 			gap: 8px;
 			color: var(--muted);
@@ -1257,6 +1259,7 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			input.color-track {
 				appearance: none;
 				-webkit-appearance: none;
+				min-width: 0;
 				height: 14px;
 				margin: 0;
 				background: transparent;
@@ -1470,11 +1473,9 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			}
 		}
 
-		// In a short window the filter panel and the list share the height, and both scroll.
+		// Keeps its height as long as the window has room; only the list scrolls.
 		.font-picker-filter {
-			flex: 0 1 auto;
-			min-height: 3em;
-			overflow-y: auto;
+			flex: 0 0 auto;
 			margin: 0 12px 8px;
 			padding: 8px 10px;
 			border-radius: 8px;
@@ -1601,6 +1602,15 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				p {
 					margin: 4px 0 0 1em;
 				}
+			}
+		}
+
+		// In a short window the filter panel and the list share what there is, and both scroll.
+		@media (max-height: 620px) {
+			.font-picker-filter {
+				flex: 0 1 auto;
+				min-height: 3em;
+				overflow-y: auto;
 			}
 		}
 

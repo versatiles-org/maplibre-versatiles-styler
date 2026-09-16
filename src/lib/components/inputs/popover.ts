@@ -30,6 +30,7 @@ export interface PlacementOptions {
 	onclose: () => void;
 	/** Escape while the focus is in the popover; default `onclose`. Handlers that call `preventDefault` win. */
 	onescape?: () => void;
+	/** A cap of its own; by default a popover may use the window's height. */
 	maxHeight?: number;
 }
 
@@ -38,7 +39,7 @@ export interface PlacementOptions {
  * and closes it on a click elsewhere or on Escape.
  */
 export function placeBesidePane(options: PlacementOptions) {
-	const { anchor, onplace, onclose, onescape = onclose, maxHeight: limit = 520 } = options;
+	const { anchor, onplace, onclose, onescape = onclose, maxHeight: limit = Infinity } = options;
 	return (popup: HTMLElement) => {
 		const margin = 8;
 		const update = () => {
