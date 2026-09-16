@@ -189,6 +189,39 @@ function findLayoutProblems(allowed: string[]): string[] {
 	return [...problems];
 }
 
+/**
+ * Every element that can scroll because its content does not fit — `overflow: auto`, `scroll` or
+ * `hidden`. Only a few are meant to; everything else squeezes its content for no reason.
+ */
+function findScrollables(): string[] {
+	const found: string[] = [];
+	for (const root of document.querySelectorAll('.maplibregl-versatiles-styler')) {
+		for (const el of [root, ...root.querySelectorAll('*')]) {
+			const style = getComputedStyle(el);
+			if (style.display === 'none' || style.visibility === 'hidden') continue;
+			// a text field scrolls its own text, which is how text fields work
+			if (['input', 'select', 'textarea'].includes(el.tagName.toLowerCase())) continue;
+			const over = Math.max(el.scrollHeight - el.clientHeight, el.scrollWidth - el.clientWidth);
+			if (over <= 1) continue;
+			if (
+				![style.overflowX, style.overflowY].some((o) => ['auto', 'scroll', 'hidden'].includes(o))
+			) {
+				continue;
+			}
+			const classes = typeof el.className === 'string' ? el.className.trim().split(/\s+/) : [];
+			found.push(
+				`${el.tagName.toLowerCase()}${classes.map((c) => `.${c}`).join('')} (${over}px over)`
+			);
+		}
+	}
+	return [...new Set(found)];
+}
+
+async function scrollables(page: Page, allowed: string[]): Promise<string[]> {
+	const found = await page.evaluate(findScrollables);
+	return found.filter((entry) => !allowed.some((selector) => entry.startsWith(selector)));
+}
+
 async function layoutProblems(page: Page): Promise<string[]> {
 	return page.evaluate(findLayoutProblems, ALLOWED);
 }
@@ -342,4 +375,57 @@ test('the layout check finds content that sticks out', async ({ page }) => {
 	expect(
 		(await layoutProblems(page)).some((p) => /color-picker.* ends outside the window/.test(p))
 	).toBe(true);
+});
+
+test.describe('nothing scrolls that is not meant to', () => {
+	/** The sidebar always scrolls; the font list is a long list by nature. */
+	const ALWAYS = [
+		'div.maplibregl-ctrl.maplibregl-ctrl-group.maplibregl-pane',
+		'ul.font-picker-list',
+	];
+	/** In a short window the filter panel and the color picker share the height, and scroll. */
+	const SHORT = [...ALWAYS, 'div.font-picker-filter', 'div.color-picker-body'];
+
+	async function openEverything(page: Page) {
+		await page.goto('/');
+		await page.waitForSelector('.maplibregl-pane button.font-button', {
+			state: 'attached',
+			timeout: 20_000,
+		});
+		await openAllSections(page);
+		await labelsSection(page).locator('button.font-button').click();
+		const fonts = page.getByRole('dialog', { name: /^Font for/ });
+		await expect(fonts).toBeVisible();
+		await fonts.locator('button.font-picker-filter-button').click();
+		await fonts.locator('.font-picker-uncovered summary').click();
+		await page.waitForTimeout(500);
+		return fonts;
+	}
+
+	test('in a window with room, only the sidebar and the font list scroll', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 900 });
+		await useLongContent(page);
+		const fonts = await openEverything(page);
+		expect(await scrollables(page, ALWAYS)).toEqual([]);
+
+		// the first Escape closes the filter panel, the second the picker
+		await page.keyboard.press('Escape');
+		await page.keyboard.press('Escape');
+		await expect(fonts).toHaveCount(0);
+		// two rows are called Water: the water color and the water label color
+		const swatch = page.getByRole('button', { name: /^Water: #/ }).first();
+		await swatch.scrollIntoViewIfNeeded();
+		await swatch.click();
+		await expect(page.getByRole('dialog', { name: 'Color for Water' })).toBeVisible();
+		expect(await scrollables(page, ALWAYS)).toEqual([]);
+	});
+
+	test('in a short window the popups share the height, and nothing else scrolls', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 800, height: 380 });
+		await useLongContent(page);
+		await openEverything(page);
+		expect(await scrollables(page, SHORT)).toEqual([]);
+	});
 });

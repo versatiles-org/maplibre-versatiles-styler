@@ -66,8 +66,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        # Chromium runs the whole suite; Firefox and WebKit the layout and stability checks.
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run E2E tests
         run: npm run test:e2e
