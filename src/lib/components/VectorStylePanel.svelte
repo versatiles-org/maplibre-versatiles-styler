@@ -84,20 +84,20 @@
 </SidebarSection>
 <h4 class="section-group">Appearance</h4>
 <SidebarSection
-	title="Color adjustments"
-	description="Transformations applied to every color in the style."
-	onReset={resetColorAdjustments}
-	changes={changes('recolor')}
->
-	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} />
-</SidebarSection>
-<SidebarSection
 	title="Individual colors"
 	description="Override the color of individual map features."
 	onReset={resetIndividualColors}
 	changes={changes('colors')}
 >
 	<ColorOptions bind:colors={options.colors} defaults={defaults.colors} />
+</SidebarSection>
+<SidebarSection
+	title="Color adjustments"
+	description="Transformations applied to every color in the style."
+	onReset={resetColorAdjustments}
+	changes={changes('recolor')}
+>
+	<RecolorOptions bind:recolor={options.recolor} defaults={defaults.recolor} />
 </SidebarSection>
 <SidebarSection
 	title="Labels"
