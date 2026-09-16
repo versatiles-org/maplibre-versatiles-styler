@@ -278,33 +278,37 @@
 			</div>
 			<label class="color-picker-slider">
 				<span aria-hidden="true">Hue</span>
-				<input
-					type="range"
-					class="color-track color-track-hue"
-					aria-label="Hue"
-					min="0"
-					max="360"
-					step="1"
-					value={Math.round(hsva.h)}
-					oninput={(e) => update({ h: Number(e.currentTarget.value) })}
-					onchange={() => writer.flush()}
-				/>
+				<span class="color-track-slot color-track-hue">
+					<input
+						type="range"
+						class="color-track"
+						aria-label="Hue"
+						min="0"
+						max="360"
+						step="1"
+						value={Math.round(hsva.h)}
+						oninput={(e) => update({ h: Number(e.currentTarget.value) })}
+						onchange={() => writer.flush()}
+					/>
+				</span>
 				<output aria-hidden="true">{Math.round(hsva.h)}°</output>
 			</label>
 			{#if alpha}
 				<label class="color-picker-slider">
 					<span aria-hidden="true">Alpha</span>
-					<input
-						type="range"
-						class="color-track color-track-alpha"
-						aria-label="Alpha"
-						min="0"
-						max="100"
-						step="1"
-						value={Math.round(hsva.a * 100)}
-						oninput={(e) => update({ a: Number(e.currentTarget.value) / 100 })}
-						onchange={() => writer.flush()}
-					/>
+					<span class="color-track-slot color-track-alpha">
+						<input
+							type="range"
+							class="color-track"
+							aria-label="Alpha"
+							min="0"
+							max="100"
+							step="1"
+							value={Math.round(hsva.a * 100)}
+							oninput={(e) => update({ a: Number(e.currentTarget.value) / 100 })}
+							onchange={() => writer.flush()}
+						/>
+					</span>
 					<output aria-hidden="true">{Math.round(hsva.a * 100)}%</output>
 				</label>
 			{/if}
@@ -344,18 +348,19 @@
 					{#each channels as channel (channel.key)}
 						<div class="color-picker-slider">
 							<span aria-hidden="true">{channel.label}</span>
-							<input
-								type="range"
-								class="color-track"
-								style:--track={channel.gradient}
-								min="0"
-								max={channel.max}
-								step="1"
-								value={Math.round(channel.value)}
-								aria-label={channel.name}
-								oninput={(e) => update(channel.set(Number(e.currentTarget.value)))}
-								onchange={() => writer.flush()}
-							/>
+							<span class="color-track-slot" style:--track={channel.gradient}>
+								<input
+									type="range"
+									class="color-track"
+									min="0"
+									max={channel.max}
+									step="1"
+									value={Math.round(channel.value)}
+									aria-label={channel.name}
+									oninput={(e) => update(channel.set(Number(e.currentTarget.value)))}
+									onchange={() => writer.flush()}
+								/>
+							</span>
 							<EditableValue
 								label={channel.name}
 								display="{Math.round(channel.value)}{channel.unit}"
