@@ -26,7 +26,11 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Terrain and hillshade, projection (globe, Mercator), sky and sun
 - Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, labels, icons, layers)
 - The whole configuration is kept in the URL hash, so a styled map can be shared as a link
-- Panel header with Reset all (undoable) and Export: `style.json` download or `@versatiles/style` code to the clipboard
+- Export dialog with a preview and syntax highlighting: `style.json` (readable or minified), the
+  `@versatiles/style` code for an npm project or a plain HTML page, and the link that reopens the map
+- Import dialog: paste or drop a styler link, a `style.json`, its address, or an options object —
+  warnings are shown before anything is applied
+- Panel header with Reset all (undoable)
 - Dark panel and pickers on dark themes and satellite
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
@@ -128,6 +132,35 @@ The three TileJSON files are loaded in parallel when the control is added, and t
 
 ---
 
+## Export and import
+
+**Export** is the button in the panel header. It opens a dialog with three tabs:
+
+| Tab          | What it gives you                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| `style.json` | The finished style as a file, readable or minified. Sources are inlined, so it needs nothing else. |
+| Code         | The `@versatiles/style` snippet that builds this style — for an npm project, or a plain HTML page. |
+| Link         | The current URL, which reopens the map exactly as it is. Only with `hash: true`.                   |
+
+An exported `style.json` records the options it was built from under `metadata["versatiles:options"]`,
+so importing the file again restores those settings exactly rather than approximating them.
+
+**Import** is in the sidebar's *Setup* group. It takes, and tells apart on its own:
+
+- a link from Export, or the bare `#…` hash of one,
+- a `style.json` — pasted, dropped as a file, or as a URL,
+- a `@versatiles/style` options object, e.g. `{"theme": "gray", "text": {"scale": 1.5}}`.
+
+A style this styler wrote comes back exactly. Any other MapLibre style — built for OpenMapTiles,
+Protomaps or Shortbread tiles — is reconstructed by `@versatiles/style/migrate`, which works out what the
+style draws and finds the closest options. That is a close copy rather than the original, and whatever
+could not be carried over is listed before you apply it. Nothing is applied until you press **Apply**.
+
+Options that are not valid are refused with the library's own explanation, which names the offending key,
+lists the keys valid in its place, and translates v5 names into their v6 replacements.
+
+---
+
 ## URL hash
 
 With `hash: true` the styler keeps its state in the URL:
@@ -151,5 +184,7 @@ Version 2 is built on `@versatiles/style` v6:
 - The v5 styles `eclipse`, `graybeard`, `neutrino` and `shadow` are replaced by themes. Links that use them
   open the closest theme (`colorful-dark`, `gray`, `muted`, `gray-dark`).
 - Options stored in older links use v5 option names; they are ignored and the theme's defaults are shown.
+  Pasting such options into **Import** explains each renamed key instead of ignoring it.
 - The copied code uses the v6 API: `await inlineSources(osm({ theme, … }))`.
+- Export moved from a dropdown in the header into a dialog, and gained an import counterpart.
 - `/tiles/index.json` is no longer read; sources are detected from their TileJSON files (see above).

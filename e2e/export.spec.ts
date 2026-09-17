@@ -1,19 +1,51 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { getMapStyle } from './helpers';
+
+const dialog = (page: Page) => page.getByRole('dialog', { name: 'Export style' });
+
+/** Opens the export dialog, once the style it shows exists. */
+async function openExport(page: Page) {
+	// The style exists once the TileJSONs are in; until then there is nothing to export.
+	await getMapStyle(page);
+	await page.getByRole('button', { name: 'Export' }).click();
+	await expect(dialog(page)).toBeVisible();
+	return dialog(page);
+}
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/#panel=open');
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 });
 
-test('download triggers with a self-contained style', async ({ page }) => {
-	// The style exists once the TileJSONs are in; until then the button has nothing to download.
-	await getMapStyle(page);
+test('opens a dialog with a tab for each way of exporting', async ({ page }) => {
+	const panel = await openExport(page);
+
+	await expect(panel.getByRole('tab', { name: 'style.json' })).toHaveAttribute(
+		'aria-selected',
+		'true'
+	);
+	await expect(panel.getByRole('tab', { name: 'Code' })).toBeVisible();
+	await expect(panel.getByRole('tab', { name: 'Link' })).toBeVisible();
+});
+
+test('closes on Escape and on the close button', async ({ page }) => {
+	await openExport(page);
+	// Escape is the dialog element's own behaviour, not something the styler wires up.
+	await page.keyboard.press('Escape');
+	await expect(dialog(page)).toBeHidden();
+
 	await page.getByRole('button', { name: 'Export' }).click();
+	await dialog(page).getByRole('button', { name: 'Close' }).click();
+	await expect(dialog(page)).toBeHidden();
+});
 
-	const downloadButton = page.getByRole('menuitem', { name: 'Download style.json' });
+test('downloads a self-contained style.json', async ({ page }) => {
+	const panel = await openExport(page);
 
-	const [download] = await Promise.all([page.waitForEvent('download'), downloadButton.click()]);
+	const [download] = await Promise.all([
+		page.waitForEvent('download'),
+		panel.getByRole('button', { name: 'Download' }).click(),
+	]);
 
 	expect(download.suggestedFilename()).toBe('style.json');
 
@@ -30,22 +62,104 @@ test('download triggers with a self-contained style', async ({ page }) => {
 	expect(source.tiles[0]).toMatch(/^https:\/\//);
 });
 
-test('copy writes a v6 snippet to the clipboard', async ({ context, page }) => {
+test('records the options in the exported style, so it can be imported back exactly', async ({
+	page,
+}) => {
+	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
+	await styleList.locator('label:has(input[value="toner"])').click();
+
+	const panel = await openExport(page);
+	const [download] = await Promise.all([
+		page.waitForEvent('download'),
+		panel.getByRole('button', { name: 'Download' }).click(),
+	]);
+	const content = await (await download.createReadStream()).toArray();
+	const json = JSON.parse(Buffer.concat(content).toString());
+
+	expect(json.metadata['versatiles:builder']).toBe('osm');
+	expect(json.metadata['versatiles:options']).toMatchObject({ theme: 'toner' });
+	// urls are environment, not style: they never travel with the options
+	expect(json.metadata['versatiles:options'].urls).toBeUndefined();
+	// and the CC0 statement is still there
+	expect(json.metadata.license).toContain('creativecommons.org');
+});
+
+test('the minified download is smaller than the readable one', async ({ page }) => {
+	const panel = await openExport(page);
+
+	async function downloadSize() {
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			panel.getByRole('button', { name: 'Download' }).click(),
+		]);
+		const content = await (await download.createReadStream()).toArray();
+		return Buffer.concat(content).length;
+	}
+
+	const pretty = await downloadSize();
+	await panel.getByRole('radio', { name: 'Smallest' }).click();
+	const minified = await downloadSize();
+
+	expect(minified).toBeLessThan(pretty);
+});
+
+test('copies a v6 npm snippet, and a script-tag one for a plain page', async ({
+	context,
+	page,
+}) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
 	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
 	await styleList.locator('label:has(input[value="gray-dark"])').click();
 
-	await page.getByRole('button', { name: 'Export' }).click();
-	await page.getByRole('menuitem', { name: 'Copy style code' }).click();
-	// the styler says so in its header instead of opening a dialog
-	await expect(page.getByRole('status')).toHaveText('Style code copied');
+	const panel = await openExport(page);
+	await panel.getByRole('tab', { name: 'Code' }).click();
 
-	const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-	expect(clipboardText).toContain("import { osm, inlineSources } from '@versatiles/style';");
-	expect(clipboardText).toContain('await inlineSources(osm({');
-	expect(clipboardText).toContain('theme: "gray-dark"');
-	// the demo's origin
-	expect(clipboardText).toContain('base: "https://tiles.versatiles.org"');
-	expect(clipboardText).not.toContain('transition');
+	await panel.getByRole('button', { name: 'Copy the code snippet' }).click();
+	// the button confirms in place rather than opening another dialog
+	await expect(panel.getByRole('button', { name: 'Copy the code snippet' })).toHaveText('Copied');
+
+	const npm = await page.evaluate(() => navigator.clipboard.readText());
+	expect(npm).toContain("import { osm, inlineSources } from '@versatiles/style';");
+	expect(npm).toContain('await inlineSources(osm({');
+	expect(npm).toContain('theme: "gray-dark"');
+	expect(npm).toContain('base: "https://tiles.versatiles.org"');
+	expect(npm).not.toContain('transition');
+
+	await panel.getByRole('radio', { name: 'HTML page' }).click();
+	await panel.getByRole('button', { name: 'Copy the code snippet' }).click();
+
+	const browser = await page.evaluate(() => navigator.clipboard.readText());
+	expect(browser).toContain(
+		'<script src="https://tiles.versatiles.org/assets/lib/versatiles-style/'
+	);
+	expect(browser).toContain('VersaTilesStyle.osm({');
+	expect(browser).toContain('theme: "gray-dark"');
+	// a classic script has no imports and no top-level await
+	expect(browser).not.toContain('import ');
+});
+
+test('shows the code with syntax highlighting rather than as flat text', async ({ page }) => {
+	const panel = await openExport(page);
+	await panel.getByRole('tab', { name: 'Code' }).click();
+
+	const preview = panel.locator('.code-preview');
+	await expect(preview.locator('.tok-keyword').first()).toBeVisible();
+	await expect(preview.locator('.tok-key').first()).toBeVisible();
+	await expect(preview.locator('.tok-string').first()).toBeVisible();
+});
+
+test('offers the link that reopens the map as it is', async ({ context, page }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
+	await styleList.locator('label:has(input[value="muted"])').click();
+
+	const panel = await openExport(page);
+	await panel.getByRole('tab', { name: 'Link' }).click();
+	await panel.getByRole('button', { name: 'Copy the link' }).click();
+
+	const link = await page.evaluate(() => navigator.clipboard.readText());
+	expect(link).toContain('#');
+	expect(link).toContain('style=muted');
 });

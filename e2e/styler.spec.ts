@@ -64,6 +64,7 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 
 	const expectedTitles = [
 		'Tile server',
+		'Import',
 		'Base style',
 		'Layers',
 		'Individual colors',
@@ -92,6 +93,7 @@ test('sections are grouped under headings', async ({ page }) => {
 	expect(outline).toEqual([
 		'# Setup',
 		'Tile server',
+		'Import',
 		'# Style',
 		'Base style',
 		'# Content',

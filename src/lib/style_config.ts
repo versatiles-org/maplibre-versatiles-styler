@@ -1,5 +1,6 @@
 import type { StyleSpecification } from 'maplibre-gl';
-import { osm, satellite } from '@versatiles/style';
+import { osm, satellite, styleMetadata } from '@versatiles/style';
+import type { CodeTarget } from '@versatiles/style';
 import type {
 	OsmOptions,
 	Palette,
@@ -277,18 +278,51 @@ export function themeSwatch(theme: Palette): ThemeSwatch {
 	};
 }
 
-/** A runnable `@versatiles/style` snippet for the current style. */
+/**
+ * A runnable `@versatiles/style` snippet for the current style.
+ *
+ * `target` picks the form: an ES module for a project with a bundler, or the `<script>` tag and
+ * `VersaTilesStyle` global that a plain HTML page needs.
+ */
 export function styleCode(
 	styleKey: StyleKey,
 	vectorState: VectorState,
 	satelliteState: SatelliteState,
 	origin: string,
-	sources: StyleSources
+	sources: StyleSources,
+	target: CodeTarget = 'npm'
 ): string {
 	// `toCode` must see URLs only, never the loaded TileJSONs: the snippet loads its own.
 	const urls = { base: origin };
 	if (styleKey === 'satellite') {
-		return satellite.toCode({ ...satelliteOptions(satelliteState, origin, sources), urls });
+		return satellite.toCode(
+			{ ...satelliteOptions(satelliteState, origin, sources), urls },
+			{ target }
+		);
 	}
-	return osm.toCode({ ...vectorOptions(styleKey, vectorState, origin, sources), urls });
+	return osm.toCode({ ...vectorOptions(styleKey, vectorState, origin, sources), urls }, { target });
+}
+
+/**
+ * The style as it is exported: the built style, plus a record in its `metadata` of the options it came
+ * from, so that importing it again restores exactly these settings.
+ *
+ * Without it, reading a style.json back means reconstructing the options from what the style draws —
+ * what `@versatiles/style/migrate` does for foreign styles, and necessarily approximate. The options
+ * written here are the minimal ones, the same few hundred bytes the URL hash carries.
+ */
+export function styleForExport(
+	style: StyleSpecification,
+	styleKey: StyleKey,
+	minimal: Record<string, unknown>
+): StyleSpecification {
+	const options = styleKey === 'satellite' ? minimal : { ...minimal, theme: styleKey };
+	return {
+		...style,
+		metadata: styleMetadata(
+			styleKey === 'satellite' ? 'satellite' : 'osm',
+			options,
+			style.metadata
+		),
+	} as StyleSpecification;
 }

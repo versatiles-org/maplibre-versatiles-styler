@@ -19,12 +19,14 @@
 		isDarkStyle,
 		minimalConfig,
 		styleCode,
+		styleForExport,
 		type StyleKey,
 		type StyleSources,
 		type VectorState,
 		type SatelliteState,
 	} from './style_config';
-	import { downloadStyle, copyStyleCode } from './export';
+	import { shareLink } from './export';
+	import type { ImportResult } from './import';
 	import { loadOrigin, type LoadedTileJSON } from './sources';
 	import { languageOptions } from './languages';
 	import { onDestroy, untrack } from 'svelte';
@@ -36,6 +38,9 @@
 	import SidebarSection from './components/SidebarSection.svelte';
 	import VectorStylePanel from './components/VectorStylePanel.svelte';
 	import SatelliteStylePanel from './components/SatelliteStylePanel.svelte';
+	import ExportDialog from './components/ExportDialog.svelte';
+	import ImportDialog from './components/ImportDialog.svelte';
+	import { DOCS } from './docs_links';
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
@@ -203,7 +208,8 @@
 	// ── Header actions ───────────────────────────────────────────────────────────
 
 	let totalChanges = $derived(configChangeCount(minimal, Object.keys(minimal)));
-	let menuOpen = $state(false);
+	let exportOpen = $state(false);
+	let importOpen = $state(false);
 	/** A short message after an action, e.g. "Style code copied". */
 	let status = $state<string | undefined>();
 	let statusTimer: ReturnType<typeof setTimeout> | undefined;
@@ -237,47 +243,55 @@
 		clearTimeout(undoTimer);
 	}
 
-	function handleDownload() {
-		menuOpen = false;
+	/** The TileJSONs that are in, for building code snippets. */
+	let loadedSources = $derived<StyleSources>({
+		osm: osmTileJSON ?? undefined,
+		satellite: satelliteTileJSON ?? undefined,
+		elevation: elevationTileJSON ?? undefined,
+	});
+
+	/**
+	 * The style to export: the style as built, carrying a record of the options it came from, so that
+	 * importing the file again restores these settings exactly instead of reconstructing them.
+	 */
+	let exportStyle = $derived.by(() => {
 		const current = currentStyle();
-		if (current) downloadStyle(current.style);
+		return current ? styleForExport(current.style, currentStyleKey, minimal) : undefined;
+	});
+
+	/**
+	 * The hash is written on a throttle, so just after an edit the URL still describes the previous
+	 * state. The dialog offers it as the link to this map, so it is brought up to date first.
+	 */
+	function openExport() {
+		hashManager?.flush();
+		exportOpen = true;
 	}
 
-	async function handleCopyCode() {
-		menuOpen = false;
-		const loaded: StyleSources = {
-			osm: osmTileJSON ?? undefined,
-			satellite: satelliteTileJSON ?? undefined,
-			elevation: elevationTileJSON ?? undefined,
-		};
-		await copyStyleCode(
-			styleCode(
-				currentStyleKey,
-				$state.snapshot(vectorState) as VectorState,
-				$state.snapshot(satelliteState) as SatelliteState,
-				origin,
-				loaded
-			)
+	function exportCode(target: 'npm' | 'browser') {
+		return styleCode(
+			currentStyleKey,
+			$state.snapshot(vectorState) as VectorState,
+			$state.snapshot(satelliteState) as SatelliteState,
+			origin,
+			loadedSources,
+			target
 		);
-		showStatus('Style code copied');
 	}
 
-	/** Closes the export menu on a click elsewhere or on Escape. */
-	function menuDismiss(menu: HTMLElement) {
-		const close = (event: Event) => {
-			if (!menu.contains(event.target as Node)) menuOpen = false;
-		};
-		const escape = (event: KeyboardEvent) => {
-			if (event.key !== 'Escape') return;
-			menuOpen = false;
-			(menu.previousElementSibling as HTMLElement | null)?.focus();
-		};
-		document.addEventListener('pointerdown', close, true);
-		menu.addEventListener('keydown', escape);
-		return () => {
-			document.removeEventListener('pointerdown', close, true);
-			menu.removeEventListener('keydown', escape);
-		};
+	/** Applies an imported style, optionally moving to the tile server it came from. */
+	function applyImport(result: ImportResult, newOrigin?: string) {
+		importOpen = false;
+		if (newOrigin && newOrigin !== origin) {
+			origin = newOrigin;
+			fontPicker.clearScripts();
+		}
+		setBaseStyle(result.styleKey, result.config);
+		showStatus(
+			result.warnings.length > 0
+				? `Style imported, with ${result.warnings.length} thing${result.warnings.length === 1 ? '' : 's'} left out`
+				: 'Style imported'
+		);
 	}
 
 	function handleOriginChange(e: Event) {
@@ -350,24 +364,9 @@
 					onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
 				>
 			{/if}
-			<div class="menu-anchor">
-				<button
-					type="button"
-					class="primary-button"
-					aria-haspopup="menu"
-					aria-expanded={menuOpen}
-					onclick={() => (menuOpen = !menuOpen)}
-					>Export<span class="icon icon-chevron" aria-hidden="true"></span></button
-				>
-				{#if menuOpen}
-					<div class="menu" role="menu" {@attach menuDismiss}>
-						<button type="button" role="menuitem" onclick={handleDownload}
-							>Download style.json</button
-						>
-						<button type="button" role="menuitem" onclick={handleCopyCode}>Copy style code</button>
-					</div>
-				{/if}
-			</div>
+			<button type="button" class="primary-button" aria-haspopup="dialog" onclick={openExport}
+				>Export</button
+			>
 			<a
 				class="icon-button"
 				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
@@ -399,6 +398,21 @@
 				<div class="input">
 					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
 				</div>
+			</div>
+		</SidebarSection>
+		<SidebarSection
+			title="Import"
+			description="Start from a style you made earlier, or one from somewhere else."
+		>
+			<p class="section-description">
+				Paste a link from Export, a <code>style.json</code>, or a set of options. Anything that
+				cannot be carried over is listed before it is applied.
+				<a href={DOCS.migrate} target="_blank" rel="noopener noreferrer">More about importing</a>
+			</p>
+			<div class="entry button-container">
+				<button type="button" aria-haspopup="dialog" onclick={() => (importOpen = true)}
+					>Import a style…</button
+				>
 			</div>
 		</SidebarSection>
 		<h4 class="section-group">Style</h4>
@@ -468,4 +482,21 @@
 			/>
 		{/if}
 	</div>
+{/if}
+
+<!--
+	The dialogs sit at the root of the control, outside the `maplibregl-ctrl-group` wrappers: MapLibre
+	sizes every button inside one of those to 29×29px. `showModal()` paints them in the top layer, so
+	their position in the tree only decides which styles reach them, not where they appear.
+-->
+{#if exportOpen}
+	<ExportDialog
+		style={exportStyle}
+		code={exportCode}
+		link={shareLink(config.hash !== false)}
+		onclose={() => (exportOpen = false)}
+	/>
+{/if}
+{#if importOpen}
+	<ImportDialog currentOrigin={origin} onapply={applyImport} onclose={() => (importOpen = false)} />
 {/if}

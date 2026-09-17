@@ -11,7 +11,11 @@ function encodeConfig(obj: Record<string, unknown>): string {
 	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function decodeConfig(str: string): Record<string, unknown> | null {
+/**
+ * The options encoded in a `config=` hash parameter, or `null` if it is not readable. Exported because
+ * the import tool reads the same parameter out of a pasted link.
+ */
+export function decodeConfig(str: string): Record<string, unknown> | null {
 	try {
 		const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
 		const binary = atob(base64);
@@ -97,6 +101,24 @@ export class HashManager {
 		if (open === this.currentPanelOpen) return;
 		this.currentPanelOpen = open;
 		this.updateHash();
+	}
+
+	/**
+	 * Writes the hash now, instead of at the end of the throttle window.
+	 *
+	 * Hash writes are throttled, so for up to `THROTTLE_MS` after an edit the URL still describes the
+	 * previous state. That is invisible while the URL is only a bookmark, but the export dialog hands it
+	 * out as *the* link to this map — and a link that silently omits the last change is worse than no
+	 * link. Anything that reads the URL as a value should call this first.
+	 */
+	flush(): void {
+		if (this.throttleTimer !== null) {
+			clearTimeout(this.throttleTimer);
+			this.throttleTimer = null;
+		}
+		this.updating = true;
+		window.history.replaceState(null, '', this.buildHash());
+		this.updating = false;
 	}
 
 	setStyleKey(key: StyleKey): void {

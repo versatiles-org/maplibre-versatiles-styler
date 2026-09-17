@@ -38,7 +38,9 @@ test.describe('landcover detection', () => {
 		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
 
 		await page.getByRole('button', { name: 'Export' }).click();
-		await page.getByRole('menuitem', { name: 'Copy style code' }).click();
+		const panel = page.getByRole('dialog', { name: 'Export style' });
+		await panel.getByRole('tab', { name: 'Code' }).click();
+		await panel.getByRole('button', { name: 'Copy the code snippet' }).click();
 
 		const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
 		expect(clipboardText).toContain('landcover: true');
