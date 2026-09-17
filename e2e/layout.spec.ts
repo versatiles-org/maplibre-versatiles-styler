@@ -342,9 +342,6 @@ for (const size of SIZES) {
 			expect(await layoutProblems(page), 'code npm').toEqual([]);
 			await dialog.getByRole('radio', { name: 'HTML page' }).click();
 			expect(await layoutProblems(page), 'code browser').toEqual([]);
-
-			await dialog.getByRole('tab', { name: 'Link' }).click();
-			expect(await layoutProblems(page), 'link').toEqual([]);
 		});
 
 		test('import dialog with a report and warnings', async ({ page }) => {

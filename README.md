@@ -26,8 +26,8 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Terrain and hillshade, projection (globe, Mercator), sky and sun
 - Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, labels, icons, layers)
 - The whole configuration is kept in the URL hash, so a styled map can be shared as a link
-- Export dialog with a preview and syntax highlighting: `style.json` (readable or minified), the
-  `@versatiles/style` code for an npm project or a plain HTML page, and the link that reopens the map
+- Export dialog with a preview and syntax highlighting: `style.json` (readable or minified) and the
+  `@versatiles/style` code for an npm project or a plain HTML page
 - Import dialog: paste or drop a styler link, a `style.json`, its address, or an options object —
   warnings are shown before anything is applied
 - Panel header with Reset all (undoable)
@@ -134,20 +134,19 @@ The three TileJSON files are loaded in parallel when the control is added, and t
 
 ## Export and import
 
-**Export** is the button in the panel header. It opens a dialog with three tabs:
+**Export** is the button in the panel header. It opens a dialog with two tabs:
 
 | Tab          | What it gives you                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------------------- |
 | `style.json` | The finished style as a file, readable or minified. Sources are inlined, so it needs nothing else. |
 | Code         | The `@versatiles/style` snippet that builds this style — for an npm project, or a plain HTML page. |
-| Link         | The current URL, which reopens the map exactly as it is. Only with `hash: true`.                   |
 
 An exported `style.json` records the options it was built from under `metadata["versatiles:options"]`,
 so importing the file again restores those settings exactly rather than approximating them.
 
 **Import** is in the sidebar's *Setup* group. It takes, and tells apart on its own:
 
-- a link from Export, or the bare `#…` hash of one,
+- a styler link — the page URL, whose hash carries the whole configuration, or just the `#…` part of it,
 - a `style.json` — pasted, dropped as a file, or as a URL,
 - a `@versatiles/style` options object, e.g. `{"theme": "gray", "text": {"scale": 1.5}}`.
 

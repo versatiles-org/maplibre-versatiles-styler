@@ -25,7 +25,6 @@
 		type VectorState,
 		type SatelliteState,
 	} from './style_config';
-	import { shareLink } from './export';
 	import type { ImportResult } from './import';
 	import { loadOrigin, type LoadedTileJSON } from './sources';
 	import { languageOptions } from './languages';
@@ -259,15 +258,6 @@
 		return current ? styleForExport(current.style, currentStyleKey, minimal) : undefined;
 	});
 
-	/**
-	 * The hash is written on a throttle, so just after an edit the URL still describes the previous
-	 * state. The dialog offers it as the link to this map, so it is brought up to date first.
-	 */
-	function openExport() {
-		hashManager?.flush();
-		exportOpen = true;
-	}
-
 	function exportCode(target: 'npm' | 'browser') {
 		return styleCode(
 			currentStyleKey,
@@ -364,8 +354,11 @@
 					onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
 				>
 			{/if}
-			<button type="button" class="primary-button" aria-haspopup="dialog" onclick={openExport}
-				>Export</button
+			<button
+				type="button"
+				class="primary-button"
+				aria-haspopup="dialog"
+				onclick={() => (exportOpen = true)}>Export</button
 			>
 			<a
 				class="icon-button"
@@ -490,12 +483,7 @@
 	their position in the tree only decides which styles reach them, not where they appear.
 -->
 {#if exportOpen}
-	<ExportDialog
-		style={exportStyle}
-		code={exportCode}
-		link={shareLink(config.hash !== false)}
-		onclose={() => (exportOpen = false)}
-	/>
+	<ExportDialog style={exportStyle} code={exportCode} onclose={() => (exportOpen = false)} />
 {/if}
 {#if importOpen}
 	<ImportDialog currentOrigin={origin} onapply={applyImport} onclose={() => (importOpen = false)} />

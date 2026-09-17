@@ -1,13 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-	byteLength,
-	copyText,
-	downloadStyle,
-	downloadText,
-	formatSize,
-	shareLink,
-	styleJson,
-} from './export';
+import { byteLength, copyText, downloadStyle, downloadText, formatSize, styleJson } from './export';
 import type { StyleSpecification } from 'maplibre-gl';
 
 const style = { version: 8, sources: {}, layers: [] } as unknown as StyleSpecification;
@@ -124,15 +116,5 @@ describe('copyText', () => {
 		expect(writeText).toHaveBeenCalledWith("import { osm } from '@versatiles/style';");
 		// the styler reports it in the dialog instead of interrupting with a browser dialog
 		expect(alertSpy).not.toHaveBeenCalled();
-	});
-});
-
-describe('shareLink', () => {
-	it('is the current URL, which already carries the whole configuration', () => {
-		expect(shareLink(true)).toBe(window.location.href);
-	});
-
-	it('is undefined without the hash, where the URL says nothing about the style', () => {
-		expect(shareLink(false)).toBeUndefined();
 	});
 });

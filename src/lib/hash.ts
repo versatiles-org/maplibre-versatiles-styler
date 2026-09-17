@@ -103,24 +103,6 @@ export class HashManager {
 		this.updateHash();
 	}
 
-	/**
-	 * Writes the hash now, instead of at the end of the throttle window.
-	 *
-	 * Hash writes are throttled, so for up to `THROTTLE_MS` after an edit the URL still describes the
-	 * previous state. That is invisible while the URL is only a bookmark, but the export dialog hands it
-	 * out as *the* link to this map — and a link that silently omits the last change is worse than no
-	 * link. Anything that reads the URL as a value should call this first.
-	 */
-	flush(): void {
-		if (this.throttleTimer !== null) {
-			clearTimeout(this.throttleTimer);
-			this.throttleTimer = null;
-		}
-		this.updating = true;
-		window.history.replaceState(null, '', this.buildHash());
-		this.updating = false;
-	}
-
 	setStyleKey(key: StyleKey): void {
 		this.currentStyleKey = key;
 		this.currentConfigEncoded = null;

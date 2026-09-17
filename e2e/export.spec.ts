@@ -25,7 +25,7 @@ test('opens a dialog with a tab for each way of exporting', async ({ page }) => 
 		'true'
 	);
 	await expect(panel.getByRole('tab', { name: 'Code' })).toBeVisible();
-	await expect(panel.getByRole('tab', { name: 'Link' })).toBeVisible();
+	await expect(panel.getByRole('tab')).toHaveCount(2);
 });
 
 test('closes on Escape and on the close button', async ({ page }) => {
@@ -139,6 +139,43 @@ test('copies a v6 npm snippet, and a script-tag one for a plain page', async ({
 	expect(browser).not.toContain('import ');
 });
 
+test('every line of a preview starts at the same place', async ({ page }) => {
+	// The dialog styles inline `<code>` in its prose with a little padding. Applied to the preview's own
+	// `<code>`, that padding sits before the first character rather than on each line, indenting line one
+	// by 4px and nothing else — and the `font` shorthand that came with it dropped the line height.
+	const panel = await openExport(page);
+
+	for (const tab of ['style.json', 'Code']) {
+		await panel.getByRole('tab', { name: tab }).click();
+		const measured = await page.evaluate(() => {
+			const pre = document.querySelector('.code-preview') as HTMLElement;
+			const left = pre.getBoundingClientRect().left;
+			const walker = document.createTreeWalker(pre.querySelector('code')!, NodeFilter.SHOW_TEXT);
+			const starts: number[] = [];
+			let atLineStart = true;
+			let node: Node | null;
+			while ((node = walker.nextNode()) && starts.length < 6) {
+				const text = node.textContent ?? '';
+				for (let i = 0; i < text.length && starts.length < 6; i++) {
+					if (atLineStart && text[i] !== '\n') {
+						const range = document.createRange();
+						range.setStart(node, i);
+						range.setEnd(node, i + 1);
+						starts.push(Math.round(range.getBoundingClientRect().left - left));
+						atLineStart = false;
+					}
+					if (text[i] === '\n') atLineStart = true;
+				}
+			}
+			return { starts, lineHeight: getComputedStyle(pre).lineHeight };
+		});
+
+		expect(new Set(measured.starts).size, `${tab}: line starts ${measured.starts}`).toBe(1);
+		// 12px type at the 1.5 the preview asks for, not the `normal` an overriding shorthand would give
+		expect(measured.lineHeight, tab).toBe('18px');
+	}
+});
+
 test('shows the code with syntax highlighting rather than as flat text', async ({ page }) => {
 	const panel = await openExport(page);
 	await panel.getByRole('tab', { name: 'Code' }).click();
@@ -147,19 +184,4 @@ test('shows the code with syntax highlighting rather than as flat text', async (
 	await expect(preview.locator('.tok-keyword').first()).toBeVisible();
 	await expect(preview.locator('.tok-key').first()).toBeVisible();
 	await expect(preview.locator('.tok-string').first()).toBeVisible();
-});
-
-test('offers the link that reopens the map as it is', async ({ context, page }) => {
-	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-
-	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-	await styleList.locator('label:has(input[value="muted"])').click();
-
-	const panel = await openExport(page);
-	await panel.getByRole('tab', { name: 'Link' }).click();
-	await panel.getByRole('button', { name: 'Copy the link' }).click();
-
-	const link = await page.evaluate(() => navigator.clipboard.readText());
-	expect(link).toContain('#');
-	expect(link).toContain('style=muted');
 });

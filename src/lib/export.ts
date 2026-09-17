@@ -52,14 +52,3 @@ export function downloadStyle(style: StyleSpecification, format: JsonFormat = 'p
 export async function copyText(text: string): Promise<void> {
 	await navigator.clipboard.writeText(text);
 }
-
-/**
- * The link that reopens this map as it stands.
- *
- * It is just the current URL: the styler already keeps the view, the theme and every changed option in
- * the hash, so there is nothing to build. Returns `undefined` when the hash is switched off, since then
- * the URL says nothing about the style and sharing it would mislead.
- */
-export function shareLink(hashEnabled: boolean): string | undefined {
-	return hashEnabled ? window.location.href : undefined;
-}

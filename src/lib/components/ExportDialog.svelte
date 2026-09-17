@@ -8,26 +8,20 @@
 	let {
 		style,
 		code,
-		link,
 		onclose,
 	}: {
 		/** The style as built, or `undefined` while a TileJSON it needs is still loading. */
 		style: StyleSpecification | undefined;
 		/** The `@versatiles/style` snippet for the current options, for where it will run. */
 		code: (target: 'npm' | 'browser') => string;
-		/** The link that reopens this map, or `undefined` when the URL hash is switched off. */
-		link: string | undefined;
 		onclose: () => void;
 	} = $props();
 
-	type Tab = 'json' | 'code' | 'link';
-	const TABS: { id: Tab; label: string }[] = [
+	type Tab = 'json' | 'code';
+	const tabs: { id: Tab; label: string }[] = [
 		{ id: 'json', label: 'style.json' },
 		{ id: 'code', label: 'Code' },
-		{ id: 'link', label: 'Link' },
 	];
-	// The Link tab is only meaningful while the hash carries the configuration.
-	let tabs = $derived(TABS.filter((tab) => tab.id !== 'link' || link !== undefined));
 
 	let tab = $state<Tab>('json');
 	let format = $state<JsonFormat>('pretty');
@@ -163,20 +157,6 @@
 				)}
 			</div>
 			<CodeBlock code={snippet} label="the code snippet" />
-		</div>
-	{:else if link}
-		<div
-			class="dialog-panel"
-			role="tabpanel"
-			id="export-panel-link"
-			aria-labelledby="export-tab-link"
-		>
-			<p class="dialog-note">
-				This link reopens the map exactly as it is now — same view, same style, same settings. Good
-				for sharing a draft, or for keeping one to carry on with later. It can be pasted back into
-				<strong>Import</strong>.
-			</p>
-			<CodeBlock code={link} label="the link" maxChars={4000} />
 		</div>
 	{/if}
 </Modal>
