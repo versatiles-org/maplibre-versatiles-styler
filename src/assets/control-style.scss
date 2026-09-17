@@ -1779,7 +1779,10 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			cursor: pointer;
 		}
 
-		code {
+		// Inline code in prose. Explicitly not the preview's own `<code>`: padding on an inline element
+		// sits before its first character rather than on every line, so it would indent line one by 4px
+		// and nothing else — and the shorthand `font` here would drop the preview's line height.
+		:not(pre) > code {
 			padding: 1px 4px;
 			border-radius: 4px;
 			background: var(--sunken);
