@@ -324,6 +324,8 @@
 		type="button"
 		class="maplibregl-ctrl-icon"
 		title="Toggle style editor"
+		aria-label="Toggle style editor"
+		aria-expanded={paneOpen}
 		onclick={() => (paneOpen = !paneOpen)}
 	></button>
 </div>

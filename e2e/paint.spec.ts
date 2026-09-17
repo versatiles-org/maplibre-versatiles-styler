@@ -1,5 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
-import { colorAt, colorsAcross, distance, distinctColors, hex, saturation, shoot } from './ink';
+import {
+	colorAt,
+	colorsAcross,
+	distance,
+	distinctColors,
+	hex,
+	saturation,
+	shoot,
+	type Rgb,
+} from './ink';
 
 /**
  * What the engines really paint. Runs in every browser: a rule that reads fine can still draw nothing —
@@ -141,4 +150,28 @@ test('a color swatch shows its color, and transparency as a checkerboard', async
 		distinctColors(squares, 10),
 		`swatch: ${squares.map(hex).join(' ')}`
 	).toBeGreaterThanOrEqual(2);
+});
+
+test('the control button shows the palette, in the accent color while the panel is open', async ({
+	page,
+}) => {
+	const button = page.locator('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon');
+	const glyph = async () => {
+		const image = await shoot(button);
+		// the icon fills the middle of the 29px button
+		return [0.3, 0.45, 0.6, 0.72].flatMap((y) => colorsAcross(image, 9, y));
+	};
+	const shows = (colors: Rgb[], target: Rgb) =>
+		colors.some((color) => distance(color, target) < 40);
+
+	const open = await glyph();
+	expect(shows(open, { r: 0x2b, g: 0x74, b: 0xe8 }), `open: ${open.map(hex).join(' ')}`).toBe(true);
+
+	await button.click();
+	await page.waitForTimeout(300);
+	const closed = await glyph();
+	expect(shows(closed, { r: 0x33, g: 0x33, b: 0x33 }), `closed: ${closed.map(hex).join(' ')}`).toBe(
+		true
+	);
+	expect(shows(closed, { r: 0x2b, g: 0x74, b: 0xe8 }), 'no accent while closed').toBe(false);
 });
