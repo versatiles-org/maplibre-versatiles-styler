@@ -169,7 +169,13 @@
 		untrack(() => {
 			// MapLibre's diff keeps the loaded tiles and repaints in place — no blank map, no tile
 			// requests. Changes it cannot apply reload the style in full (see `style_update.ts`).
-			map.setStyle(styleForEditing(next.style), setStyleOptions(rendered, next.rendered));
+			// `isStyleLoaded` warns when the map has no style at all, so it is only asked once the styler
+			// has put one there; the first style is never a diff anyway.
+			const styleLoaded = rendered === undefined || map.isStyleLoaded() === true;
+			map.setStyle(
+				styleForEditing(next.style),
+				setStyleOptions(rendered, next.rendered, styleLoaded)
+			);
 			rendered = next.rendered;
 			hashManager?.setConfig(minimal);
 		});

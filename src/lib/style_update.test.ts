@@ -81,4 +81,10 @@ describe('setStyleOptions', () => {
 		expect(setStyleOptions(undefined, vector())).toEqual({ diff: false, validate: false });
 		expect(setStyleOptions(vector(), vector())).toEqual({ diff: true, validate: false });
 	});
+
+	it('reloads instead of diffing while the style on the map still loads', () => {
+		// MapLibre would log "Unable to perform style diff" and rebuild the style itself.
+		expect(setStyleOptions(vector(), vector(), false)).toEqual({ diff: false, validate: false });
+		expect(setStyleOptions(vector(), vector(), true)).toEqual({ diff: true, validate: false });
+	});
 });

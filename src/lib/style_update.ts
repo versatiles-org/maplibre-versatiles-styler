@@ -62,10 +62,15 @@ export function styleForEditing(style: StyleSpecification): StyleSpecification {
  *
  * `validate: false`: the styles come from `@versatiles/style`, whose tests validate them against the
  * style spec. Skipping MapLibre's validation saves about 5 ms per edit.
+ *
+ * `styleLoaded`: MapLibre can only diff against a style it has finished loading. Asked to diff against
+ * one that is still loading, it logs "Unable to perform style diff" and rebuilds the style from scratch
+ * — so an edit while the previous style loads says so and reloads without the warning.
  */
 export function setStyleOptions(
 	previous: RenderedStyle | undefined,
-	next: RenderedStyle
+	next: RenderedStyle,
+	styleLoaded = true
 ): { diff: boolean; validate: boolean } {
-	return { diff: canDiff(previous, next), validate: false };
+	return { diff: styleLoaded && canDiff(previous, next), validate: false };
 }
