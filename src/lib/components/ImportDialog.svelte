@@ -1,6 +1,13 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
-	import { countSettings, parseImport, type ImportResult } from '../import';
+	import {
+		countSettings,
+		groupDiagnostics,
+		parseImport,
+		summarizeProvenance,
+		type ImportResult,
+	} from '../import';
+	import { is, type Diagnostic } from '@versatiles/style/migrate';
 	import { DOCS } from '../docs_links';
 
 	let {
@@ -36,6 +43,35 @@
 	let otherOrigin = $derived(
 		result?.origin && result.origin !== currentOrigin ? result.origin : undefined
 	);
+
+	let groups = $derived(groupDiagnostics(result?.diagnostics ?? []));
+	/** How much of the colour palette was actually read, rather than taken from the nearest theme. */
+	let colors = $derived(summarizeProvenance(result?.provenance ?? {}, 'colors'));
+
+	/**
+	 * The colours a diagnostic offers as alternatives, or `undefined` for every other code.
+	 *
+	 * `color.conflict` is several layers painting the same feature — a z-order contest. `color.collapsed`
+	 * is the source telling apart features this style has one setting for, which for an OpenMapTiles POI
+	 * layer is systematic rather than incidental. Both end as "one colour had to serve", so both are
+	 * worth showing as swatches.
+	 */
+	function swatches(d: Diagnostic): { color: string; label: string }[] | undefined {
+		if (is(d, 'color.conflict')) {
+			return d.data.observed.map((o) => ({ color: o.color, label: o.layers.join(', ') }));
+		}
+		if (is(d, 'color.collapsed')) {
+			return d.data.observed.map((o) => ({ color: o.color, label: o.feature }));
+		}
+		return undefined;
+	}
+
+	/** The colour a diagnostic settled on, so the swatch that won can be marked. */
+	function chosen(d: Diagnostic): string | undefined {
+		if (is(d, 'color.conflict')) return d.data.chosen;
+		if (is(d, 'color.collapsed')) return d.data.chosen;
+		return undefined;
+	}
 
 	async function check() {
 		if (busy) return;
@@ -157,15 +193,51 @@
 						original.
 					</p>
 				{/if}
-				{#if result.warnings.length > 0}
-					<!-- Neutral, because these are a mix: some things genuinely did not come across, others
-					     merely follow the theme rather than the source style. -->
+				{#if colors.total > 0}
+					<p class="import-note">
+						{colors.observed} of {colors.total} colours were read from the style; the rest follow the
+						<strong>{result.styleKey}</strong> theme.
+					</p>
+				{/if}
+
+				{#if groups.warnings.length > 0}
 					<p class="import-note">Worth knowing before you apply:</p>
-					<ul class="import-warnings">
-						{#each result.warnings as warning, index (index)}
-							<li>{warning}</li>
+					<ul class="import-diagnostics">
+						{#each groups.warnings as d, index (index)}
+							{@const alternatives = swatches(d)}
+							<li>
+								{d.message}
+								{#if alternatives}
+									{@const winner = chosen(d)}
+									<!-- The whole point of the payload: the colours it had to choose between. -->
+									<ul class="import-swatches">
+										{#each alternatives as option, i (i)}
+											<li class:won={option.color === winner}>
+												<span class="import-swatch" style:--swatch={option.color}></span>
+												<code>{option.color}</code>
+												<span class="import-swatch-label">{option.label}</span>
+											</li>
+										{/each}
+									</ul>
+								{/if}
+							</li>
 						{/each}
 					</ul>
+				{/if}
+
+				{#if groups.notes.length > 0}
+					<!-- Collapsed: these are true of almost every import, and beside a real warning they
+					     would only teach people to skim past both. -->
+					<details class="import-notes">
+						<summary
+							>{groups.notes.length} more {groups.notes.length === 1 ? 'note' : 'notes'}</summary
+						>
+						<ul class="import-diagnostics">
+							{#each groups.notes as d, index (index)}
+								<li>{d.message}</li>
+							{/each}
+						</ul>
+					</details>
 				{/if}
 				{#if otherOrigin}
 					<label class="import-origin">

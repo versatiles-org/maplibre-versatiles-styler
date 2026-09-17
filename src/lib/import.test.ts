@@ -3,7 +3,8 @@
 import { describe, it, expect } from 'vitest';
 import { osm, satellite, styleMetadata } from '@versatiles/style';
 import type { StyleSpecification } from '@versatiles/style';
-import { countSettings, parseImport } from './import';
+import { countSettings, groupDiagnostics, parseImport, summarizeProvenance } from './import';
+import type { Diagnostic, ProvenanceMap } from '@versatiles/style/migrate';
 
 /** The result of a successful import, or a failure of the test naming why it was refused. */
 async function imported(text: string) {
@@ -43,7 +44,8 @@ describe('parseImport: a styler link', () => {
 			kind: 'link',
 			styleKey: 'gray-dark',
 			config,
-			warnings: [],
+			diagnostics: [],
+			provenance: {},
 		});
 	});
 
@@ -56,7 +58,13 @@ describe('parseImport: a styler link', () => {
 
 	it('accepts a link with a style but no config', async () => {
 		const result = await imported('https://example.org/#style=muted');
-		expect(result).toEqual({ kind: 'link', styleKey: 'muted', config: {}, warnings: [] });
+		expect(result).toEqual({
+			kind: 'link',
+			styleKey: 'muted',
+			config: {},
+			diagnostics: [],
+			provenance: {},
+		});
 	});
 
 	it('maps a v5 style name from an old link to its closest theme', async () => {
@@ -87,7 +95,8 @@ describe('parseImport: an options object', () => {
 			kind: 'options',
 			styleKey: 'gray',
 			config: { text: { scale: 1.5 } },
-			warnings: [],
+			diagnostics: [],
+			provenance: {},
 			origin: undefined,
 		});
 	});
@@ -134,7 +143,7 @@ describe('parseImport: an options object', () => {
 });
 
 describe('parseImport: a style.json this styler wrote', () => {
-	it('reads the recorded options back exactly, with no warnings', async () => {
+	it('reads the recorded options back exactly, with nothing to report', async () => {
 		const options = osm.minimizeOptions({ theme: 'gray-dark', text: { scale: 1.5 } });
 		const style = { ...osm(options), metadata: styleMetadata('osm', options) };
 
@@ -142,7 +151,8 @@ describe('parseImport: a style.json this styler wrote', () => {
 		expect(result.kind).toBe('recorded');
 		expect(result.styleKey).toBe('gray-dark');
 		expect(result.config).toEqual({ text: { scale: 1.5 } });
-		expect(result.warnings).toEqual([]);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.provenance).toEqual({});
 	});
 
 	it('reads a recorded satellite style back as satellite', async () => {
@@ -175,10 +185,118 @@ describe('parseImport: any other style.json', () => {
 		expect(result.styleKey).toBe('toner');
 	}, 30_000);
 
+	it('reports a clean reconstruction as notes only, with nothing to warn about', async () => {
+		// Re-reading one of our own styles is the best case there is: it should not look alarming.
+		const style = osm({ theme: 'muted' }) as StyleSpecification;
+		const groups = groupDiagnostics((await imported(JSON.stringify(style))).diagnostics);
+
+		expect(groups.errors).toEqual([]);
+		expect(groups.warnings).toEqual([]);
+		expect(groups.notes.length).toBeGreaterThan(0);
+	}, 30_000);
+
+	it('reports most of the palette as read from the style', async () => {
+		const style = osm({ theme: 'muted' }) as StyleSpecification;
+		const { observed, total } = summarizeProvenance(
+			(await imported(JSON.stringify(style))).provenance,
+			'colors'
+		);
+		expect(total).toBeGreaterThan(0);
+		expect(observed).toBeGreaterThan(total / 2);
+	}, 30_000);
+
+	it('offers the discarded colours when several layers paint one setting', async () => {
+		// Four symbol layers matching the same probe: the topmost wins and the rest are the alternatives
+		// a consumer offers back as a choice.
+		const colors = ['#16a085', '#8e44ad', '#c0392b', '#d35400'];
+		const style = {
+			version: 8,
+			sources: { omt: { type: 'vector', url: 'https://example.org/t.json' } },
+			layers: [
+				{ id: 'bg', type: 'background', paint: { 'background-color': '#ffffff' } },
+				...colors.map((color, i) => ({
+					id: `poi-${i}`,
+					type: 'symbol',
+					source: 'omt',
+					'source-layer': 'poi',
+					layout: { 'text-field': '{name}', 'text-font': ['Noto Sans Regular'] },
+					paint: { 'text-color': color },
+				})),
+			],
+		};
+
+		const result = await imported(JSON.stringify(style));
+		const conflicts = groupDiagnostics(result.diagnostics).warnings.filter(
+			(d) => d.code === 'color.conflict'
+		);
+		expect(conflicts.length).toBeGreaterThan(0);
+
+		const conflict = conflicts[0];
+		if (conflict.code !== 'color.conflict') throw new Error('narrowing');
+		expect(conflict.optionPath).toMatch(/^colors\./);
+		// one entry per colour, which is what the swatch list is built from
+		expect(conflict.data.observed.map((o) => o.color.toLowerCase()).sort()).toEqual(
+			[...colors].sort()
+		);
+		expect(conflict.data.chosen.toLowerCase()).toBe('#d35400'); // the topmost, which is what the map shows
+	}, 30_000);
+
 	it('refuses something shaped like a style but drawing nothing it knows', async () => {
 		const outcome = await refused('{"version":8,"sources":{},"layers":[]}');
 		expect(outcome.error).toContain('could not be read');
 	}, 30_000);
+});
+
+describe('groupDiagnostics', () => {
+	const d = (severity: 'error' | 'warning' | 'info', code: string) =>
+		({ code, severity, message: code }) as unknown as Diagnostic;
+
+	it('splits by severity, keeping the library’s order within each group', () => {
+		const groups = groupDiagnostics([
+			d('info', 'icons.replaced'),
+			d('warning', 'color.conflict'),
+			d('error', 'schema.none'),
+			d('info', 'layer.unread'),
+		]);
+		expect(groups.errors.map((x) => x.code)).toEqual(['schema.none']);
+		expect(groups.warnings.map((x) => x.code)).toEqual(['color.conflict']);
+		expect(groups.notes.map((x) => x.code)).toEqual(['icons.replaced', 'layer.unread']);
+	});
+
+	it('gives three empty groups for nothing', () => {
+		expect(groupDiagnostics([])).toEqual({ errors: [], warnings: [], notes: [] });
+	});
+});
+
+describe('summarizeProvenance', () => {
+	const map = {
+		theme: { origin: 'observed' },
+		'colors.water': { origin: 'observed' },
+		'colors.land': { origin: 'observed' },
+		'colors.poi': { origin: 'inherited' },
+		'colors.labelPoi': { origin: 'default' },
+		'text.places.font': { origin: 'pooled' },
+	} as ProvenanceMap;
+
+	it('counts observed against everything the derivation considered', () => {
+		expect(summarizeProvenance(map, 'colors')).toEqual({ observed: 2, total: 4 });
+	});
+
+	it('takes only the prefix asked for', () => {
+		expect(summarizeProvenance(map, 'text')).toEqual({ observed: 0, total: 1 });
+		expect(summarizeProvenance(map, 'theme')).toEqual({ observed: 1, total: 1 });
+	});
+
+	it('is zero for an empty map, so an exact import reports nothing', () => {
+		expect(summarizeProvenance({}, 'colors')).toEqual({ observed: 0, total: 0 });
+	});
+
+	it('ignores paths the library does not annotate', () => {
+		// Absence under an uncovered prefix means "not reported yet", not "nothing was read" — counting
+		// it as the latter would understate every import.
+		const withUncovered = { ...map, 'layers.labels': { origin: 'observed' } } as ProvenanceMap;
+		expect(summarizeProvenance(withUncovered, 'layers')).toEqual({ observed: 0, total: 0 });
+	});
 });
 
 describe('countSettings', () => {

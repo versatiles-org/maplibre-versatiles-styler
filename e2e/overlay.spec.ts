@@ -76,7 +76,7 @@ test('a new overlay theme brings its colors', async ({ page }) => {
 	const overlay = await open(page, 'Overlay');
 	const colors = await open(page, 'Overlay colors');
 	const water = colorInput(colors, 'water');
-	await expect(water).toHaveValue('#D6D6D6'); // gray
+	await expect(water).toHaveValue('#D7D7D7'); // gray
 
 	await row(overlay, 'Theme').locator('select').selectOption('toner');
 	await expect(water).toHaveValue('#D8E7F7');
@@ -127,7 +127,7 @@ test('overlay layers only list what the overlay draws', async ({ page }) => {
 
 test('the sky follows the overlay water color', async ({ page }) => {
 	const map = await open(page, 'Map');
-	await expect(row(map, 'Sky Color').locator('input.color-text')).toHaveValue('#D6D6D6');
+	await expect(row(map, 'Sky Color').locator('input.color-text')).toHaveValue('#D7D7D7');
 	await row(map, 'Projection').locator('select').selectOption('vertical-perspective');
 	await expect.poll(() => hashConfig(page)).toEqual({ projection: 'vertical-perspective' });
 });

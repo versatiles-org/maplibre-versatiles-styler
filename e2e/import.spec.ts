@@ -149,7 +149,44 @@ test('warns before applying a style it had to reconstruct', async ({ page }) => 
 	await expect(report).toContainText('a MapLibre style');
 	// it says plainly that this is a close copy, before anything is applied
 	await expect(report).toContainText('close copy');
+	// how much of the palette was actually read, rather than taken from the theme
+	await expect(report).toContainText(/\d+ of \d+ colours were read from the style/);
+	// re-reading one of our own styles is the best case there is: notes, not warnings
+	await expect(report).not.toContainText('Worth knowing');
+	await expect(report.locator('.import-notes summary')).toContainText(/\d+ more notes?/);
 	await expect(page.getByRole('dialog', { name: 'Import style' })).toBeVisible();
+});
+
+test('offers the discarded colours when several layers paint one setting', async ({ page }) => {
+	const panel = await openImport(page);
+
+	// Four symbol layers matching the same probe feature: the topmost wins, and the three it passed
+	// over are what the dialog offers back as swatches.
+	const stacked = JSON.stringify({
+		version: 8,
+		sources: { omt: { type: 'vector', url: 'https://example.org/t.json' } },
+		layers: [
+			{ id: 'bg', type: 'background', paint: { 'background-color': '#ffffff' } },
+			...['#16a085', '#8e44ad', '#c0392b', '#d35400'].map((color, i) => ({
+				id: `poi-${i}`,
+				type: 'symbol',
+				source: 'omt',
+				'source-layer': 'poi',
+				layout: { 'text-field': '{name}', 'text-font': ['Noto Sans Regular'] },
+				paint: { 'text-color': color },
+			})),
+		],
+	});
+
+	const report = await check(panel, stacked);
+	await expect(report).toContainText('Worth knowing');
+	await expect(report).toContainText('colours were drawn for');
+
+	const swatches = report.locator('.import-swatches').first();
+	await expect(swatches.locator('li')).toHaveCount(4);
+	// the winner is marked, not merely listed first
+	await expect(swatches.locator('li.won')).toHaveCount(1);
+	await expect(swatches.locator('li.won')).toContainText('#D35400');
 });
 
 test('closes on Escape without applying anything', async ({ page }) => {

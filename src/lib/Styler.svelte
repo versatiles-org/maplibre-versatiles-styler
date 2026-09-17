@@ -277,9 +277,12 @@
 			fontPicker.clearScripts();
 		}
 		setBaseStyle(result.styleKey, result.config);
+		// Only the warnings are counted here: the notes are true of almost every import, and counting
+		// them would make a clean one look like it went badly.
+		const worth = result.diagnostics.filter((d) => d.severity === 'warning').length;
 		showStatus(
-			result.warnings.length > 0
-				? `Style imported, with ${result.warnings.length} thing${result.warnings.length === 1 ? '' : 's'} left out`
+			worth > 0
+				? `Style imported, with ${worth} thing${worth === 1 ? '' : 's'} worth checking`
 				: 'Style imported'
 		);
 	}

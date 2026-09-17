@@ -1,6 +1,12 @@
 import { osm, readStyleOptions, satellite } from '@versatiles/style';
 import type { OsmOptions, SatelliteOptions, StyleSpecification } from '@versatiles/style';
-import { guessOptions, type OptionsGuess } from '@versatiles/style/migrate';
+import {
+	guessOptions,
+	isCovered,
+	type Diagnostic,
+	type OptionsGuess,
+	type ProvenanceMap,
+} from '@versatiles/style/migrate';
 import { decodeConfig } from './hash';
 import { toStyleKey, DEFAULT_STYLE_KEY, type StyleKey } from './style_config';
 
@@ -23,14 +29,73 @@ export interface ImportResult {
 	 * `setBaseStyle` takes, and the same shape the URL hash stores.
 	 */
 	config: Record<string, unknown>;
-	/** What could not be carried over. Empty for an exact import. */
-	warnings: string[];
+	/**
+	 * What could not be carried over, had to be chosen between, or was only guessed at. Sorted by the
+	 * library, most severe first. Empty for the exact paths — a link, an options object or a style.json
+	 * that records its own options have nothing to reconstruct and so nothing to report.
+	 */
+	diagnostics: Diagnostic[];
+	/**
+	 * Where each derived option came from, keyed by option path. Empty for the exact paths. Kept on the
+	 * result so the panel can mark a guessed setting later; the dialog only summarises it.
+	 */
+	provenance: ProvenanceMap;
 	/** A tile server the imported style names, when it differs from the one in use. */
 	origin?: string;
 }
 
+/** The exact paths report nothing: there was nothing to reconstruct. */
+const NOTHING_TO_REPORT = { diagnostics: [] as Diagnostic[], provenance: {} as ProvenanceMap };
+
 export type ImportOutcome =
 	{ ok: true; result: ImportResult } | { ok: false; error: string; detail?: string };
+
+/**
+ * Diagnostics split by how much they should stop someone.
+ *
+ * The dialog shows the three differently: what went wrong, what to look at, and what merely happened.
+ * Lumping them together is what made the old flat list unreadable — `icons.replaced` fires on every
+ * import with a sprite, and beside a real warning it teaches people to skim past both.
+ */
+export interface DiagnosticGroups {
+	errors: Diagnostic[];
+	warnings: Diagnostic[];
+	notes: Diagnostic[];
+}
+
+export function groupDiagnostics(diagnostics: readonly Diagnostic[]): DiagnosticGroups {
+	return {
+		errors: diagnostics.filter((d) => d.severity === 'error'),
+		warnings: diagnostics.filter((d) => d.severity === 'warning'),
+		notes: diagnostics.filter((d) => d.severity === 'info'),
+	};
+}
+
+/** How much of a group of settings was actually read from the imported style. */
+export interface ProvenanceSummary {
+	/** Settings read from the style itself. */
+	observed: number;
+	/** Settings the derivation considered at all — `observed` plus everything it filled in. */
+	total: number;
+}
+
+/**
+ * How many settings under `prefix` came from the style rather than from the theme.
+ *
+ * Only over paths the library says it annotates: outside those, an absent entry means "not reported
+ * yet" rather than "nothing was read", and counting it as the latter would understate every import.
+ */
+export function summarizeProvenance(provenance: ProvenanceMap, prefix: string): ProvenanceSummary {
+	let observed = 0;
+	let total = 0;
+	for (const [path, entry] of Object.entries(provenance)) {
+		if (!isCovered(path)) continue;
+		if (path !== prefix && !path.startsWith(`${prefix}.`)) continue;
+		total++;
+		if (entry.origin === 'observed') observed++;
+	}
+	return { observed, total };
+}
 
 /** How many settings the imported config changes — what the dialog reports before applying. */
 export function countSettings(config: Record<string, unknown>): number {
@@ -114,7 +179,7 @@ function parseLink(text: string): ImportOutcome | undefined {
 			kind: 'link',
 			styleKey: toStyleKey(params.get('style')) ?? DEFAULT_STYLE_KEY,
 			config: config ?? {},
-			warnings: [],
+			...NOTHING_TO_REPORT,
 		},
 	};
 }
@@ -128,7 +193,13 @@ function parseOptions(value: Record<string, unknown>): ImportOutcome {
 			satellite.resolveOptions(value as SatelliteOptions);
 			return {
 				ok: true,
-				result: { kind: 'options', styleKey: 'satellite', config, warnings: [], origin: base },
+				result: {
+					kind: 'options',
+					styleKey: 'satellite',
+					config,
+					...NOTHING_TO_REPORT,
+					origin: base,
+				},
 			};
 		}
 		const key = styleKey ?? DEFAULT_STYLE_KEY;
@@ -136,7 +207,7 @@ function parseOptions(value: Record<string, unknown>): ImportOutcome {
 		osm.resolveOptions({ ...(config as OsmOptions), theme: key as OsmOptions['theme'] });
 		return {
 			ok: true,
-			result: { kind: 'options', styleKey: key, config, warnings: [], origin: base },
+			result: { kind: 'options', styleKey: key, config, ...NOTHING_TO_REPORT, origin: base },
 		};
 	} catch (error) {
 		return {
@@ -148,39 +219,30 @@ function parseOptions(value: Record<string, unknown>): ImportOutcome {
 	}
 }
 
-/** Turns a reconstruction into a result, carrying over what it says it could not read. */
+/** Turns a reconstruction into a result, carrying its diagnostics and provenance through. */
 function fromGuess(guess: OptionsGuess): ImportOutcome {
+	const { diagnostics, provenance } = guess.report;
 	if (guess.kind === 'unknown') {
+		// Every fatal code carries its own explanation; the library has already sorted them, so the
+		// first is the most severe. There is always at least one on this path.
 		return {
 			ok: false,
 			error: 'That style could not be read.',
 			detail:
-				guess.report.warnings.join('\n') ||
+				diagnostics.map((d) => d.message).join('\n') ||
 				'It does not look like a style built for OpenMapTiles, Protomaps or Shortbread tiles.',
 		};
 	}
 
 	const { styleKey, config, base } = splitOptions(guess.options as Record<string, unknown>);
-	const warnings = [...guess.report.warnings];
-	const unmatched = guess.report.unmatched;
-	if (unmatched.length > 0) {
-		// `unmatched` is the layers no probe read — *not* layers that were dropped. They are still drawn;
-		// they simply keep whatever the chosen theme gives them rather than anything read from the source
-		// style. Saying "left out" here would be alarming and wrong: re-reading one of this styler's own
-		// styles leaves a couple of hundred layers unprobed, and nothing is missing from the result.
-		const shown = unmatched.slice(0, 6).join(', ');
-		warnings.push(
-			`${unmatched.length} layer${unmatched.length === 1 ? '' : 's'} could not be read one by one and ` +
-				`follow${unmatched.length === 1 ? 's' : ''} the theme instead: ${shown}${unmatched.length > 6 ? ', …' : ''}`
-		);
-	}
 	return {
 		ok: true,
 		result: {
 			kind: 'derived',
 			styleKey: guess.kind === 'satellite' ? 'satellite' : (styleKey ?? DEFAULT_STYLE_KEY),
 			config,
-			warnings,
+			diagnostics,
+			provenance,
 			origin: base,
 		},
 	};
@@ -198,7 +260,7 @@ async function parseStyle(style: StyleSpecification): Promise<ImportOutcome> {
 				kind: 'recorded',
 				styleKey: recorded.builder === 'satellite' ? 'satellite' : (styleKey ?? DEFAULT_STYLE_KEY),
 				config,
-				warnings: [],
+				...NOTHING_TO_REPORT,
 				origin: base,
 			},
 		};
