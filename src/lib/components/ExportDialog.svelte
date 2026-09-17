@@ -73,7 +73,7 @@
 	</div>
 {/snippet}
 
-<Modal title="Export style" description="Take this map style with you." {onclose}>
+{#snippet tabStrip()}
 	<div class="dialog-tabs" role="tablist" aria-label="What to export">
 		{#each tabs as entry, index (entry.id)}
 			<button
@@ -88,7 +88,14 @@
 			>
 		{/each}
 	</div>
+{/snippet}
 
+<Modal
+	title="Export style"
+	description="Take this map style with you."
+	toolbar={tabStrip}
+	{onclose}
+>
 	{#if tab === 'json'}
 		<div
 			class="dialog-panel"

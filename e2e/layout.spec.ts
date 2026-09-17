@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 /**
- * No content is wider or higher than its container: in the sidebar, the font picker and the color
- * picker, at several window sizes and with long content.
+ * No content is wider or higher than its container: in the sidebar, the font picker, the color picker
+ * and the export/import dialogs, at several window sizes and with long content.
  */
 
 const SIZES = [
@@ -14,7 +14,12 @@ const SIZES = [
 ];
 
 /** Elements that stick out on purpose. */
-const ALLOWED: string[] = [];
+const ALLOWED: string[] = [
+	// Code is the one thing allowed to be wider than its box. A style.json carries long inlined tile and
+	// attribution URLs; wrapping them would make the preview unreadable, so it scrolls instead.
+	'.code-preview',
+	'.code-preview *',
+];
 
 /**
  * Layout problems in the sidebar and the popups:
@@ -48,7 +53,10 @@ function findLayoutProblems(allowed: string[]): string[] {
 		// the content of a closed section keeps its size, but is not shown
 		(el.parentElement?.closest('details:not([open])') !== null && !el.closest('summary')) ||
 		style.visibility === 'hidden' ||
-		(rect.width === 0 && rect.height === 0) ||
+		style.opacity === '0' ||
+		// Shrunk to a point rather than removed: a visually-hidden label, or the real file input behind a
+		// styled one. Both stay in the tree for screen readers and for the keyboard, and neither is content.
+		(rect.width <= 1 && rect.height <= 1) ||
 		// moved out of sight on purpose, e.g. the radios of the theme table
 		(style.position === 'absolute' && (rect.right < -1000 || rect.bottom < -1000));
 	const contentBox = (el: Element, style: CSSStyleDeclaration) => {
@@ -63,7 +71,9 @@ function findLayoutProblems(allowed: string[]): string[] {
 	};
 	const isAllowed = (el: Element) => allowed.some((selector) => el.matches(selector));
 
-	for (const root of document.querySelectorAll('.maplibregl-pane, .font-picker, .color-picker')) {
+	for (const root of document.querySelectorAll(
+		'.maplibregl-pane, .font-picker, .color-picker, .styler-dialog'
+	)) {
 		const rootRect = root.getBoundingClientRect();
 		if (root.classList.contains('maplibregl-pane')) {
 			if (rootRect.right > innerWidth + TOLERANCE)
@@ -310,6 +320,56 @@ for (const size of SIZES) {
 			await dialog.getByRole('combobox', { name: 'Search fonts' }).fill('extraordinarily');
 			await expect(dialog.getByRole('option', { name: /^Extraordinarily/ })).toBeVisible();
 			expect(await layoutProblems(page)).toEqual([]);
+		});
+
+		test('export dialog on every tab', async ({ page }) => {
+			await page.goto('/#panel=open');
+			// The style has to exist before there is a style.json to preview.
+			await page.waitForSelector('.maplibregl-pane button.font-button', { state: 'attached' });
+			await page.getByRole('button', { name: 'Export' }).click();
+			const dialog = page.getByRole('dialog', { name: 'Export style' });
+			await expect(dialog).toBeVisible();
+
+			// style.json: the widest content there is — long inlined tile URLs in a preview.
+			await expect(dialog.locator('.code-preview .tok-key').first()).toBeVisible();
+			expect(await layoutProblems(page), 'style.json').toEqual([]);
+
+			await dialog.getByRole('radio', { name: 'Smallest' }).click();
+			// minified is one enormous line, so the preview has to scroll rather than stretch the dialog
+			expect(await layoutProblems(page), 'minified').toEqual([]);
+
+			await dialog.getByRole('tab', { name: 'Code' }).click();
+			expect(await layoutProblems(page), 'code npm').toEqual([]);
+			await dialog.getByRole('radio', { name: 'HTML page' }).click();
+			expect(await layoutProblems(page), 'code browser').toEqual([]);
+
+			await dialog.getByRole('tab', { name: 'Link' }).click();
+			expect(await layoutProblems(page), 'link').toEqual([]);
+		});
+
+		test('import dialog with a report and warnings', async ({ page }) => {
+			await page.goto('/#panel=open');
+			await page.waitForSelector('.maplibregl-pane button.font-button', { state: 'attached' });
+			const section = page.locator('details:has(summary .section-title:text-is("Import"))');
+			await section.locator('summary').click();
+			await section.getByRole('button', { name: 'Import a style…' }).click();
+			const dialog = page.getByRole('dialog', { name: 'Import style' });
+			await expect(dialog).toBeVisible();
+			expect(await layoutProblems(page), 'empty').toEqual([]);
+
+			// A long error message: the library's unknown-key report lists every valid key in its place.
+			await dialog.locator('textarea').fill('{"theme":"gray","nonsense":true}');
+			await dialog.getByRole('button', { name: 'Check' }).click();
+			await expect(dialog.locator('.import-error')).toBeVisible();
+			expect(await layoutProblems(page), 'error').toEqual([]);
+
+			// A long list of warnings, and the tile-server question.
+			await dialog
+				.locator('textarea')
+				.fill('{"theme":"gray","urls":{"base":"https://tiles.example.org"}}');
+			await dialog.getByRole('button', { name: 'Check' }).click();
+			await expect(dialog.locator('.import-origin')).toBeVisible();
+			expect(await layoutProblems(page), 'another tile server').toEqual([]);
 		});
 
 		test('color picker on every tab', async ({ page }) => {

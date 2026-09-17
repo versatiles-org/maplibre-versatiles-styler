@@ -21,6 +21,7 @@
 		title,
 		description,
 		onclose,
+		toolbar,
 		children,
 		footer,
 	}: {
@@ -28,6 +29,8 @@
 		/** A sentence under the title saying what this dialog is for. */
 		description?: string;
 		onclose: () => void;
+		/** Sits between the header and the body, e.g. a tab strip: it stays put while the body scrolls. */
+		toolbar?: Snippet;
 		children: Snippet;
 		footer?: Snippet;
 	} = $props();
@@ -61,6 +64,9 @@
 			<span class="icon icon-close" aria-hidden="true"></span>
 		</button>
 	</div>
+	{#if toolbar}
+		{@render toolbar()}
+	{/if}
 	<div class="dialog-body">
 		{@render children()}
 	</div>
