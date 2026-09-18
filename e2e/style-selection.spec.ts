@@ -45,6 +45,7 @@ test('shows the themes as a table: name, light, dark', async ({ page }) => {
 		'muted',
 		'gray',
 		'toner',
+		'satellite',
 	]);
 
 	const row = table.locator('tbody tr', { has: page.locator('th:text-is("gray")') });
@@ -52,11 +53,35 @@ test('shows the themes as a table: name, light, dark', async ({ page }) => {
 	await expect(row.locator('td').nth(1).locator('input[type="radio"]')).toHaveValue('gray-dark');
 	await expect(row.getByRole('radio', { name: 'gray dark' })).toHaveCount(1);
 
-	// satellite is not a theme: it stays below the table
-	await expect(table.locator('input[value="satellite"]')).toHaveCount(0);
-	await expect(
-		page.locator('.maplibregl-versatiles-styler .style-list > label input[value="satellite"]')
-	).toHaveCount(1);
+	// satellite has no dark variant: its card sits in the light column, the dark cell stays empty
+	const satelliteRow = table.locator('tbody tr', { has: page.locator('th:text-is("satellite")') });
+	await expect(satelliteRow.locator('td').nth(0).locator('input[type="radio"]')).toHaveValue(
+		'satellite'
+	);
+	await expect(satelliteRow.locator('td').nth(1).locator('label')).toHaveCount(0);
+});
+
+test('every theme card is the same size, on the golden ratio', async ({ page }) => {
+	const cards = page.locator('.maplibregl-versatiles-styler .style-list .theme-card');
+	// the satellite card only joins once its TileJSON has loaded
+	await expect(cards).toHaveCount(11);
+	const boxes = await cards.evaluateAll((nodes) =>
+		nodes.map((node) => {
+			const { x, width, height } = node.getBoundingClientRect();
+			return { x, width, height };
+		})
+	);
+
+	for (const box of boxes) {
+		expect(box.width / box.height).toBeCloseTo(1.618, 2);
+		expect(box.width).toBeCloseTo(boxes[0].width, 1);
+		expect(box.height).toBeCloseTo(boxes[0].height, 1);
+	}
+
+	// two columns, so two distinct left edges — and the satellite card shares the light one
+	const columns = [...new Set(boxes.map((box) => Math.round(box.x)))].sort((a, b) => a - b);
+	expect(columns.length).toBe(2);
+	expect(Math.round(boxes[boxes.length - 1].x)).toBe(columns[0]);
 });
 
 test('the style radios form one group', async ({ page }) => {

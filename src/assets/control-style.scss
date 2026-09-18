@@ -979,6 +979,8 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			// The themes as a table: the theme's name, then a radio for its light and for its dark variant.
 			.theme-table {
 				width: 100%;
+				// fixed: the two card columns stay exactly as wide as each other, whatever the names
+				table-layout: fixed;
 				border-collapse: collapse;
 
 				th,
@@ -993,15 +995,16 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					color: var(--subtle);
 				}
 
-				// the names, then two columns of cards
 				tbody th {
-					width: 64px;
 					text-align: left;
 					font-weight: 400;
 				}
 
-				thead td {
-					width: 64px;
+				// The two card columns are fixed, the names take what is left. `table-layout: fixed`
+				// reads the widths off the first row, which is the head's unless there is no head.
+				thead th,
+				tbody tr:first-child td {
+					width: 84px;
 				}
 			}
 
@@ -1045,18 +1048,14 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				&:hover input:not(:checked) + .theme-card {
 					box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.35);
 				}
-
-				&.satellite {
-					margin-top: 2px;
-				}
 			}
 
 			// A theme as a small map drawn in its own colors: land, water, a park, a street and a motorway.
 			.theme-card {
 				position: relative;
-				display: flex;
-				align-items: center;
-				height: 30px;
+				display: block;
+				// the width comes from the table cell; the golden ratio gives the height
+				aspect-ratio: 1.618;
 				border-radius: 6px;
 				box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.14);
 				background:
@@ -1066,10 +1065,6 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					radial-gradient(ellipse at 10% 120%, var(--water) 0 46%, transparent 47%), var(--land);
 
 				&.satellite-card {
-					padding: 0 10px;
-					color: #fff;
-					font-weight: 600;
-					text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 					background:
 						linear-gradient(
 							118deg,

@@ -413,15 +413,17 @@
 		</SidebarSection>
 		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
-			{#if themes.length > 0}
+			{#if themes.length > 0 || styleKeys.includes('satellite')}
 				<table class="theme-table">
-					<thead>
-						<tr>
-							<td></td>
-							<th scope="col">light</th>
-							<th scope="col">dark</th>
-						</tr>
-					</thead>
+					{#if themes.length > 0}
+						<thead>
+							<tr>
+								<td></td>
+								<th scope="col">light</th>
+								<th scope="col">dark</th>
+							</tr>
+						</thead>
+					{/if}
 					<tbody>
 						{#each themes as theme (theme.name)}
 							<tr>
@@ -446,14 +448,22 @@
 								{/each}
 							</tr>
 						{/each}
+						<!-- Satellite has no light/dark pair: it rides in the light column so every card
+						     stays on the same grid. -->
+						{#if styleKeys.includes('satellite')}
+							<tr>
+								<th scope="row">satellite</th>
+								<td>
+									<label title="satellite">
+										{@render styleRadio('satellite', 'satellite')}
+										<span class="theme-card satellite-card"></span>
+									</label>
+								</td>
+								<td></td>
+							</tr>
+						{/if}
 					</tbody>
 				</table>
-			{/if}
-			{#if styleKeys.includes('satellite')}
-				<label class="satellite">
-					{@render styleRadio('satellite', 'satellite')}
-					<span class="theme-card satellite-card">satellite</span>
-				</label>
 			{/if}
 		</SidebarSection>
 		{#if isSatellite}
