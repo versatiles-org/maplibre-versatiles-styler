@@ -59,6 +59,16 @@ function labelOf(key: string): string {
 	return LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
 }
 
+/** The node at `path`, e.g. `['water','lakes']`, or `undefined` when the tree has no such group. */
+export function findLayerNode(
+	nodes: readonly LayerNode[],
+	path: readonly string[]
+): LayerNode | undefined {
+	const node = nodes.find((candidate) => candidate.key === path[0]);
+	if (!node || path.length === 1) return node;
+	return findLayerNode(node.children, path.slice(1));
+}
+
 function leaves(node: LayerNode): LayerNode[] {
 	return node.children.length === 0 ? [node] : node.children.flatMap(leaves);
 }

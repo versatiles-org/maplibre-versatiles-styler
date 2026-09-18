@@ -15,9 +15,76 @@ export interface PopoverPosition {
  * control. The layer carries the control's class, so its styles still apply.
  */
 export function portalToMap(anchor: HTMLElement) {
+	return portalTo(anchor.closest('.maplibregl-map') ?? document.body);
+}
+
+/** The same, for a caller that already holds the element to move the layer into. */
+export function portalTo(target: Element) {
 	return (layer: HTMLElement) => {
-		(anchor.closest('.maplibregl-map') ?? document.body).appendChild(layer);
+		target.appendChild(layer);
 		return () => layer.remove();
+	};
+}
+
+/** Popover layers of their own, which a click in must not count as a click outside. */
+const NESTED_LAYERS = '.color-picker-layer, .font-picker-layer';
+
+export interface PointPlacementOptions {
+	/** Where the popover points, in client coordinates — for the inspector, where the map was clicked. */
+	point: { x: number; y: number };
+	onplace: (position: { left: number; top: number; maxHeight: number }) => void;
+	onclose: () => void;
+}
+
+/**
+ * An attachment that puts a popover next to a point on the map and keeps it in the window, flipping to
+ * the other side of the point when it would not fit.
+ *
+ * Unlike `placeBesidePane` there is no anchor element to spare from the outside-click check, so the
+ * popover closes on any click but its own — except in a picker it opened itself, which lives in a layer
+ * of its own outside the popover's DOM.
+ */
+export function placeAtPoint(options: PointPlacementOptions) {
+	const { point, onplace, onclose } = options;
+	return (popup: HTMLElement) => {
+		const margin = 8;
+		const gap = 14;
+		const update = () => {
+			const maxHeight = window.innerHeight - 2 * margin;
+			const height = Math.min(popup.offsetHeight, maxHeight);
+			const width = popup.offsetWidth;
+			const left =
+				point.x + gap + width <= window.innerWidth - margin
+					? point.x + gap
+					: Math.max(margin, point.x - gap - width);
+			const top = Math.max(margin, Math.min(point.y - 24, window.innerHeight - height - margin));
+			onplace({ left, top, maxHeight });
+		};
+		const closeOutside = (event: PointerEvent) => {
+			const target = event.target as Element;
+			if (popup.contains(target)) return;
+			if (typeof target.closest === 'function' && target.closest(NESTED_LAYERS)) return;
+			onclose();
+		};
+		const handleEscape = (event: KeyboardEvent) => {
+			if (event.defaultPrevented) return;
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				onclose();
+			}
+		};
+		update();
+		const resize = new ResizeObserver(update);
+		resize.observe(popup);
+		window.addEventListener('resize', update);
+		document.addEventListener('pointerdown', closeOutside, true);
+		document.addEventListener('keydown', handleEscape);
+		return () => {
+			resize.disconnect();
+			window.removeEventListener('resize', update);
+			document.removeEventListener('pointerdown', closeOutside, true);
+			document.removeEventListener('keydown', handleEscape);
+		};
 	};
 }
 

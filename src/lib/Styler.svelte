@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Map as MLGLMap, StyleSpecification } from 'maplibre-gl';
+	import type { Map as MLGLMap, MapMouseEvent, StyleSpecification } from 'maplibre-gl';
 	import { osm } from '@versatiles/style';
 	import type { Palette } from '@versatiles/style';
 	import type { VersaTilesStylerConfig } from './types';
@@ -16,8 +16,12 @@
 		buildSatelliteStyle,
 		configChangeCount,
 		containerBackground,
+		inspectSources,
 		isDarkStyle,
 		minimalConfig,
+		overlayDefaults,
+		probeSatelliteState,
+		probeVectorState,
 		styleCode,
 		styleForExport,
 		type StyleKey,
@@ -26,6 +30,13 @@
 		type SatelliteState,
 	} from './style_config';
 	import type { ImportResult } from './import';
+	import {
+		colorIndex,
+		describeFeatures,
+		groupIndex,
+		type InspectResult,
+		type RenderedFeature,
+	} from './inspect';
 	import { loadOrigin, type LoadedTileJSON } from './sources';
 	import { languageOptions } from './languages';
 	import { onDestroy, untrack } from 'svelte';
@@ -38,6 +49,7 @@
 	import VectorStylePanel from './components/VectorStylePanel.svelte';
 	import SatelliteStylePanel from './components/SatelliteStylePanel.svelte';
 	import ExportDialog from './components/ExportDialog.svelte';
+	import InspectPopup from './components/InspectPopup.svelte';
 	import ImportDialog from './components/ImportDialog.svelte';
 	import { DOCS } from './docs_links';
 
@@ -116,7 +128,9 @@
 	 * needs is still loading. Sources are only read when the options need them, so a source that
 	 * arrives later and changes nothing does not rebuild the style.
 	 */
-	function currentStyle(): { style: StyleSpecification; rendered: RenderedStyle } | undefined {
+	function currentStyle(
+		probe = false
+	): { style: StyleSpecification; rendered: RenderedStyle } | undefined {
 		const styleKey = currentStyleKey;
 		if (styleKey === 'satellite') {
 			const state = $state.snapshot(satelliteState) as SatelliteState;
@@ -125,7 +139,10 @@
 			const stateSources = styleSources(state.osmOverlay !== false, state.features);
 			if (!stateSources) return undefined;
 			return {
-				style: buildSatelliteStyle(state, origin, { ...stateSources, satellite }),
+				style: buildSatelliteStyle(probe ? probeSatelliteState(state) : state, origin, {
+					...stateSources,
+					satellite,
+				}),
 				rendered: { styleKey, origin, options: state },
 			};
 		}
@@ -133,7 +150,12 @@
 		const stateSources = styleSources(true, state.features);
 		if (!stateSources?.osm) return undefined;
 		return {
-			style: buildVectorStyle(styleKey, state, origin, stateSources),
+			style: buildVectorStyle(
+				styleKey,
+				probe ? probeVectorState(state) : state,
+				origin,
+				stateSources
+			),
 			rendered: { styleKey, origin, options: state },
 		};
 	}
@@ -202,6 +224,81 @@
 			const fallback = styleKeys[0];
 			untrack(() => setBaseStyle(fallback));
 		}
+	});
+
+	// ── Inspector ────────────────────────────────────────────────────────────────
+
+	/** Whether a click on the map says what is under it, and how it got its looks. */
+	let inspectOn = $state(false);
+	/** The features of the last click, described when it happened. */
+	let inspectResult = $state<InspectResult | undefined>();
+
+	/**
+	 * What names the layers of the style on the map. Built only while the inspector is on: it costs
+	 * another style build — a few milliseconds — and nothing else asks for it.
+	 */
+	let inspectIndexes = $derived.by(() => {
+		if (!inspectOn) return undefined;
+		const probe = currentStyle(true)?.style;
+		if (!probe) return undefined;
+		const { layerGroups, textGroups, colorKeys } = inspectSources(currentStyleKey);
+		return {
+			groups: groupIndex(layerGroups),
+			topics: groupIndex(textGroups),
+			colors: colorIndex(probe, colorKeys),
+		};
+	});
+
+	/**
+	 * The options the popup edits, which are the live ones: it changes a colour or a group the same way
+	 * the sections do, by writing to the state the style is built from.
+	 */
+	let inspectTargets = $derived.by(() => {
+		const { layerGroups } = inspectSources(currentStyleKey);
+		if (currentStyleKey === 'satellite') {
+			const overlay = satelliteState.osmOverlay;
+			if (!overlay) return { layerGroups };
+			const defaults = overlayDefaults(overlay.theme);
+			return {
+				layerGroups,
+				colors: overlay.colors,
+				colorDefaults: defaults.colors,
+				layers: overlay.layers,
+				layerDefaults: defaults.layers,
+			};
+		}
+		if (!currentVectorDefaults) return { layerGroups };
+		return {
+			layerGroups,
+			colors: vectorState.colors,
+			colorDefaults: currentVectorDefaults.colors,
+			layers: vectorState.layers,
+			layerDefaults: currentVectorDefaults.layers,
+		};
+	});
+
+	$effect(() => {
+		if (!inspectOn) return;
+		const canvas = map.getCanvas();
+		const hostCursor = canvas.style.cursor;
+		canvas.style.cursor = 'crosshair';
+		const handler = (event: MapMouseEvent) => {
+			const indexes = inspectIndexes;
+			if (!indexes) return;
+			// Only what the map draws is found: a hidden group is not drawn, so it is never a hit.
+			const features = map.queryRenderedFeatures(event.point) as unknown as RenderedFeature[];
+			inspectResult = {
+				layers: describeFeatures(features, indexes),
+				point: { x: event.originalEvent.clientX, y: event.originalEvent.clientY },
+				lngLat: { lng: event.lngLat.lng, lat: event.lngLat.lat },
+			};
+		};
+		map.on('click', handler);
+		return () => {
+			map.off('click', handler);
+			canvas.style.cursor = hostCursor;
+			inspectResult = undefined;
+		};
 	});
 
 	// ── Header actions ───────────────────────────────────────────────────────────
@@ -359,6 +456,18 @@
 			{/if}
 			<button
 				type="button"
+				class="icon-button"
+				class:active={inspectOn}
+				aria-pressed={inspectOn}
+				title={inspectOn
+					? 'Stop inspecting the map'
+					: 'Inspect the map: click a feature to see what styles it'}
+				aria-label="Inspect the map"
+				onclick={() => (inspectOn = !inspectOn)}
+				><span class="icon icon-inspect" aria-hidden="true"></span></button
+			>
+			<button
+				type="button"
 				class="primary-button"
 				aria-haspopup="dialog"
 				onclick={() => (exportOpen = true)}>Export</button
@@ -500,4 +609,16 @@
 {/if}
 {#if importOpen}
 	<ImportDialog currentOrigin={origin} onapply={applyImport} onclose={() => (importOpen = false)} />
+{/if}
+{#if inspectResult}
+	<InspectPopup
+		result={inspectResult}
+		{container}
+		colors={inspectTargets.colors}
+		colorDefaults={inspectTargets.colorDefaults}
+		layers={inspectTargets.layers}
+		layerDefaults={inspectTargets.layerDefaults}
+		layerGroups={inspectTargets.layerGroups}
+		onclose={() => (inspectResult = undefined)}
+	/>
 {/if}

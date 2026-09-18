@@ -23,6 +23,9 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Labels in any language of the tileset, or in the browser's language; tilt of line labels
 - Label style for all labels, a group or a topic (places, streets, water, …): font, size, spacing, capitalization, letter spacing, line height, wrap width and halo — with a font picker that previews each family, filters by writing system and warns when a font lacks the letters of the label language
 - Icon size and spacing
+- Inspector: click a feature on the map to see which style layer drew it, which layer group and label
+  topic it belongs to, and which color it was painted with — and change that color or hide the group
+  right there
 - Terrain and hillshade, projection (globe, Mercator), sky and sun
 - Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, labels, icons, layers)
 - The whole configuration is kept in the URL hash, so a styled map can be shared as a link

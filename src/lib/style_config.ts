@@ -2,14 +2,18 @@ import type { StyleSpecification } from 'maplibre-gl';
 import { osm, satellite, styleMetadata } from '@versatiles/style';
 import type { CodeTarget } from '@versatiles/style';
 import type {
+	LayerGroupMap,
 	OsmOptions,
 	Palette,
+	ResolvedColors,
 	ResolvedOsm,
 	ResolvedOsmOverlay,
 	ResolvedSatellite,
 	SatelliteOptions,
+	TextGroupMap,
 	TileJSONSpecification,
 } from '@versatiles/style';
+import { probeColors } from './inspect';
 
 export const PALETTES: readonly Palette[] = osm.palettes;
 export const DEFAULT_STYLE_KEY: StyleKey = 'colorful';
@@ -122,6 +126,40 @@ function toVectorState(resolved: ResolvedOsm): VectorState {
 function toSatelliteState(resolved: ResolvedSatellite): SatelliteState {
 	const { urls: _urls, ...state } = resolved;
 	return state;
+}
+
+/** What the inspector needs to name the layers of a style: its group maps and its colour keys. */
+export function inspectSources(styleKey: StyleKey): {
+	layerGroups: LayerGroupMap;
+	textGroups: TextGroupMap;
+	colorKeys: readonly string[];
+} {
+	const builder = styleKey === 'satellite' ? satellite : osm;
+	return {
+		layerGroups: builder.layerGroups,
+		textGroups: builder.textGroups,
+		colorKeys: builder.colorKeys,
+	};
+}
+
+/**
+ * The same options with every colour key set to a hue of its own. The style built from these says which
+ * key reaches which layer — see `inspect.ts`. A satellite style without its overlay has no palette to
+ * probe, and comes back unchanged.
+ */
+export function probeVectorState(state: VectorState): VectorState {
+	return { ...state, colors: probeColors(osm.colorKeys) as ResolvedColors };
+}
+
+export function probeSatelliteState(state: SatelliteState): SatelliteState {
+	if (!state.osmOverlay) return state;
+	return {
+		...state,
+		osmOverlay: {
+			...state.osmOverlay,
+			colors: probeColors(satellite.colorKeys) as ResolvedColors,
+		},
+	};
 }
 
 /** The TileJSONs a style is built from. A missing source is left out of the style. */

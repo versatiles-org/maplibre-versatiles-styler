@@ -35,6 +35,14 @@ export function colorGroups<K extends string>(keys: readonly K[]): ColorGroup<K>
 	return base.colors.length > 0 ? groups : groups.slice(1);
 }
 
+/**
+ * A colour key on its own, e.g. `natureWood` → "Nature wood". The sections show the group's word once
+ * as a heading and drop it from the row; the inspector has no heading to lean on, so it keeps it.
+ */
+export function colorLabel(key: string): string {
+	return label(words(key));
+}
+
 function words(key: string): string[] {
 	return key.split(/(?=[A-Z])/).map((word) => word.toLowerCase());
 }
