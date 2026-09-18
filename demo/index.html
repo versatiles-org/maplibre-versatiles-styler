@@ -9,8 +9,7 @@
 			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
 		/>
 
-		<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" defer></script>
-		<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
+		<link href="../node_modules/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
 		<script src="../dist/maplibre-versatiles-styler.umd.cjs" defer></script>
 
 		<style>
@@ -41,7 +40,10 @@
 
 	<body>
 		<div id="map" class="maplibregl-compact"></div>
-		<script defer>
+		<!-- MapLibre GL JS 6 is an ES module without a default export, so it is imported, not a global. -->
+		<script type="module">
+			import * as maplibregl from '../node_modules/maplibre-gl/dist/maplibre-gl.mjs';
+
 			window.addEventListener('DOMContentLoaded', () => {
 				const map = new maplibregl.Map({
 					container: 'map',

@@ -1,6 +1,10 @@
+// MapLibre GL JS 6 is an ES module without a default export.
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import VersaTilesStylerControl from '../src/index';
 
-declare const maplibregl: any;
+// Expose the library for E2E tests, which patch `Map.prototype` before the map is created.
+(window as any).maplibregl = maplibregl;
 
 window.addEventListener('DOMContentLoaded', () => {
 	const map = new maplibregl.Map({

@@ -21,6 +21,11 @@ export default defineConfig({
 		sourcemap: true,
 		cssCodeSplit: false,
 	},
+	// MapLibre GL JS 6 loads its worker as `new URL('./maplibre-gl-worker.mjs', import.meta.url)`,
+	// which the dependency pre-bundler does not copy into `.vite/deps`.
+	optimizeDeps: {
+		exclude: ['maplibre-gl'],
+	},
 	css: {
 		preprocessorOptions: {
 			scss: {

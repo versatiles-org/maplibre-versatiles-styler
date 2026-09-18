@@ -36,7 +36,8 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite
 
-Requires MapLibre GL JS 5 or later.
+Requires MapLibre GL JS 6 or later: the styles it builds use paint properties (such as
+`line-layer-opacity`) that earlier versions reject.
 
 ---
 
@@ -49,7 +50,7 @@ npm install maplibre-versatiles-styler
 ```
 
 ```js
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import VersaTilesStylerControl from 'maplibre-versatiles-styler';
 
 const map = new maplibregl.Map({
@@ -68,9 +69,8 @@ map.addControl(new VersaTilesStylerControl({ open: true }));
   <meta charset="utf-8" />
   <title>MapLibre VersaTiles Styler Demo</title>
 
-  <!-- MapLibre -->
+  <!-- MapLibre: version 6 ships as an ES module only, so it is imported below -->
   <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
-  <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js" defer></script>
 
   <!-- VersaTiles Styler -->
   <script src="https://unpkg.com/maplibre-versatiles-styler" defer></script>
@@ -83,7 +83,9 @@ map.addControl(new VersaTilesStylerControl({ open: true }));
 
 <body>
   <div id="map"></div>
-  <script defer>
+  <script type="module">
+    import * as maplibregl from "https://unpkg.com/maplibre-gl/dist/maplibre-gl.mjs";
+
     window.addEventListener("DOMContentLoaded", () => {
       const map = new maplibregl.Map({
         container: "map",
