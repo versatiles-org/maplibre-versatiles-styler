@@ -66,6 +66,20 @@ test('a click names the layer, its group and the source layer it came from', asy
 	await expect(popup.locator('.inspect-note').first()).toContainText('in Labels');
 });
 
+test('the feature properties are listed by name', async ({ page }) => {
+	const label = await labelPoint(page);
+	await inspectAt(page, label);
+
+	await page.locator('.inspect-popup .inspect-properties summary').first().click();
+	const names = await page
+		.locator('.inspect-popup .inspect-properties')
+		.first()
+		.locator('dt')
+		.allInnerTexts();
+	expect(names.length).toBeGreaterThan(1);
+	expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+});
+
 test('the color of what was clicked can be changed in the popup', async ({ page }) => {
 	const label = await labelPoint(page);
 	await inspectAt(page, label);

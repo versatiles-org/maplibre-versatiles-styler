@@ -67,10 +67,15 @@
 		return rows;
 	}
 
+	/**
+	 * The feature's properties by name. A tile lists them in whatever order it was written in, which
+	 * differs from feature to feature; by name, the one being looked for is always in the same place.
+	 */
 	function propertyEntries(layer: InspectedLayer): [string, string][] {
 		return Object.entries(layer.properties)
 			.filter(([, value]) => value !== null && value !== undefined && value !== '')
-			.map(([name, value]) => [name, String(value)]);
+			.map(([name, value]): [string, string] => [name, String(value)])
+			.sort(([a], [b]) => a.localeCompare(b));
 	}
 </script>
 
