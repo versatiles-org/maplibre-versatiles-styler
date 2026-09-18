@@ -468,17 +468,23 @@
 				>
 			</div>
 			<div class="styler-toolbar">
+				<!--
+					Peers, and both quiet: they only open a dialog, and the accent belongs to the button that
+					commits inside it. The arrows say which way the style travels.
+				-->
 				<button
 					type="button"
-					class="secondary-button"
+					class="toolbar-button"
 					aria-haspopup="dialog"
-					onclick={() => (importOpen = true)}>Import…</button
+					onclick={() => (importOpen = true)}
+					><span class="icon icon-import" aria-hidden="true"></span>Import…</button
 				>
 				<button
 					type="button"
-					class="primary-button"
+					class="toolbar-button"
 					aria-haspopup="dialog"
-					onclick={() => (exportOpen = true)}>Export…</button
+					onclick={() => (exportOpen = true)}
+					><span class="icon icon-export" aria-hidden="true"></span>Export…</button
 				>
 				{#if undoState}
 					<button type="button" class="text-button" onclick={undoReset}>Undo reset</button>
