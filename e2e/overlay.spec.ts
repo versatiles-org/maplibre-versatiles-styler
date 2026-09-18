@@ -50,8 +50,8 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 		'Satellite imagery',
 		'Overlay',
 		'Overlay layers',
-		'Overlay color adjustments',
 		'Overlay colors',
+		'Overlay color adjustments',
 		'Overlay labels',
 		'Overlay icons',
 		'Terrain & hillshade',
@@ -80,8 +80,8 @@ test('a new overlay theme brings its colors', async ({ page }) => {
 
 	await row(overlay, 'Theme').locator('select').selectOption('toner');
 	await expect(water).toHaveValue('#D8E7F7');
-	// the imagery treatment stays: white labels
-	await expect(colorInput(colors, 'label')).toHaveValue('#FFFFFF');
+	// the imagery treatment stays: labels lightened for legibility over the photo
+	await expect(colorInput(colors, 'label')).toHaveValue('#E4E4E4');
 	await expect.poll(() => hashConfig(page)).toEqual({ osmOverlay: { theme: 'toner' } });
 });
 

@@ -130,7 +130,10 @@ describe('overlayDefaults', () => {
 		const colorful = overlayDefaults('colorful');
 		expect(colorful.theme).toBe('colorful');
 		expect(colorful.colors.water).toBe(vectorDefaults('colorful').colors.water);
-		expect(colorful.colors.label).toBe('#ffffff');
+		// The treatment lightens every label token for legibility over imagery — tinted from the
+		// theme rather than flat white, so the basemap's dark ink is gone either way.
+		expect(colorful.colors.label).toBe('#E2E2F8');
+		expect(colorful.colors.label).not.toBe(vectorDefaults('colorful').colors.label);
 		expect(colorful.text).toEqual(gray.text);
 	});
 });

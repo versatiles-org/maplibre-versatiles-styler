@@ -121,20 +121,20 @@
 	</SidebarSection>
 	<h4 class="section-group">Appearance</h4>
 	<SidebarSection
-		title="Overlay color adjustments"
-		description="Transformations applied to every color of the overlay."
-		onReset={resetOverlayRecolor}
-		changes={changes('osmOverlay.recolor')}
-	>
-		<RecolorOptions bind:recolor={options.osmOverlay.recolor} defaults={overlay.recolor} />
-	</SidebarSection>
-	<SidebarSection
 		title="Overlay colors"
 		description="Override the color of individual overlay features."
 		onReset={resetOverlayColors}
 		changes={changes('osmOverlay.colors')}
 	>
 		<ColorOptions bind:colors={options.osmOverlay.colors} defaults={overlay.colors} />
+	</SidebarSection>
+	<SidebarSection
+		title="Overlay color adjustments"
+		description="Transformations applied to every color of the overlay."
+		onReset={resetOverlayRecolor}
+		changes={changes('osmOverlay.recolor')}
+	>
+		<RecolorOptions bind:recolor={options.osmOverlay.recolor} defaults={overlay.recolor} />
 	</SidebarSection>
 	<SidebarSection
 		title="Overlay labels"
