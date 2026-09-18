@@ -458,34 +458,11 @@
 		<!-- What the pane is, and what can be done to the style as a whole: one row each. -->
 		<div class="styler-top">
 			<div class="styler-head">
-				<span class="styler-title">Map style</span>
-				<button
-					type="button"
-					class="icon-button"
-					aria-label="Close the style editor"
-					onclick={() => (paneOpen = false)}
-					><span class="icon icon-close" aria-hidden="true"></span></button
-				>
-			</div>
-			<div class="styler-toolbar">
+				<span class="styler-title">VersaTiles Map Styler</span>
 				<!--
-					Peers, and both quiet: they only open a dialog, and the accent belongs to the button that
-					commits inside it. The arrows say which way the style travels.
+					Resetting belongs with the title rather than beside Import and Export: it comes and goes
+					with the changes, and in the row below it would push that pair off centre.
 				-->
-				<button
-					type="button"
-					class="toolbar-button"
-					aria-haspopup="dialog"
-					onclick={() => (importOpen = true)}
-					><span class="icon icon-import" aria-hidden="true"></span>Import…</button
-				>
-				<button
-					type="button"
-					class="toolbar-button"
-					aria-haspopup="dialog"
-					onclick={() => (exportOpen = true)}
-					><span class="icon icon-export" aria-hidden="true"></span>Export…</button
-				>
 				{#if undoState}
 					<button type="button" class="text-button" onclick={undoReset}>Undo reset</button>
 				{:else if totalChanges > 0}
@@ -497,11 +474,38 @@
 						onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
 					>
 				{/if}
+				<button
+					type="button"
+					class="icon-button"
+					aria-label="Close the style editor"
+					onclick={() => (paneOpen = false)}
+					><span class="icon icon-close" aria-hidden="true"></span></button
+				>
 			</div>
 		</div>
 		{#if status}
 			<p class="styler-status" role="status">{status}</p>
 		{/if}
+		<!--
+			Peers, and both quiet: they only open a dialog, and the accent belongs to the button that
+			commits inside it. The arrows say which way the style travels.
+		-->
+		<div class="styler-toolbar">
+			<button
+				type="button"
+				class="toolbar-button"
+				aria-haspopup="dialog"
+				onclick={() => (importOpen = true)}
+				><span class="icon icon-import" aria-hidden="true"></span>Import…</button
+			>
+			<button
+				type="button"
+				class="toolbar-button"
+				aria-haspopup="dialog"
+				onclick={() => (exportOpen = true)}
+				><span class="icon icon-export" aria-hidden="true"></span>Export…</button
+			>
+		</div>
 		<h4 class="section-group">Setup</h4>
 		<SidebarSection
 			title="Tile server"

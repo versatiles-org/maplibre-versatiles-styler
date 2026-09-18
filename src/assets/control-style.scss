@@ -186,7 +186,6 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			position: sticky;
 			top: 0;
 			z-index: 2;
-			border-bottom: 1px solid var(--line);
 			background: var(--bg);
 
 			// MapLibre sizes every button in a control group; these size themselves.
@@ -197,12 +196,13 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			}
 		}
 
-		// The title of the pane, and closing it.
+		// The title of the pane, what can be undone, and closing it. The same insets as a section row,
+		// so the buttons at its end line up with the chevrons below them.
 		.styler-head {
 			display: flex;
 			align-items: center;
 			gap: 2px;
-			padding: 8px 8px 2px 12px;
+			padding: 8px 8px 8px 12px;
 
 			.styler-title {
 				margin-right: auto;
@@ -211,21 +211,25 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			}
 		}
 
-		// What acts on the whole style: reading one in, writing one out, and starting over.
+		// What acts on the whole style: reading one in, and writing one out.
 		.styler-toolbar {
 			display: flex;
 			align-items: center;
-			justify-content: center;
-			gap: 6px;
-			padding: 2px 8px 8px 12px;
+			gap: 8px;
+			// On the pane's 12px inset, like every row below it; a little less above and below, since
+			// the buttons carry a border of their own.
+			padding: 10px 12px;
+			border-top: 1px solid var(--line);
 
-			// A matched pair: same weight, same width, so neither reads as the more important one.
+			// A matched pair: same weight, and half the row each, so neither reads as the more important
+			// one and the two stay centred whatever else the pane shows.
 			.toolbar-button {
 				display: inline-flex;
+				flex: 1 1 0;
 				align-items: center;
 				justify-content: center;
 				gap: 6px;
-				min-width: 104px;
+				min-width: 0;
 				height: 28px;
 				padding: 0 10px;
 				border: 1px solid var(--line);
@@ -252,17 +256,11 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					}
 				}
 			}
-
-			// Reset stays at the far end, so its coming and going moves neither button.
-			.icon-button,
-			.text-button {
-				margin-left: auto;
-			}
 		}
 
 		// The project behind the styler, below everything it can do.
 		.styler-foot {
-			padding: 14px 12px 12px;
+			padding: 12px;
 			border-top: 1px solid var(--line);
 
 			a {
