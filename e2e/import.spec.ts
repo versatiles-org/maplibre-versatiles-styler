@@ -3,12 +3,10 @@ import { getMapStyle } from './helpers';
 
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Import style' });
 
-/** Opens the import dialog from the Setup group of the sidebar. */
+/** Opens the import dialog from the pane's toolbar. */
 async function openImport(page: Page) {
 	await getMapStyle(page);
-	const section = page.locator('details:has(summary .section-title:text-is("Import"))');
-	await section.locator('summary').click();
-	await section.getByRole('button', { name: 'Import a style…' }).click();
+	await page.locator('.styler-toolbar').getByRole('button', { name: 'Import…' }).click();
 	await expect(dialog(page)).toBeVisible();
 	return dialog(page);
 }

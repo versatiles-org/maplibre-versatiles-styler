@@ -51,7 +51,6 @@
 	import ExportDialog from './components/ExportDialog.svelte';
 	import InspectPopup from './components/InspectPopup.svelte';
 	import ImportDialog from './components/ImportDialog.svelte';
-	import { DOCS } from './docs_links';
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();
@@ -429,7 +428,12 @@
 	/>
 {/snippet}
 
-<div class="maplibregl-ctrl maplibregl-ctrl-group">
+<!--
+	The styler's buttons: opening the editor, and the inspector attached to its right. One control with
+	two buttons, because the inspector is part of the styler — it reads the style the pane edits, and
+	writes back to it — even though it acts on the map rather than on the pane.
+-->
+<div class="maplibregl-ctrl maplibregl-ctrl-group styler-buttons">
 	<button
 		type="button"
 		class="maplibregl-ctrl-icon"
@@ -438,56 +442,56 @@
 		aria-expanded={paneOpen}
 		onclick={() => (paneOpen = !paneOpen)}
 	></button>
+	<button
+		type="button"
+		class="ctrl-inspect"
+		title={inspectOn
+			? 'Stop inspecting the map'
+			: 'Inspect the map: click a feature to see what styles it'}
+		aria-label="Inspect the map"
+		aria-pressed={inspectOn}
+		onclick={() => (inspectOn = !inspectOn)}
+	></button>
 </div>
 {#if paneOpen}
 	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
-		<div class="styler-head">
-			<span class="styler-title">Map style</span>
-			{#if undoState}
-				<button type="button" class="text-button" onclick={undoReset}>Undo reset</button>
-			{:else if totalChanges > 0}
+		<!-- What the pane is, and what can be done to the style as a whole: one row each. -->
+		<div class="styler-top">
+			<div class="styler-head">
+				<span class="styler-title">Map style</span>
 				<button
 					type="button"
 					class="icon-button"
-					aria-label="Reset all changes"
-					title="Reset all {totalChanges} changes"
-					onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
+					aria-label="Close the style editor"
+					onclick={() => (paneOpen = false)}
+					><span class="icon icon-close" aria-hidden="true"></span></button
 				>
-			{/if}
-			<button
-				type="button"
-				class="icon-button"
-				class:active={inspectOn}
-				aria-pressed={inspectOn}
-				title={inspectOn
-					? 'Stop inspecting the map'
-					: 'Inspect the map: click a feature to see what styles it'}
-				aria-label="Inspect the map"
-				onclick={() => (inspectOn = !inspectOn)}
-				><span class="icon icon-inspect" aria-hidden="true"></span></button
-			>
-			<button
-				type="button"
-				class="primary-button"
-				aria-haspopup="dialog"
-				onclick={() => (exportOpen = true)}>Export</button
-			>
-			<a
-				class="icon-button"
-				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
-				target="_blank"
-				rel="noopener noreferrer"
-				title="Improve me on GitHub"
-				aria-label="Improve me on GitHub"
-				><span class="icon icon-github" aria-hidden="true"></span></a
-			>
-			<button
-				type="button"
-				class="icon-button"
-				aria-label="Close the style editor"
-				onclick={() => (paneOpen = false)}
-				><span class="icon icon-close" aria-hidden="true"></span></button
-			>
+			</div>
+			<div class="styler-toolbar">
+				<button
+					type="button"
+					class="secondary-button"
+					aria-haspopup="dialog"
+					onclick={() => (importOpen = true)}>Import…</button
+				>
+				<button
+					type="button"
+					class="primary-button"
+					aria-haspopup="dialog"
+					onclick={() => (exportOpen = true)}>Export…</button
+				>
+				{#if undoState}
+					<button type="button" class="text-button" onclick={undoReset}>Undo reset</button>
+				{:else if totalChanges > 0}
+					<button
+						type="button"
+						class="icon-button"
+						aria-label="Reset all changes"
+						title="Reset all {totalChanges} changes"
+						onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
+					>
+				{/if}
+			</div>
 		</div>
 		{#if status}
 			<p class="styler-status" role="status">{status}</p>
@@ -503,21 +507,6 @@
 				<div class="input">
 					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
 				</div>
-			</div>
-		</SidebarSection>
-		<SidebarSection
-			title="Import"
-			description="Start from a style you made earlier, or one from somewhere else."
-		>
-			<p class="section-description">
-				Paste a link from Export, a <code>style.json</code>, or a set of options. Anything that
-				cannot be carried over is listed before it is applied.
-				<a href={DOCS.migrate} target="_blank" rel="noopener noreferrer">More about importing</a>
-			</p>
-			<div class="entry button-container">
-				<button type="button" aria-haspopup="dialog" onclick={() => (importOpen = true)}
-					>Import a style…</button
-				>
 			</div>
 		</SidebarSection>
 		<h4 class="section-group">Style</h4>
@@ -596,6 +585,15 @@
 				{languages}
 			/>
 		{/if}
+		<!-- The project itself, which is neither the map nor the style: out of the action rows. -->
+		<div class="styler-foot">
+			<a
+				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
+				target="_blank"
+				rel="noopener noreferrer"
+				><span class="icon icon-github" aria-hidden="true"></span>Improve me on GitHub</a
+			>
+		</div>
 	</div>
 {/if}
 

@@ -109,6 +109,43 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 		}
 	}
 
+	// The inspector, attached to the right of the button that opens the editor. MapLibre stacks the
+	// buttons of a group and divides them with a top border; this pair stands side by side instead, so
+	// that it reads as one control with two buttons rather than two tools.
+	.maplibregl-ctrl-group.styler-buttons {
+		display: flex;
+		width: max-content;
+
+		button + button {
+			border-top: 0;
+			border-left: 1px solid #ddd;
+		}
+
+		// The focus ring's rounding follows the row, not the stack MapLibre assumes.
+		button:focus:first-child {
+			border-radius: 4px 0 0 4px;
+		}
+
+		button:focus:last-child {
+			border-radius: 0 4px 4px 0;
+		}
+	}
+
+	button.ctrl-inspect {
+		display: grid;
+		place-items: center;
+		color: #333;
+
+		&::after {
+			@include icon($inspect-icon, 18px);
+		}
+
+		&[aria-pressed='true'] {
+			background-color: var(--accent-soft);
+			color: var(--accent);
+		}
+	}
+
 	a {
 		color: var(--muted);
 		text-decoration: none;
@@ -140,15 +177,12 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 		border-radius: 10px;
 		box-shadow: var(--shadow);
 
-		// The header: what the styler is, and what it can do with the whole style.
-		.styler-head {
+		// Two rows that stay put while the sections scroll: what the pane is, and what can be done to
+		// the style as a whole.
+		.styler-top {
 			position: sticky;
 			top: 0;
 			z-index: 2;
-			display: flex;
-			align-items: center;
-			gap: 2px;
-			padding: 8px 8px 8px 12px;
 			border-bottom: 1px solid var(--line);
 			background: var(--bg);
 
@@ -158,11 +192,51 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				width: auto;
 				height: auto;
 			}
+		}
+
+		// The title of the pane, and closing it.
+		.styler-head {
+			display: flex;
+			align-items: center;
+			gap: 2px;
+			padding: 8px 8px 2px 12px;
 
 			.styler-title {
 				margin-right: auto;
 				font-size: 14px;
 				font-weight: 600;
+			}
+		}
+
+		// What acts on the whole style: reading one in, writing one out, and starting over.
+		.styler-toolbar {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding: 2px 8px 8px 12px;
+
+			// Reset stays at the far end, so its coming and going moves neither button.
+			.icon-button,
+			.text-button {
+				margin-left: auto;
+			}
+		}
+
+		// The project behind the styler, below everything it can do.
+		.styler-foot {
+			padding: 14px 12px 12px;
+			border-top: 1px solid var(--line);
+
+			a {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				color: var(--subtle);
+				font-size: 12px;
+
+				&:hover {
+					color: var(--ink);
+				}
 			}
 		}
 
@@ -328,12 +402,6 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 			background: var(--sunken);
 			color: var(--ink);
 		}
-
-		// A button that stays on, like the inspector's.
-		&.active {
-			background: var(--accent-soft);
-			color: var(--accent);
-		}
 	}
 
 	.text-button {
@@ -412,10 +480,6 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 
 	.icon-github {
 		mask: url('data:image/svg+xml,#{$github-icon}') center / 16px no-repeat;
-	}
-
-	.icon-inspect {
-		mask: url('data:image/svg+xml,#{$inspect-icon}') center / 16px no-repeat;
 	}
 
 	.maplibregl-list {

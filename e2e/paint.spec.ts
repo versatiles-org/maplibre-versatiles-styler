@@ -155,7 +155,10 @@ test('a color swatch shows its color, and transparency as a checkerboard', async
 test('the control button shows the palette, in the accent color while the panel is open', async ({
 	page,
 }) => {
-	const button = page.locator('.maplibregl-versatiles-styler button.maplibregl-ctrl-icon');
+	// The palette button, not the inspector, which sits in a control group of its own.
+	const button = page.locator(
+		'.maplibregl-versatiles-styler button.maplibregl-ctrl-icon[aria-label="Toggle style editor"]'
+	);
 	const glyph = async () => {
 		const image = await shoot(button);
 		// the icon fills the middle of the 29px button

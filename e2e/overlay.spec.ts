@@ -45,7 +45,6 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 	);
 	await expect(titles).toHaveText([
 		'Tile server',
-		'Import',
 		'Base style',
 		'Satellite imagery',
 		'Overlay',

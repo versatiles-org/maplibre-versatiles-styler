@@ -64,7 +64,6 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 
 	const expectedTitles = [
 		'Tile server',
-		'Import',
 		'Base style',
 		'Layers',
 		'Individual colors',
@@ -93,7 +92,6 @@ test('sections are grouped under headings', async ({ page }) => {
 	expect(outline).toEqual([
 		'# Setup',
 		'Tile server',
-		'Import',
 		'# Style',
 		'Base style',
 		'# Content',
@@ -121,8 +119,8 @@ test('sections expand and collapse on click', async ({ page }) => {
 	await expect(details).not.toHaveAttribute('open', '');
 });
 
-test('the header links to GitHub', async ({ page }) => {
-	const link = page.getByRole('link', { name: 'Improve me on GitHub' });
+test('the pane links to GitHub in its footer', async ({ page }) => {
+	const link = page.locator('.styler-foot').getByRole('link', { name: 'Improve me on GitHub' });
 	await expect(link).toHaveAttribute(
 		'href',
 		'https://github.com/versatiles-org/maplibre-versatiles-styler'

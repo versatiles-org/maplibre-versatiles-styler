@@ -103,6 +103,17 @@ test('a layer group can be hidden from the popup', async ({ page }) => {
 		.toBe(false);
 });
 
+test('the inspector works with the style editor closed', async ({ page }) => {
+	// It is a map tool of its own: it sits in its own control group and needs no pane.
+	const label = await labelPoint(page);
+	await page.getByRole('button', { name: 'Inspect the map' }).click();
+	await page.getByRole('button', { name: 'Close the style editor' }).click();
+	await expect(page.locator('.maplibregl-pane')).toHaveCount(0);
+
+	await page.mouse.click(label.x, label.y);
+	await expect(page.locator('.inspect-popup')).toBeVisible();
+});
+
 test('turning the inspector off closes the popup', async ({ page }) => {
 	const label = await labelPoint(page);
 	await inspectAt(page, label);

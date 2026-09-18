@@ -347,9 +347,7 @@ for (const size of SIZES) {
 		test('import dialog with a report and warnings', async ({ page }) => {
 			await page.goto('/#panel=open');
 			await page.waitForSelector('.maplibregl-pane button.font-button', { state: 'attached' });
-			const section = page.locator('details:has(summary .section-title:text-is("Import"))');
-			await section.locator('summary').click();
-			await section.getByRole('button', { name: 'Import a style…' }).click();
+			await page.locator('.styler-toolbar').getByRole('button', { name: 'Import…' }).click();
 			const dialog = page.getByRole('dialog', { name: 'Import style' });
 			await expect(dialog).toBeVisible();
 			expect(await layoutProblems(page), 'empty').toEqual([]);
