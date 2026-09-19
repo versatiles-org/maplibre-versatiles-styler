@@ -1,9 +1,6 @@
 {
 	"deps-graph": {
-		"collapse-dir": [
-			"src/lib/components/sections/*",
-			"src/lib/components/inputs/*"
-		],
+		"collapse-dir": ["src/lib/components/sections/*", "src/lib/components/inputs/*"],
 		"svg": "assets/dependency-graph.svg"
 	}
 }

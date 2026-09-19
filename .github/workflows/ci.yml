@@ -53,6 +53,8 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    # Nothing to learn from twenty minutes of browsers if the build or the unit tests already failed.
+    needs: test
     # The suite needs about ten minutes on a runner. Without a limit of its own a hung run would hold
     # the job for GitHub's six-hour default.
     timeout-minutes: 30

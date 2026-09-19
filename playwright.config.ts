@@ -5,6 +5,9 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
+	// A run with this many failures is broken rather than flaky: stop instead of spending twenty
+	// minutes proving it. Ten is above the handful a single genuine regression produces.
+	maxFailures: process.env.CI ? 10 : 0,
 	// A GitHub runner has four cores, and the map renders in software there: two workers halve the wall
 	// time, more would contend for the CPU the rendering needs.
 	workers: process.env.CI ? 2 : undefined,
