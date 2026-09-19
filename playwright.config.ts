@@ -5,9 +5,13 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: process.env.CI ? 1 : undefined,
-	// `open: 'never'` keeps the report from launching a browser on failure
-	reporter: [['html', { open: 'never' }]],
+	// A GitHub runner has four cores, and the map renders in software there: two workers halve the wall
+	// time, more would contend for the CPU the rendering needs.
+	workers: process.env.CI ? 2 : undefined,
+	// `open: 'never'` keeps the report from launching a browser on failure. `line` prints each test as
+	// it finishes: the html reporter alone writes nothing until the end, which makes a slow run in CI
+	// look like a hung one.
+	reporter: [['line'], ['html', { open: 'never' }]],
 	use: {
 		baseURL: 'http://localhost:5173',
 		trace: 'on-first-retry',

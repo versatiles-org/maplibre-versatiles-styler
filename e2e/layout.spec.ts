@@ -5,6 +5,14 @@ import { test, expect, type Page } from '@playwright/test';
  * and the export/import dialogs, at several window sizes and with long content.
  */
 
+/**
+ * Drops the route handlers `useLongContent` installs while a request may still be in flight. Without
+ * this a test that ends mid-request fails with "route.fetch: Test ended", and takes its retries with it.
+ */
+test.afterEach(async ({ page }) => {
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+});
+
 const SIZES = [
 	{ width: 1100, height: 900 },
 	{ width: 800, height: 500 },
