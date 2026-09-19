@@ -9,10 +9,17 @@ export default [
 	...svelte.configs.recommended,
 	{
 		ignores: [
-			'dist/**/*.*',
-			'demo/**/*.*',
-			'e2e/**/*.*',
-			'node_modules/**/*.*',
+			// Generated: the same list as .gitignore. Without these, the coverage report's own scripts and
+			// the bundles inside the Playwright report are linted as if they were source.
+			'coverage/**',
+			'dist/**',
+			'node_modules/**',
+			'playwright-report/**',
+			'screenshots/**',
+			'test-results/**',
+			// Left out on purpose.
+			'demo/**',
+			'e2e/**',
 			'playwright.config.ts',
 		],
 	},
