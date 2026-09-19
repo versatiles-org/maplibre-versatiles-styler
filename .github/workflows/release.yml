@@ -7,15 +7,79 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  # The same split as in ci.yml: a Linux runner has no GPU and gives Firefox no WebGL at all, so these
-  # checks belong on macOS, which also runs the real Safari engine. Runners are free for a public
-  # repository. A tag doesn't trigger CI, so the release has to run these itself.
-  cross-browser:
+  # A tag doesn't trigger CI, so the release has to run the same checks itself. The jobs mirror
+  # ci.yml: a fast gate, then the two browser jobs in parallel, then the release.
+  check:
+    name: Typecheck, Lint and Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  e2e-chromium:
+    name: E2E Tests (Chromium)
+    runs-on: ubuntu-latest
+    # Nothing to learn from twenty minutes of browsers if the unit tests already failed.
+    needs: check
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e -- --project=chromium
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-chromium
+          path: playwright-report/
+          retention-days: 30
+
+  # The layout and stability checks in the other engines, on macOS because a Linux runner has no GPU
+  # and gives Firefox no WebGL at all — MapLibre needs WebGL2, so every test there fails before the
+  # map exists. macOS also runs the real Safari engine. Runners are free for a public repository.
+  e2e-cross-browser:
     name: E2E Tests (Firefox, WebKit)
     runs-on: macos-latest
+    needs: check
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -47,8 +111,9 @@ jobs:
   release:
     name: Build and release
     runs-on: ubuntu-latest
-    needs: cross-browser
-    timeout-minutes: 30
+    needs: [e2e-chromium, e2e-cross-browser]
+    permissions:
+      contents: write
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -64,35 +129,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Playwright browsers
-        # Chromium only: the other engines run on the macOS job above.
-        run: npx playwright install --with-deps chromium
-
-      # `npm run check` would run the e2e suite across every project, Firefox included. Its steps are
-      # spelled out here instead so the browsers can be split across runners.
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run E2E tests
-        run: npm run test:e2e -- --project=chromium
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-chromium
-          path: playwright-report/
-          retention-days: 30
 
       - name: Get version
         run: 'echo "RELEASE_TAG=v$(jq -r ''.version'' package.json)" >> $GITHUB_ENV'
