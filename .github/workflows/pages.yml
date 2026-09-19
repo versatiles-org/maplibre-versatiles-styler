@@ -30,10 +30,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      # `demo/index.html` loads the bundle from next to itself, so the build only has to put it there.
+      # The `.js` extension is deliberate: GitHub Pages serves `.cjs` as `application/node`, which
+      # browsers reject as a JavaScript MIME type.
       - name: Prepare demo
-        run: |
-          cp dist/maplibre-versatiles-styler.umd.cjs demo/
-          sed -i 's|../dist/maplibre-versatiles-styler.umd.cjs|./maplibre-versatiles-styler.umd.cjs|' demo/index.html
+        run: cp dist/maplibre-versatiles-styler.umd.cjs demo/maplibre-versatiles-styler.umd.js
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v5

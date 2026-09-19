@@ -9,8 +9,11 @@
 			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
 		/>
 
-		<link href="../node_modules/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
-		<script src="../dist/maplibre-versatiles-styler.umd.cjs" defer></script>
+		<!-- The same CDN the README documents: `node_modules` is not deployed with this page. -->
+		<link href="https://unpkg.com/maplibre-gl@6/dist/maplibre-gl.css" rel="stylesheet" />
+		<!-- Copied next to this file by the build; `.js` because GitHub Pages serves `.cjs` as
+		     `application/node`, which is not a valid JavaScript MIME type. -->
+		<script src="./maplibre-versatiles-styler.umd.js" defer></script>
 
 		<style>
 			body {
@@ -42,7 +45,7 @@
 		<div id="map" class="maplibregl-compact"></div>
 		<!-- MapLibre GL JS 6 is an ES module without a default export, so it is imported, not a global. -->
 		<script type="module">
-			import * as maplibregl from '../node_modules/maplibre-gl/dist/maplibre-gl.mjs';
+			import * as maplibregl from 'https://unpkg.com/maplibre-gl@6/dist/maplibre-gl.mjs';
 
 			window.addEventListener('DOMContentLoaded', () => {
 				const map = new maplibregl.Map({
