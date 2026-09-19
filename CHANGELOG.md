@@ -5,6 +5,115 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-09-19
+
+### Breaking Changes
+
+- port styler core to @versatiles/style v6
+
+### Features
+
+- v6 parity for the style list, colors and labels; update e2e tests
+- font section as a per-group and per-topic tree
+- layer visibility, label spacing and tilt, terrain and hillshade details
+- map options and the full satellite overlay
+- update sun configuration to include color and intensity in state management
+- implement dynamic container background color based on selected style
+- apply style changes with MapLibre's style diff
+- implement theme selection table with light and dark variants
+- add gamma and contrast sliders with logarithmic support and step adjustments
+- implement editable value input for sliders with keyboard support
+- implement config change detection and update reset button visibility in style panels
+- enhance font selection and preview functionality
+- enhance font picker with language filtering and clipboard support
+- label style editor for the v6 text options
+- filter the font picker by writing system
+- bulk script selection and closest fonts in the font picker
+- "Scripts in view" in the font picker
+- remove labelLanguage function and related tests from font tree
+- color row with hex field and transparency preview
+- color picker with live map updates
+- RGB, HSL and hex tabs in the color picker
+- enhance popover behavior with resize observer and improve color picker scrolling
+- add layout tests for sidebar and popups to check content overflow and visibility
+- reorganize sidebar sections and enhance styling for better usability
+- enhance input components and introduce InputSegmented
+- implement theme swatch functionality and update config change tracking
+- enhance export functionality and improve UI for style management
+- enhance Playwright configuration to include Firefox and WebKit for layout and stability tests
+- add tests for color rendering and interaction in the color picker component
+- enhance color track styling and structure in ColorPicker component
+- add 'Tile server' section to the sidebar and update overlay tests
+- reorder 'Color adjustments' section in VectorStylePanel and update tests for sidebar titles
+- update sidebar panel behavior and hash management for improved state handling
+- add aria attributes for accessibility to the style editor toggle button
+- export and import dialogs, close #19
+- enhance dialog components with tab strip and toolbar support
+- remove link export option and related functionality from export dialog
+- enhance import functionality with diagnostics and provenance tracking
+- add satellite theme support in style selection and styling
+- update overlay color adjustments for improved legibility and consistency
+- update to MapLibre GL JS 6, adjust imports and configurations for compatibility
+- **inspector:** add feature inspection capabilities to the map
+- refactor import dialog and inspector integration for improved usability
+- add import and export buttons with icons to the toolbar for enhanced functionality
+- **inspector:** enhance feature property listing and sorting in the inspector
+- **e2e:** enhance layout tests with unrouteAll to handle mid-request failures chore(playwright): adjust worker count and reporter settings for CI optimization
+- add documentation generation for dependency graph
+- enable WebGL support in Firefox configuration for CI environment
+- enhance E2E testing by adding cross-browser support for Firefox and WebKit
+- add functions to ensure UI elements have settled before interaction in color picker and layout tests
+- improve popover handling by ensuring visibility before interaction in color and font pickers
+
+### Bug Fixes
+
+- standardize percentage formatting and improve color picker styles
+- adjust layout properties for better responsiveness and add maxHeight option to popover
+- update testMatch patterns for Firefox and WebKit to include paint tests
+- no style diff against a style that is still loading
+- adjust inline code styling to prevent indentation issues
+- improve CI workflow by adding dependency on test job and set max failures for Playwright
+- update ESLint ignore patterns to align with .gitignore and improve linting accuracy
+
+### Performance Improvements
+
+- instant paint changes and no style validation while editing
+
+### Code Refactoring
+
+- nest the control styles by element
+- group src/lib by topic
+
+### Documentation
+
+- update README for v2 (themes, options, server requirements, URL hash, upgrade notes)
+
+### Tests
+
+- add stability tests to ensure panel layout remains unchanged on setting changes
+
+### Build System
+
+- **deps:** bump fast-uri in the security group across 1 directory
+- **deps:** link @versatiles/style v6 from local checkout
+
+### Chores
+
+- update devDependencies to latest versions
+- update dependencies in package.json
+- remove husky configuration and dependencies
+- update @versatiles/style dependency to version 6.0.0
+- update @versatiles/release-tool to version 2.15.0
+
+### Styles
+
+- fix logo CSS by nesting img styles
+- put the pane's rows on one inset
+
+### Other Changes
+
+- Refactor color model and picker to support multiple color spaces
+
 ## [1.4.0] - 2026-08-22
 
 ### Features
