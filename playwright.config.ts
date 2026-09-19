@@ -33,7 +33,20 @@ export default defineConfig({
 		{
 			name: 'firefox',
 			testMatch: /(layout|stability|paint)\.spec\.ts/,
-			use: { ...devices['Desktop Firefox'] },
+			use: {
+				...devices['Desktop Firefox'],
+				// A CI runner has no GPU, and Firefox then refuses WebGL rather than falling back to
+				// software — MapLibre 6 needs WebGL2 and throws before the control is ever added, so every
+				// test times out waiting for a sidebar that was never mounted. Chromium avoids this with
+				// `--use-gl=angle` below; these are the equivalent.
+				launchOptions: {
+					firefoxUserPrefs: {
+						'webgl.force-enabled': true,
+						'webgl.disabled': false,
+						'gfx.webrender.software': true,
+					},
+				},
+			},
 		},
 		{
 			name: 'webkit',
