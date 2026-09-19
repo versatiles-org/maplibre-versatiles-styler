@@ -51,7 +51,7 @@ jobs:
           slug: versatiles-org/maplibre-versatiles-styler
 
   e2e:
-    name: E2E Tests
+    name: E2E Tests (Chromium)
     runs-on: ubuntu-latest
     # Nothing to learn from twenty minutes of browsers if the build or the unit tests already failed.
     needs: test
@@ -72,16 +72,51 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        # Chromium runs the whole suite; Firefox and WebKit the layout and stability checks.
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --project=chromium
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-chromium
+          path: playwright-report/
+          retention-days: 30
+
+  # The layout and stability checks in the other engines. They run on macOS because a Linux runner has
+  # no GPU and gives Firefox no WebGL at all — MapLibre needs WebGL2, so every test there failed before
+  # the map existed. macOS also runs the real Safari engine, which is the one these checks are about;
+  # Playwright's WebKit on Linux is the GTK port. Runners are free for a public repository.
+  e2e-cross-browser:
+    name: E2E Tests (Firefox, WebKit)
+    runs-on: macos-latest
+    needs: test
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Run E2E tests
+        run: npm run test:e2e -- --project=firefox --project=webkit
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-cross-browser
           path: playwright-report/
           retention-days: 30
