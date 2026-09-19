@@ -1,0 +1,321 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1293" height="1206" viewBox="0 0 1293 1206">
+<title>Dependency graph</title>
+<style>
+	.background { fill: #ffffff; }
+	.directory { stroke: #c5ccc9; stroke-width: 1; }
+	.depth1 { fill: #f2f4f3; }
+	.depth2 { fill: #e8ecea; }
+	.depth3 { fill: #dfe4e2; }
+	.file { fill: #ffffff; stroke: #9aa6a1; stroke-width: 1; }
+	text { font-family: Helvetica, Arial, 'Liberation Sans', sans-serif; font-size: 12px; }
+	.label { fill: #1b2220; text-anchor: middle; }
+	.directory-label { fill: #66736d; font-weight: 600; }
+	.edge { fill: none; stroke: #5f6b66; stroke-width: 1; stroke-opacity: 0.7; }
+	.arrowhead { fill: #5f6b66; }
+	svg { --outgoing: #d9480f; --incoming: #1971c2; }
+	.background, .edge { pointer-events: none; }
+	.node { cursor: default; }
+	.node:hover .file { stroke-width: 2; }
+	.arrowhead-dim { fill: #5f6b66; fill-opacity: 0.15; }
+	.arrowhead-outgoing { fill: var(--outgoing); }
+	.arrowhead-incoming { fill: var(--incoming); }
+	@media (prefers-color-scheme: dark) {
+		svg { --outgoing: #ff922b; --incoming: #4dabf7; }
+		.arrowhead-dim { fill: #8b949e; }
+		.background { fill: #0d1117; }
+		.directory { stroke: #39424d; }
+		.depth1 { fill: #161b22; }
+		.depth2 { fill: #1c232c; }
+		.depth3 { fill: #232b35; }
+		.file { fill: #0d1117; stroke: #5c6773; }
+		.label { fill: #e6edf3; }
+		.directory-label { fill: #8b949e; }
+		.edge { stroke: #8b949e; }
+		.arrowhead { fill: #8b949e; }
+	}
+	svg:has(.node:hover) .edge { stroke-opacity: 0.15; marker-end: url(#arrow-dim); }
+	svg:has(.n37:hover) .inner-n37, svg:has(.n38:hover) .inner-n38, svg:has(.n41:hover) .inner-n41, svg:has(.n43:hover) .inner-n43, svg:has(.n44:hover) .inner-n44 { stroke-opacity: 0.7; marker-end: url(#arrow); }
+	svg:has(.n0:hover) .from-n0, svg:has(.n1:hover) .from-n1, svg:has(.n2:hover) .from-n2, svg:has(.n38:hover) .out-n38, svg:has(.n39:hover) .out-n39, svg:has(.n4:hover) .from-n4, svg:has(.n41:hover) .out-n41, svg:has(.n7:hover) .from-n7, svg:has(.n11:hover) .from-n11, svg:has(.n44:hover) .out-n44, svg:has(.n12:hover) .from-n12, svg:has(.n15:hover) .from-n15, svg:has(.n18:hover) .from-n18, svg:has(.n19:hover) .from-n19, svg:has(.n20:hover) .from-n20, svg:has(.n23:hover) .from-n23, svg:has(.n45:hover) .out-n45, svg:has(.n26:hover) .from-n26, svg:has(.n27:hover) .from-n27, svg:has(.n47:hover) .out-n47, svg:has(.n28:hover) .from-n28, svg:has(.n48:hover) .out-n48, svg:has(.n30:hover) .from-n30, svg:has(.n31:hover) .from-n31, svg:has(.n46:hover) .out-n46, svg:has(.n32:hover) .from-n32, svg:has(.n35:hover) .from-n35 { stroke: var(--outgoing); stroke-opacity: 1; marker-end: url(#arrow-outgoing); }
+	svg:has(.n1:hover) .to-n1, svg:has(.n38:hover) .in-n38, svg:has(.n2:hover) .to-n2, svg:has(.n39:hover) .in-n39, svg:has(.n4:hover) .to-n4, svg:has(.n41:hover) .in-n41, svg:has(.n3:hover) .to-n3, svg:has(.n40:hover) .in-n40, svg:has(.n5:hover) .to-n5, svg:has(.n6:hover) .to-n6, svg:has(.n42:hover) .in-n42, svg:has(.n7:hover) .to-n7, svg:has(.n43:hover) .in-n43, svg:has(.n8:hover) .to-n8, svg:has(.n9:hover) .to-n9, svg:has(.n10:hover) .to-n10, svg:has(.n11:hover) .to-n11, svg:has(.n44:hover) .in-n44, svg:has(.n12:hover) .to-n12, svg:has(.n18:hover) .to-n18, svg:has(.n20:hover) .to-n20, svg:has(.n26:hover) .to-n26, svg:has(.n34:hover) .to-n34, svg:has(.n25:hover) .to-n25, svg:has(.n46:hover) .in-n46, svg:has(.n31:hover) .to-n31, svg:has(.n35:hover) .to-n35, svg:has(.n13:hover) .to-n13, svg:has(.n14:hover) .to-n14, svg:has(.n15:hover) .to-n15, svg:has(.n17:hover) .to-n17, svg:has(.n16:hover) .to-n16, svg:has(.n19:hover) .to-n19, svg:has(.n21:hover) .to-n21, svg:has(.n22:hover) .to-n22, svg:has(.n23:hover) .to-n23, svg:has(.n45:hover) .in-n45, svg:has(.n24:hover) .to-n24, svg:has(.n28:hover) .to-n28, svg:has(.n48:hover) .in-n48, svg:has(.n32:hover) .to-n32, svg:has(.n30:hover) .to-n30, svg:has(.n33:hover) .to-n33, svg:has(.n27:hover) .to-n27, svg:has(.n47:hover) .in-n47, svg:has(.n29:hover) .to-n29 { stroke: var(--incoming); stroke-opacity: 1; marker-end: url(#arrow-incoming); }
+	svg:has(.n0:hover) .n1 .file, svg:has(.n1:hover) .n2 .file, svg:has(.n1:hover) .n4 .file, svg:has(.n2:hover) .n3 .file, svg:has(.n38:hover) .n3 .file, svg:has(.n39:hover) .n3 .file, svg:has(.n4:hover) .n5 .file, svg:has(.n41:hover) .n5 .file, svg:has(.n4:hover) .n6 .file, svg:has(.n41:hover) .n6 .file, svg:has(.n4:hover) .n7 .file, svg:has(.n41:hover) .n7 .file, svg:has(.n4:hover) .n8 .file, svg:has(.n41:hover) .n8 .file, svg:has(.n4:hover) .n9 .file, svg:has(.n41:hover) .n9 .file, svg:has(.n4:hover) .n10 .file, svg:has(.n41:hover) .n10 .file, svg:has(.n4:hover) .n11 .file, svg:has(.n41:hover) .n11 .file, svg:has(.n4:hover) .n12 .file, svg:has(.n4:hover) .n18 .file, svg:has(.n4:hover) .n20 .file, svg:has(.n4:hover) .n26 .file, svg:has(.n4:hover) .n34 .file, svg:has(.n4:hover) .n25 .file, svg:has(.n4:hover) .n31 .file, svg:has(.n4:hover) .n35 .file, svg:has(.n7:hover) .n8 .file, svg:has(.n11:hover) .n7 .file, svg:has(.n44:hover) .n7 .file, svg:has(.n12:hover) .n13 .file, svg:has(.n41:hover) .n13 .file, svg:has(.n12:hover) .n14 .file, svg:has(.n41:hover) .n14 .file, svg:has(.n12:hover) .n15 .file, svg:has(.n12:hover) .n17 .file, svg:has(.n15:hover) .n14 .file, svg:has(.n15:hover) .n16 .file, svg:has(.n41:hover) .n16 .file, svg:has(.n18:hover) .n13 .file, svg:has(.n18:hover) .n19 .file, svg:has(.n41:hover) .n19 .file, svg:has(.n18:hover) .n17 .file, svg:has(.n19:hover) .n7 .file, svg:has(.n19:hover) .n11 .file, svg:has(.n20:hover) .n21 .file, svg:has(.n41:hover) .n21 .file, svg:has(.n20:hover) .n22 .file, svg:has(.n41:hover) .n22 .file, svg:has(.n20:hover) .n8 .file, svg:has(.n20:hover) .n23 .file, svg:has(.n23:hover) .n24 .file, svg:has(.n41:hover) .n24 .file, svg:has(.n45:hover) .n24 .file, svg:has(.n23:hover) .n25 .file, svg:has(.n45:hover) .n25 .file, svg:has(.n23:hover) .n22 .file, svg:has(.n45:hover) .n22 .file, svg:has(.n23:hover) .n31 .file, svg:has(.n45:hover) .n31 .file, svg:has(.n23:hover) .n28 .file, svg:has(.n41:hover) .n28 .file, svg:has(.n45:hover) .n28 .file, svg:has(.n23:hover) .n32 .file, svg:has(.n41:hover) .n32 .file, svg:has(.n45:hover) .n32 .file, svg:has(.n23:hover) .n30 .file, svg:has(.n41:hover) .n30 .file, svg:has(.n45:hover) .n30 .file, svg:has(.n23:hover) .n33 .file, svg:has(.n41:hover) .n33 .file, svg:has(.n45:hover) .n33 .file, svg:has(.n26:hover) .n7 .file, svg:has(.n26:hover) .n27 .file, svg:has(.n26:hover) .n34 .file, svg:has(.n27:hover) .n21 .file, svg:has(.n47:hover) .n21 .file, svg:has(.n27:hover) .n23 .file, svg:has(.n47:hover) .n23 .file, svg:has(.n27:hover) .n28 .file, svg:has(.n47:hover) .n28 .file, svg:has(.n27:hover) .n30 .file, svg:has(.n47:hover) .n30 .file, svg:has(.n27:hover) .n29 .file, svg:has(.n41:hover) .n29 .file, svg:has(.n47:hover) .n29 .file, svg:has(.n27:hover) .n22 .file, svg:has(.n47:hover) .n22 .file, svg:has(.n27:hover) .n7 .file, svg:has(.n47:hover) .n7 .file, svg:has(.n28:hover) .n29 .file, svg:has(.n48:hover) .n29 .file, svg:has(.n30:hover) .n6 .file, svg:has(.n48:hover) .n6 .file, svg:has(.n31:hover) .n32 .file, svg:has(.n46:hover) .n32 .file, svg:has(.n32:hover) .n6 .file, svg:has(.n35:hover) .n7 .file, svg:has(.n35:hover) .n23 .file, svg:has(.n35:hover) .n27 .file, svg:has(.n35:hover) .n34 .file { stroke: var(--outgoing); }
+	svg:has(.n1:hover) .n0 .file, svg:has(.n38:hover) .n0 .file, svg:has(.n2:hover) .n1 .file, svg:has(.n39:hover) .n1 .file, svg:has(.n4:hover) .n1 .file, svg:has(.n41:hover) .n1 .file, svg:has(.n3:hover) .n2 .file, svg:has(.n40:hover) .n2 .file, svg:has(.n5:hover) .n4 .file, svg:has(.n39:hover) .n4 .file, svg:has(.n6:hover) .n4 .file, svg:has(.n42:hover) .n4 .file, svg:has(.n7:hover) .n4 .file, svg:has(.n43:hover) .n4 .file, svg:has(.n8:hover) .n4 .file, svg:has(.n9:hover) .n4 .file, svg:has(.n10:hover) .n4 .file, svg:has(.n11:hover) .n4 .file, svg:has(.n44:hover) .n4 .file, svg:has(.n12:hover) .n4 .file, svg:has(.n18:hover) .n4 .file, svg:has(.n20:hover) .n4 .file, svg:has(.n26:hover) .n4 .file, svg:has(.n34:hover) .n4 .file, svg:has(.n25:hover) .n4 .file, svg:has(.n46:hover) .n4 .file, svg:has(.n31:hover) .n4 .file, svg:has(.n35:hover) .n4 .file, svg:has(.n8:hover) .n7 .file, svg:has(.n7:hover) .n11 .file, svg:has(.n43:hover) .n11 .file, svg:has(.n13:hover) .n12 .file, svg:has(.n44:hover) .n12 .file, svg:has(.n14:hover) .n12 .file, svg:has(.n15:hover) .n12 .file, svg:has(.n17:hover) .n12 .file, svg:has(.n14:hover) .n15 .file, svg:has(.n44:hover) .n15 .file, svg:has(.n16:hover) .n15 .file, svg:has(.n13:hover) .n18 .file, svg:has(.n44:hover) .n18 .file, svg:has(.n19:hover) .n18 .file, svg:has(.n17:hover) .n18 .file, svg:has(.n7:hover) .n19 .file, svg:has(.n43:hover) .n19 .file, svg:has(.n11:hover) .n19 .file, svg:has(.n21:hover) .n20 .file, svg:has(.n42:hover) .n20 .file, svg:has(.n22:hover) .n20 .file, svg:has(.n8:hover) .n20 .file, svg:has(.n43:hover) .n20 .file, svg:has(.n23:hover) .n20 .file, svg:has(.n45:hover) .n20 .file, svg:has(.n24:hover) .n23 .file, svg:has(.n39:hover) .n23 .file, svg:has(.n25:hover) .n23 .file, svg:has(.n46:hover) .n23 .file, svg:has(.n22:hover) .n23 .file, svg:has(.n42:hover) .n23 .file, svg:has(.n31:hover) .n23 .file, svg:has(.n28:hover) .n23 .file, svg:has(.n48:hover) .n23 .file, svg:has(.n32:hover) .n23 .file, svg:has(.n30:hover) .n23 .file, svg:has(.n33:hover) .n23 .file, svg:has(.n7:hover) .n26 .file, svg:has(.n43:hover) .n26 .file, svg:has(.n27:hover) .n26 .file, svg:has(.n47:hover) .n26 .file, svg:has(.n34:hover) .n26 .file, svg:has(.n21:hover) .n27 .file, svg:has(.n42:hover) .n27 .file, svg:has(.n23:hover) .n27 .file, svg:has(.n45:hover) .n27 .file, svg:has(.n28:hover) .n27 .file, svg:has(.n48:hover) .n27 .file, svg:has(.n30:hover) .n27 .file, svg:has(.n29:hover) .n27 .file, svg:has(.n22:hover) .n27 .file, svg:has(.n7:hover) .n27 .file, svg:has(.n43:hover) .n27 .file, svg:has(.n29:hover) .n28 .file, svg:has(.n42:hover) .n28 .file, svg:has(.n6:hover) .n30 .file, svg:has(.n42:hover) .n30 .file, svg:has(.n32:hover) .n31 .file, svg:has(.n48:hover) .n31 .file, svg:has(.n6:hover) .n32 .file, svg:has(.n42:hover) .n32 .file, svg:has(.n7:hover) .n35 .file, svg:has(.n43:hover) .n35 .file, svg:has(.n23:hover) .n35 .file, svg:has(.n45:hover) .n35 .file, svg:has(.n27:hover) .n35 .file, svg:has(.n47:hover) .n35 .file, svg:has(.n34:hover) .n35 .file { stroke: var(--incoming); }
+	svg:has(.n37:hover) .directory.n37, svg:has(.n38:hover) .directory.n38, svg:has(.n39:hover) .directory.n39, svg:has(.n40:hover) .directory.n40, svg:has(.n41:hover) .directory.n41, svg:has(.n42:hover) .directory.n42, svg:has(.n43:hover) .directory.n43, svg:has(.n44:hover) .directory.n44, svg:has(.n45:hover) .directory.n45, svg:has(.n46:hover) .directory.n46, svg:has(.n47:hover) .directory.n47, svg:has(.n48:hover) .directory.n48 { stroke-width: 2; }
+</style>
+<defs>
+<marker id="arrow" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path class="arrowhead" d="M0,0 L8,4 L0,8 z"/></marker>
+<marker id="arrow-dim" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path class="arrowhead-dim" d="M0,0 L8,4 L0,8 z"/></marker>
+<marker id="arrow-outgoing" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path class="arrowhead-outgoing" d="M0,0 L8,4 L0,8 z"/></marker>
+<marker id="arrow-incoming" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path class="arrowhead-incoming" d="M0,0 L8,4 L0,8 z"/></marker>
+</defs>
+<rect class="background" width="1293" height="1206"/>
+<rect class="directory depth1 node n37" x="12" y="12" width="1268.35" height="1182" rx="6"/>
+<rect class="directory depth2 node n38" x="22" y="96" width="1248.35" height="990" rx="6"/>
+<rect class="directory depth3 node n39" x="936" y="801" width="262.34" height="62" rx="6"/>
+<g class="node n2">
+<rect class="file" x="1129" y="829" width="59.34" height="24" rx="4"/>
+<text class="label" x="1158.67" y="845" textLength="43.34" lengthAdjust="spacingAndGlyphs">styles.ts</text>
+</g>
+<g class="node n5">
+<rect class="file" x="1022" y="829" width="90.03" height="24" rx="4"/>
+<text class="label" x="1067.01" y="845" textLength="74.03" lengthAdjust="spacingAndGlyphs">map_labels.ts</text>
+</g>
+<g class="node n24">
+<rect class="file" x="946" y="829" width="59.34" height="24" rx="4"/>
+<text class="label" x="975.67" y="845" textLength="43.34" lengthAdjust="spacingAndGlyphs">frame.ts</text>
+</g>
+<rect class="directory depth3 node n41" x="32" y="180" width="959" height="540" rx="6"/>
+<rect class="directory depth3 node n45" x="613" y="502" width="90.01" height="62" rx="6"/>
+<g class="node n23">
+<rect class="file" x="623" y="530" width="70.01" height="24" rx="4"/>
+<text class="label" x="658.01" y="546" textLength="54.01" lengthAdjust="spacingAndGlyphs">* (17 files)</text>
+</g>
+<rect class="directory depth3 node n46" x="642" y="624" width="287.04" height="62" rx="6"/>
+<g class="node n25">
+<rect class="file" x="652" y="652" width="128.03" height="24" rx="4"/>
+<text class="label" x="716.02" y="668" textLength="112.03" lengthAdjust="spacingAndGlyphs">color_picker.svelte.ts</text>
+</g>
+<g class="node n31">
+<rect class="file" x="797" y="652" width="122.04" height="24" rx="4"/>
+<text class="label" x="858.02" y="668" textLength="106.04" lengthAdjust="spacingAndGlyphs">font_picker.svelte.ts</text>
+</g>
+<rect class="directory depth3 node n47" x="533" y="372" width="90.01" height="62" rx="6"/>
+<g class="node n27">
+<rect class="file" x="543" y="400" width="70.01" height="24" rx="4"/>
+<text class="label" x="578.01" y="416" textLength="54.01" lengthAdjust="spacingAndGlyphs">* (10 files)</text>
+</g>
+<g class="node n4">
+<rect class="file" x="395" y="208" width="81.35" height="24" rx="4"/>
+<text class="label" x="435.68" y="224" textLength="65.35" lengthAdjust="spacingAndGlyphs">Styler.svelte</text>
+</g>
+<g class="node n12">
+<rect class="file" x="208" y="300" width="119.37" height="24" rx="4"/>
+<text class="label" x="267.68" y="316" textLength="103.37" lengthAdjust="spacingAndGlyphs">ExportDialog.svelte</text>
+</g>
+<g class="node n15">
+<rect class="file" x="229" y="397.33" width="108.7" height="24" rx="4"/>
+<text class="label" x="283.35" y="413.33" textLength="92.7" lengthAdjust="spacingAndGlyphs">CodeBlock.svelte</text>
+</g>
+<g class="node n17">
+<rect class="file" x="114" y="372" width="83.36" height="24" rx="4"/>
+<text class="label" x="155.68" y="388" textLength="67.36" lengthAdjust="spacingAndGlyphs">Modal.svelte</text>
+</g>
+<g class="node n18">
+<rect class="file" x="73" y="300" width="118.7" height="24" rx="4"/>
+<text class="label" x="132.35" y="316" textLength="102.7" lengthAdjust="spacingAndGlyphs">ImportDialog.svelte</text>
+</g>
+<g class="node n20">
+<rect class="file" x="640" y="402.4" width="124.06" height="24" rx="4"/>
+<text class="label" x="702.03" y="418.4" textLength="108.06" lengthAdjust="spacingAndGlyphs">InspectPopup.svelte</text>
+</g>
+<g class="node n26">
+<rect class="file" x="361" y="300" width="150.72" height="24" rx="4"/>
+<text class="label" x="436.36" y="316" textLength="134.72" lengthAdjust="spacingAndGlyphs">SatelliteStylePanel.svelte</text>
+</g>
+<g class="node n34">
+<rect class="file" x="369" y="372" width="132.05" height="24" rx="4"/>
+<text class="label" x="435.03" y="388" textLength="116.05" lengthAdjust="spacingAndGlyphs">SidebarSection.svelte</text>
+</g>
+<g class="node n35">
+<rect class="file" x="533" y="300" width="142.72" height="24" rx="4"/>
+<text class="label" x="604.36" y="316" textLength="126.72" lengthAdjust="spacingAndGlyphs">VectorStylePanel.svelte</text>
+</g>
+<rect class="directory depth3 node n42" x="545" y="962" width="335.68" height="62" rx="6"/>
+<g class="node n6">
+<rect class="file" x="709" y="990" width="84.04" height="24" rx="4"/>
+<text class="label" x="751.02" y="1006" textLength="68.04" lengthAdjust="spacingAndGlyphs">languages.ts</text>
+</g>
+<g class="node n21">
+<rect class="file" x="810" y="990" width="60.68" height="24" rx="4"/>
+<text class="label" x="840.34" y="1006" textLength="44.68" lengthAdjust="spacingAndGlyphs">colors.ts</text>
+</g>
+<g class="node n22">
+<rect class="file" x="555" y="990" width="60.68" height="24" rx="4"/>
+<text class="label" x="585.34" y="1006" textLength="44.68" lengthAdjust="spacingAndGlyphs">layers.ts</text>
+</g>
+<g class="node n29">
+<rect class="file" x="632" y="990" width="60.02" height="24" rx="4"/>
+<text class="label" x="662.01" y="1006" textLength="44.02" lengthAdjust="spacingAndGlyphs">labels.ts</text>
+</g>
+<rect class="directory depth3 node n43" x="263" y="962" width="266" height="114" rx="6"/>
+<g class="node n7">
+<rect class="file" x="365" y="990" width="60.69" height="24" rx="4"/>
+<text class="label" x="395.34" y="1006" textLength="44.69" lengthAdjust="spacingAndGlyphs">config.ts</text>
+</g>
+<g class="node n8">
+<rect class="file" x="362" y="1042" width="66.69" height="24" rx="4"/>
+<text class="label" x="395.34" y="1058" textLength="50.69" lengthAdjust="spacingAndGlyphs">inspect.ts</text>
+</g>
+<g class="node n9">
+<rect class="file" x="273" y="990" width="70.68" height="24" rx="4"/>
+<text class="label" x="308.34" y="1006" textLength="54.68" lengthAdjust="spacingAndGlyphs">sources.ts</text>
+</g>
+<g class="node n10">
+<rect class="file" x="442" y="990" width="65.37" height="24" rx="4"/>
+<text class="label" x="474.68" y="1006" textLength="49.37" lengthAdjust="spacingAndGlyphs">update.ts</text>
+</g>
+<rect class="directory depth3 node n44" x="72" y="788" width="355.69" height="114" rx="6"/>
+<g class="node n11">
+<rect class="file" x="363" y="868" width="54.69" height="24" rx="4"/>
+<text class="label" x="390.34" y="884" textLength="38.69" lengthAdjust="spacingAndGlyphs">hash.ts</text>
+</g>
+<g class="node n13">
+<rect class="file" x="161" y="816" width="54.02" height="24" rx="4"/>
+<text class="label" x="188.01" y="832" textLength="38.02" lengthAdjust="spacingAndGlyphs">docs.ts</text>
+</g>
+<g class="node n14">
+<rect class="file" x="232" y="816" width="62.02" height="24" rx="4"/>
+<text class="label" x="263.01" y="832" textLength="46.02" lengthAdjust="spacingAndGlyphs">export.ts</text>
+</g>
+<g class="node n16">
+<rect class="file" x="311" y="816" width="73.36" height="24" rx="4"/>
+<text class="label" x="347.68" y="832" textLength="57.36" lengthAdjust="spacingAndGlyphs">highlight.ts</text>
+</g>
+<g class="node n19">
+<rect class="file" x="82" y="816" width="62.01" height="24" rx="4"/>
+<text class="label" x="113" y="832" textLength="46.01" lengthAdjust="spacingAndGlyphs">import.ts</text>
+</g>
+<rect class="directory depth3 node n48" x="581" y="803.6" width="315.34" height="62" rx="6"/>
+<g class="node n28">
+<rect class="file" x="591" y="831.6" width="69.34" height="24" rx="4"/>
+<text class="label" x="625.67" y="847.6" textLength="53.34" lengthAdjust="spacingAndGlyphs">families.ts</text>
+</g>
+<g class="node n30">
+<rect class="file" x="677" y="831.6" width="49.35" height="24" rx="4"/>
+<text class="label" x="701.67" y="847.6" textLength="33.35" lengthAdjust="spacingAndGlyphs">tree.ts</text>
+</g>
+<g class="node n32">
+<rect class="file" x="823" y="831.6" width="63.34" height="24" rx="4"/>
+<text class="label" x="854.67" y="847.6" textLength="47.34" lengthAdjust="spacingAndGlyphs">scripts.ts</text>
+</g>
+<g class="node n33">
+<rect class="file" x="743" y="831.6" width="63.35" height="24" rx="4"/>
+<text class="label" x="774.68" y="847.6" textLength="47.35" lengthAdjust="spacingAndGlyphs">glyphs.ts</text>
+</g>
+<g class="node n1">
+<rect class="file" x="1122" y="124" width="64.68" height="24" rx="4"/>
+<text class="label" x="1154.34" y="140" textLength="48.68" lengthAdjust="spacingAndGlyphs">control.ts</text>
+</g>
+<g class="node n36">
+<rect class="file" x="1203" y="124" width="57.35" height="24" rx="4"/>
+<text class="label" x="1231.68" y="140" textLength="41.35" lengthAdjust="spacingAndGlyphs">types.ts</text>
+</g>
+<rect class="directory depth2 node n40" x="1095" y="1122" width="128.02" height="62" rx="6"/>
+<g class="node n3">
+<rect class="file" x="1105" y="1150" width="108.02" height="24" rx="4"/>
+<text class="label" x="1159.01" y="1166" textLength="92.02" lengthAdjust="spacingAndGlyphs">control-style.scss</text>
+</g>
+<g class="node n0">
+<rect class="file" x="1125" y="40" width="57.35" height="24" rx="4"/>
+<text class="label" x="1153.68" y="56" textLength="41.35" lengthAdjust="spacingAndGlyphs">index.ts</text>
+</g>
+<path class="edge from-n0 to-n1 inner-n37 in-n38" d="M1154,64 L1154,124" marker-end="url(#arrow)"/>
+<path class="edge from-n1 to-n2 inner-n37 inner-n38 in-n39" d="M1159,148 L1159,829" marker-end="url(#arrow)"/>
+<path class="edge from-n1 to-n4 inner-n37 inner-n38 in-n41" d="M1149,148 L1149,158 L436,158 L436,208" marker-end="url(#arrow)"/>
+<path class="edge from-n2 to-n3 inner-n37 out-n38 out-n39 in-n40" d="M1159,853 L1159,1150" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n5 inner-n37 inner-n38 in-n39 out-n41" d="M476,232 L476,242 L980,242 L980,734 L1067,734 L1067,829" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n6 inner-n37 inner-n38 out-n41 in-n42" d="M471,232 L471,250 L940,250 L940,734 L907,734 L907,924 L761,924 L761,990" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n7 inner-n37 inner-n38 out-n41 in-n43" d="M407,232 L407,258 L62,258 L62,734 L61,734 L61,924 L370,924 L370,990" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n8 inner-n37 inner-n38 out-n41 in-n43" d="M401,232 L401,250 L52,250 L52,932 L354,932 L354,1024 L385,1024 L385,1042" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n9 inner-n37 inner-n38 out-n41 in-n43" d="M395,232 L395,242 L42,242 L42,940 L308,940 L308,990" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n10 inner-n37 inner-n38 out-n41 in-n43" d="M441,232 L441,290 L522,290 L522,750 L475,750 L475,990" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n11 inner-n37 inner-n38 out-n41 in-n44" d="M424,232 L424,282 L341,282 L341,350 L348,350 L348,742 L395,742 L395,868" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n12 inner-n37 inner-n38 inner-n41" d="M418,232 L418,274 L268,274 L268,300" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n18 inner-n37 inner-n38 inner-n41" d="M412,232 L412,266 L132,266 L132,300" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n20 inner-n37 inner-n38 inner-n41" d="M453,232 L453,274 L702,274 L702,402.4" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n26 inner-n37 inner-n38 inner-n41" d="M436,232 L436,300" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n34 inner-n37 inner-n38 inner-n41" d="M430,232 L430,290 L350,290 L350,342 L425,342 L425,372" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n25 inner-n37 inner-n38 inner-n41 in-n46" d="M459,232 L459,266 L784,266 L784,594 L721,594 L721,652" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n31 inner-n37 inner-n38 inner-n41 in-n46" d="M465,232 L465,258 L863,258 L863,652" marker-end="url(#arrow)"/>
+<path class="edge from-n4 to-n35 inner-n37 inner-n38 inner-n41" d="M447,232 L447,282 L604,282 L604,300" marker-end="url(#arrow)"/>
+<path class="edge from-n7 to-n8 inner-n37 inner-n38 inner-n43" d="M395,1014 L395,1042" marker-end="url(#arrow)"/>
+<path class="edge from-n11 to-n7 inner-n37 inner-n38 in-n43 out-n44" d="M390,892 L390,990" marker-end="url(#arrow)"/>
+<path class="edge from-n12 to-n13 inner-n37 inner-n38 out-n41 in-n44" d="M263,324 L263,342 L208,342 L208,734 L193,734 L193,816" marker-end="url(#arrow)"/>
+<path class="edge from-n12 to-n14 inner-n37 inner-n38 out-n41 in-n44" d="M273,324 L273,350 L218,350 L218,734 L258,734 L258,816" marker-end="url(#arrow)"/>
+<path class="edge from-n12 to-n15 inner-n37 inner-n38 inner-n41" d="M283,324 L283,397.33" marker-end="url(#arrow)"/>
+<path class="edge from-n12 to-n17 inner-n37 inner-n38 inner-n41" d="M253,324 L253,334 L161,334 L161,372" marker-end="url(#arrow)"/>
+<path class="edge from-n15 to-n14 inner-n37 inner-n38 out-n41 in-n44" d="M278,421.33 L278,734 L268,734 L268,816" marker-end="url(#arrow)"/>
+<path class="edge from-n15 to-n16 inner-n37 inner-n38 out-n41 in-n44" d="M288,421.33 L288,750 L348,750 L348,816" marker-end="url(#arrow)"/>
+<path class="edge from-n18 to-n13 inner-n37 inner-n38 out-n41 in-n44" d="M132,324 L132,342 L103,342 L103,734 L183,734 L183,816" marker-end="url(#arrow)"/>
+<path class="edge from-n18 to-n19 inner-n37 inner-n38 out-n41 in-n44" d="M122,324 L122,334 L93,334 L93,742 L113,742 L113,816" marker-end="url(#arrow)"/>
+<path class="edge from-n18 to-n17 inner-n37 inner-n38 inner-n41" d="M142,324 L142,334 L151,334 L151,372" marker-end="url(#arrow)"/>
+<path class="edge from-n19 to-n7 inner-n37 inner-n38 in-n43 out-n44" d="M108,840 L108,916 L380,916 L380,990" marker-end="url(#arrow)"/>
+<path class="edge from-n19 to-n11 inner-n37 inner-n38 inner-n44" d="M118,840 L118,850 L385,850 L385,868" marker-end="url(#arrow)"/>
+<path class="edge from-n20 to-n21 inner-n37 inner-n38 out-n41 in-n42" d="M717,426.4 L717,448 L960,448 L960,750 L925,750 L925,940 L845,940 L845,990" marker-end="url(#arrow)"/>
+<path class="edge from-n20 to-n22 inner-n37 inner-n38 out-n41 in-n42" d="M697,426.4 L697,472 L562,472 L562,734 L561,734 L561,932 L595,932 L595,990" marker-end="url(#arrow)"/>
+<path class="edge from-n20 to-n8 inner-n37 inner-n38 out-n41 in-n43" d="M687,426.4 L687,456 L532,456 L532,758 L518,758 L518,1024 L405,1024 L405,1042" marker-end="url(#arrow)"/>
+<path class="edge from-n20 to-n23 inner-n37 inner-n38 inner-n41 in-n45" d="M707,426.4 L707,488 L668,488 L668,530" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n24 inner-n37 inner-n38 in-n39 out-n41 out-n45" d="M693,554 L693,578 L970,578 L970,734 L976,734 L976,829" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n25 inner-n37 inner-n38 inner-n41 out-n45 in-n46" d="M673,554 L673,594 L711,594 L711,652" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n22 inner-n37 inner-n38 out-n41 in-n42 out-n45" d="M623,554 L623,578 L552,578 L552,940 L585,940 L585,990" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n31 inner-n37 inner-n38 inner-n41 out-n45 in-n46" d="M683,554 L683,586 L853,586 L853,652" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n28 inner-n37 inner-n38 out-n41 out-n45 in-n48" d="M633,554 L633,586 L592,586 L592,766 L631,766 L631,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n32 inner-n37 inner-n38 out-n41 out-n45 in-n48" d="M663,554 L663,610 L631,610 L631,700 L632,700 L632,734 L850,734 L850,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n30 inner-n37 inner-n38 out-n41 out-n45 in-n48" d="M643,554 L643,594 L612,594 L612,750 L707,750 L707,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n23 to-n33 inner-n37 inner-n38 out-n41 out-n45 in-n48" d="M653,554 L653,602 L622,602 L622,742 L775,742 L775,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n26 to-n7 inner-n37 inner-n38 out-n41 in-n43" d="M426,324 L426,334 L358,334 L358,734 L438,734 L438,916 L400,916 L400,990" marker-end="url(#arrow)"/>
+<path class="edge from-n26 to-n27 inner-n37 inner-n38 inner-n41 in-n47" d="M446,324 L446,334 L573,334 L573,400" marker-end="url(#arrow)"/>
+<path class="edge from-n26 to-n34 inner-n37 inner-n38 inner-n41" d="M436,324 L436,334 L435,334 L435,372" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n21 inner-n37 inner-n38 out-n41 in-n42 out-n47" d="M608,424 L608,464 L950,464 L950,742 L916,742 L916,932 L835,932 L835,990" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n23 inner-n37 inner-n38 inner-n41 in-n45 out-n47" d="M598,424 L598,480 L648,480 L648,530" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n28 inner-n37 inner-n38 out-n41 out-n47 in-n48" d="M578,424 L578,480 L582,480 L582,774 L621,774 L621,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n30 inner-n37 inner-n38 out-n41 out-n47 in-n48" d="M588,424 L588,488 L602,488 L602,758 L697,758 L697,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n29 inner-n37 inner-n38 out-n41 in-n42 out-n47" d="M568,424 L568,480 L572,480 L572,734 L570,734 L570,924 L657,924 L657,990" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n22 inner-n37 inner-n38 out-n41 in-n42 out-n47" d="M558,424 L558,464 L542,464 L542,948 L575,948 L575,990" marker-end="url(#arrow)"/>
+<path class="edge from-n27 to-n7 inner-n37 inner-n38 out-n41 in-n43 out-n47" d="M548,424 L548,448 L502,448 L502,734 L447,734 L447,924 L410,924 L410,990" marker-end="url(#arrow)"/>
+<path class="edge from-n28 to-n29 inner-n37 inner-n38 in-n42 out-n48" d="M626,855.6 L626,916 L667,916 L667,990" marker-end="url(#arrow)"/>
+<path class="edge from-n30 to-n6 inner-n37 inner-n38 in-n42 out-n48" d="M702,855.6 L702,916 L741,916 L741,990" marker-end="url(#arrow)"/>
+<path class="edge from-n31 to-n32 inner-n37 inner-n38 out-n41 out-n46 in-n48" d="M858,676 L858,734 L860,734 L860,831.6" marker-end="url(#arrow)"/>
+<path class="edge from-n32 to-n6 inner-n37 inner-n38 in-n42 out-n48" d="M855,855.6 L855,916 L751,916 L751,990" marker-end="url(#arrow)"/>
+<path class="edge from-n35 to-n7 inner-n37 inner-n38 out-n41 in-n43" d="M599,324 L599,350 L512,350 L512,742 L456,742 L456,932 L420,932 L420,990" marker-end="url(#arrow)"/>
+<path class="edge from-n35 to-n23 inner-n37 inner-n38 inner-n41 in-n45" d="M619,324 L619,334 L775,334 L775,480 L658,480 L658,530" marker-end="url(#arrow)"/>
+<path class="edge from-n35 to-n27 inner-n37 inner-n38 inner-n41 in-n47" d="M609,324 L609,358 L583,358 L583,400" marker-end="url(#arrow)"/>
+<path class="edge from-n35 to-n34 inner-n37 inner-n38 inner-n41" d="M589,324 L589,342 L445,342 L445,372" marker-end="url(#arrow)"/>
+<g class="node n37">
+<rect class="depth1" x="19" y="16" width="24.01" height="16" rx="2"/>
+<text class="directory-label" x="22" y="28" textLength="18.01" lengthAdjust="spacingAndGlyphs">src</text>
+</g>
+<g class="node n38">
+<rect class="depth2" x="29" y="100" width="20" height="16" rx="2"/>
+<text class="directory-label" x="32" y="112" textLength="14" lengthAdjust="spacingAndGlyphs">lib</text>
+</g>
+<g class="node n39">
+<rect class="depth3" x="943" y="805" width="52.68" height="16" rx="2"/>
+<text class="directory-label" x="946" y="817" textLength="46.68" lengthAdjust="spacingAndGlyphs">browser</text>
+</g>
+<g class="node n41">
+<rect class="depth3" x="39" y="184" width="77.34" height="16" rx="2"/>
+<text class="directory-label" x="42" y="196" textLength="71.34" lengthAdjust="spacingAndGlyphs">components</text>
+</g>
+<g class="node n45">
+<rect class="depth3" x="620" y="506" width="42" height="16" rx="2"/>
+<text class="directory-label" x="623" y="518" textLength="36" lengthAdjust="spacingAndGlyphs">inputs</text>
+</g>
+<g class="node n46">
+<rect class="depth3" x="649" y="628" width="34.01" height="16" rx="2"/>
+<text class="directory-label" x="652" y="640" textLength="28.01" lengthAdjust="spacingAndGlyphs">state</text>
+</g>
+<g class="node n47">
+<rect class="depth3" x="540" y="376" width="54.68" height="16" rx="2"/>
+<text class="directory-label" x="543" y="388" textLength="48.68" lengthAdjust="spacingAndGlyphs">sections</text>
+</g>
+<g class="node n42">
+<rect class="depth3" x="552" y="966" width="49.33" height="16" rx="2"/>
+<text class="directory-label" x="555" y="978" textLength="43.33" lengthAdjust="spacingAndGlyphs">options</text>
+</g>
+<g class="node n43">
+<rect class="depth3" x="270" y="966" width="33.35" height="16" rx="2"/>
+<text class="directory-label" x="273" y="978" textLength="27.35" lengthAdjust="spacingAndGlyphs">style</text>
+</g>
+<g class="node n44">
+<rect class="depth3" x="79" y="792" width="50.68" height="16" rx="2"/>
+<text class="directory-label" x="82" y="804" textLength="44.68" lengthAdjust="spacingAndGlyphs">transfer</text>
+</g>
+<g class="node n48">
+<rect class="depth3" x="588" y="807.6" width="35.33" height="16" rx="2"/>
+<text class="directory-label" x="591" y="819.6" textLength="29.33" lengthAdjust="spacingAndGlyphs">fonts</text>
+</g>
+<g class="node n40">
+<rect class="depth2" x="1102" y="1126" width="43.36" height="16" rx="2"/>
+<text class="directory-label" x="1105" y="1138" textLength="37.36" lengthAdjust="spacingAndGlyphs">assets</text>
+</g>
+</svg>

@@ -112,11 +112,11 @@ When using the UMD build, the control is available as the global `VersaTilesStyl
 
 The `VersaTilesStylerControl` constructor accepts an optional config object:
 
-| Option   | Type      | Default                  | Description                                                                  |
-| -------- | --------- | ------------------------ | ---------------------------------------------------------------------------- |
-| `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.       |
-| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise    |
-| `hash`   | `boolean` | `true`                   | Keep the map view, the style and its options in the URL hash fragment        |
+| Option   | Type      | Default                  | Description                                                               |
+| -------- | --------- | ------------------------ | ------------------------------------------------------------------------- |
+| `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.    |
+| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise |
+| `hash`   | `boolean` | `true`                   | Keep the map view, the style and its options in the URL hash fragment     |
 
 ---
 
@@ -124,14 +124,14 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 
 The styler reads everything from the `origin`. Each of these is optional — what is missing is left out of the sidebar:
 
-| Path                                        | Used for                                                                 |
-| ------------------------------------------- | ------------------------------------------------------------------------ |
-| `/tiles/osm/tiles.json`                     | The vector themes and the satellite overlay; languages; landcover        |
-| `/tiles/satellite/tiles.json`               | The satellite style                                                      |
-| `/tiles/elevation/tiles.json`               | Terrain and hillshade                                                    |
-| `/assets/glyphs/{fontstack}/{range}.pbf`    | Label fonts                                                              |
-| `/assets/glyphs/font_families.json`         | The font lists; without it, fonts are entered as glyph names             |
-| `/assets/sprites/base`                      | Icons                                                                    |
+| Path                                     | Used for                                                          |
+| ---------------------------------------- | ----------------------------------------------------------------- |
+| `/tiles/osm/tiles.json`                  | The vector themes and the satellite overlay; languages; landcover |
+| `/tiles/satellite/tiles.json`            | The satellite style                                               |
+| `/tiles/elevation/tiles.json`            | Terrain and hillshade                                             |
+| `/assets/glyphs/{fontstack}/{range}.pbf` | Label fonts                                                       |
+| `/assets/glyphs/font_families.json`      | The font lists; without it, fonts are entered as glyph names      |
+| `/assets/sprites/base`                   | Icons                                                             |
 
 The three TileJSON files are loaded in parallel when the control is added, and the style is set once they are in.
 
@@ -141,8 +141,8 @@ The three TileJSON files are loaded in parallel when the control is added, and t
 
 **Export** is the button in the panel header. It opens a dialog with two tabs:
 
-| Tab          | What it gives you                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------------- |
+| Tab          | What it gives you                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------------- |
 | `style.json` | The finished style as a file, readable or minified. Sources are inlined, so it needs nothing else. |
 | Code         | The `@versatiles/style` snippet that builds this style — for an npm project, or a plain HTML page. |
 
@@ -192,3 +192,16 @@ Version 2 is built on `@versatiles/style` v6:
 - The copied code uses the v6 API: `await inlineSources(osm({ theme, … }))`.
 - Export moved from a dropdown in the header into a dialog, and gained an import counterpart.
 - `/tiles/index.json` is no longer read; sources are detected from their TileJSON files (see above).
+
+## Development
+
+`src/lib` is grouped by topic: `style/` builds the style from the options, `options/` holds the models
+the sidebar sections edit, `fonts/` everything about faces and glyphs, `transfer/` a style in and out
+(import, export, the URL hash), `browser/` the adapters to the page and the map, and `components/` the
+Svelte UI. `control.ts` is what `src/index.ts` exports, and the only entry point.
+
+### Dependency Graph
+
+<!--- This chapter is generated automatically --->
+
+[![Dependency graph](assets/dependency-graph.svg)](assets/dependency-graph.svg?raw=true)

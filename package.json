@@ -32,7 +32,9 @@
     "test:unit": "vitest run",
     "test": "npm run test:unit && npm run test:e2e",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
-    "upgrade": "vrt deps-upgrade"
+    "upgrade": "vrt deps-upgrade",
+    "doc": "npm run doc-graph",
+    "doc-graph": "vrt deps-graph | vrt doc-insert README.md '### Dependency Graph'"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
