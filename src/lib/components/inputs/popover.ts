@@ -29,11 +29,40 @@ export function portalTo(target: Element) {
 /** Popover layers of their own, which a click in must not count as a click outside. */
 const NESTED_LAYERS = '.color-picker-layer, .font-picker-layer';
 
+/**
+ * Places a popover before it is shown, and shows it once the placement holds.
+ *
+ * The first measurement is taken while the popover's own content is still settling, which leaves it a
+ * few pixels shorter than it ends up; placing from that and correcting afterwards makes the popover hop
+ * under the pointer that opened it. Two frames of waiting are imperceptible, and they also spare a test
+ * from measuring a position that is about to change.
+ *
+ * `onready` runs when the popover becomes visible, because an element that is not visible cannot take
+ * focus — which is what both pickers do as soon as they open.
+ */
+function revealWhenPlaced(popup: HTMLElement, update: () => void, onready?: Reveal) {
+	popup.style.visibility = 'hidden';
+	update();
+	requestAnimationFrame(() => {
+		// The content has been laid out by now, so this placement is the one that holds.
+		update();
+		requestAnimationFrame(() => {
+			popup.style.visibility = '';
+			onready?.(popup);
+		});
+	});
+}
+
+/** Called with the popover when it becomes visible. */
+export type Reveal = (popup: HTMLElement) => void;
+
 export interface PointPlacementOptions {
 	/** Where the popover points, in client coordinates — for the inspector, where the map was clicked. */
 	point: { x: number; y: number };
 	onplace: (position: { left: number; top: number; maxHeight: number }) => void;
 	onclose: () => void;
+	/** Called once the popover is placed and visible. */
+	onready?: Reveal;
 }
 
 /**
@@ -45,7 +74,7 @@ export interface PointPlacementOptions {
  * of its own outside the popover's DOM.
  */
 export function placeAtPoint(options: PointPlacementOptions) {
-	const { point, onplace, onclose } = options;
+	const { point, onplace, onclose, onready } = options;
 	return (popup: HTMLElement) => {
 		const margin = 8;
 		const gap = 14;
@@ -73,7 +102,7 @@ export function placeAtPoint(options: PointPlacementOptions) {
 				onclose();
 			}
 		};
-		update();
+		revealWhenPlaced(popup, update, onready);
 		const resize = new ResizeObserver(update);
 		resize.observe(popup);
 		window.addEventListener('resize', update);
@@ -97,6 +126,8 @@ export interface PlacementOptions {
 	onclose: () => void;
 	/** Escape while the focus is in the popover; default `onclose`. Handlers that call `preventDefault` win. */
 	onescape?: () => void;
+	/** Called once the popover is placed and visible — where to move the focus. */
+	onready?: Reveal;
 	/** A cap of its own; by default a popover may use the window's height. */
 	maxHeight?: number;
 }
@@ -106,7 +137,14 @@ export interface PlacementOptions {
  * and closes it on a click elsewhere or on Escape.
  */
 export function placeBesidePane(options: PlacementOptions) {
-	const { anchor, onplace, onclose, onescape = onclose, maxHeight: limit = Infinity } = options;
+	const {
+		anchor,
+		onplace,
+		onclose,
+		onescape = onclose,
+		onready,
+		maxHeight: limit = Infinity,
+	} = options;
 	return (popup: HTMLElement) => {
 		const margin = 8;
 		const update = () => {
@@ -140,7 +178,7 @@ export function placeBesidePane(options: PlacementOptions) {
 				onescape();
 			}
 		};
-		update();
+		revealWhenPlaced(popup, update, onready);
 		// The popover changes its size while open (a panel opens, a field appears): place it again.
 		const resize = new ResizeObserver(update);
 		resize.observe(popup);

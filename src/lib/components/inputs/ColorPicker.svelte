@@ -168,9 +168,9 @@
 		}
 	}
 
+	/** Once the picker is placed and visible: it is moved by `portalToMap` and hidden until then. */
 	function focus(picker: HTMLElement) {
-		// After `portalToMap` has moved the picker: moving a focused element drops its focus.
-		queueMicrotask(() => picker.querySelector<HTMLElement>('.color-track')?.focus());
+		picker.querySelector<HTMLElement>('.color-track')?.focus();
 	}
 </script>
 
@@ -199,8 +199,8 @@
 			onclose: close,
 			onescape: cancel,
 			onplace: (p) => (position = p),
+			onready: focus,
 		})}
-		{@attach focus}
 	>
 		<div class="color-picker-header">
 			<span>Color for {title}</span>

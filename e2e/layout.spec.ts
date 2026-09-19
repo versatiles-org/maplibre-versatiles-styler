@@ -237,24 +237,8 @@ async function scrollables(page: Page, allowed: string[]): Promise<string[]> {
 	return found.filter((entry) => !allowed.some((selector) => entry.startsWith(selector)));
 }
 
-/**
- * The problems of the *settled* layout.
- *
- * A popover places itself the moment it is mounted and places itself again once a `ResizeObserver` has
- * told it how tall it really is, so a single sample can catch the frame in between: the colour picker
- * opens on its first tab one pixel below the window and corrects itself immediately after. Two
- * identical samples in a row mean the layout has stopped moving, and a problem that is really there is
- * reported by the first pair.
- */
 async function layoutProblems(page: Page): Promise<string[]> {
-	let previous: string[] | undefined;
-	for (let attempt = 0; attempt < 20; attempt++) {
-		const found = await page.evaluate(findLayoutProblems, ALLOWED);
-		if (previous !== undefined && JSON.stringify(found) === JSON.stringify(previous)) return found;
-		previous = found;
-		await page.waitForTimeout(50);
-	}
-	return previous ?? [];
+	return page.evaluate(findLayoutProblems, ALLOWED);
 }
 
 /** A long family name and a long label language, to see that long content stays inside. */
@@ -435,6 +419,8 @@ test('the layout check finds content that sticks out', async ({ page }) => {
 		'.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))'
 	);
 	await colors.locator('button.color-swatch').first().click();
+	// The picker is hidden until it has been placed, and the check skips what is not visible.
+	await expect(page.getByRole('dialog', { name: /^Color for/ })).toBeVisible();
 	await page.addStyleTag({
 		content: `
 			.color-picker { max-height: 150px !important; }

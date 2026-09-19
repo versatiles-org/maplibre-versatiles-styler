@@ -174,9 +174,9 @@
 		scrolled = true;
 	});
 
-	function focus(input: HTMLInputElement) {
-		// After `portalToMap` has moved the picker: moving a focused element drops its focus.
-		queueMicrotask(() => input.focus());
+	/** Once the picker is placed and visible: it is moved by `portalToMap` and hidden until then. */
+	function focus(picker: HTMLElement) {
+		picker.querySelector<HTMLInputElement>('input.font-picker-search')?.focus();
 	}
 
 	/** Picks a family: the search match, or the face closest to the current style. */
@@ -266,7 +266,7 @@
 		style:left="{position.left}px"
 		style:top="{position.top}px"
 		style:max-height="{position.maxHeight}px"
-		{@attach placeBesidePane({ anchor, onclose, onplace: (p) => (position = p) })}
+		{@attach placeBesidePane({ anchor, onclose, onplace: (p) => (position = p), onready: focus })}
 	>
 		<div class="font-picker-header">
 			<span class="font-picker-title">Font for {title}</span>
@@ -285,7 +285,6 @@
 				aria-activedescendant={activeKey ? `${uid}-${activeKey}` : undefined}
 				bind:value={query}
 				onkeydown={handleKeydown}
-				{@attach focus}
 			/>
 			<button
 				type="button"

@@ -309,29 +309,11 @@ test.describe('color field', () => {
 test.describe('color picker', () => {
 	type Page = import('@playwright/test').Page;
 
-	/**
-	 * Waits until an element has stopped moving.
-	 *
-	 * A popover places itself when it mounts and again once a `ResizeObserver` reports its real height,
-	 * which moves it by a few pixels when the window is too short for it to sit level with its row.
-	 * A test that reads a box in between then presses the mouse where the slider no longer is, and the
-	 * drag does nothing at all. Two identical boxes in a row mean it has come to rest.
-	 */
-	async function hasSettled(page: Page, locator: import('@playwright/test').Locator) {
-		let previous = '';
-		for (let attempt = 0; attempt < 20; attempt++) {
-			const current = JSON.stringify(await locator.boundingBox());
-			if (current === previous) return;
-			previous = current;
-			await page.waitForTimeout(50);
-		}
-	}
-
 	async function openPicker(page: Page, key: string, title: string) {
 		await colorRow(page, key).locator('button.color-swatch').click();
 		const dialog = page.getByRole('dialog', { name: `Color for ${title}` });
+		// The picker is hidden until it has been placed, so this waits for its final position.
 		await expect(dialog).toBeVisible();
-		await hasSettled(page, dialog);
 		return dialog;
 	}
 
