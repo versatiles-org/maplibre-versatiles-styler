@@ -2,8 +2,8 @@
 	import type { StyleSpecification } from 'maplibre-gl';
 	import Modal from './Modal.svelte';
 	import CodeBlock from './CodeBlock.svelte';
-	import { downloadStyle, styleJson, type JsonFormat } from '../export';
-	import { DOCS } from '../docs_links';
+	import { downloadStyle, styleJson, type JsonFormat } from '../transfer/export';
+	import { DOCS } from '../transfer/docs';
 
 	let {
 		style,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ResolvedProjection, ResolvedSky, ResolvedSun } from '@versatiles/style';
 	import { osm } from '@versatiles/style';
-	import { sameColor } from '../../color_model';
+	import { sameColor } from '../inputs/color_model';
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputColor from '../inputs/InputColor.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';

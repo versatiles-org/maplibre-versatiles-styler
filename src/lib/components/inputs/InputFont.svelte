@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { FontFaceInfo } from '@versatiles/style';
-	import type { FontUse } from '../../font_families';
-	import { useFontPickerState } from '../../font_picker_state.svelte';
+	import type { FontUse } from '../../fonts/families';
+	import { useFontPickerState } from '../state/font_picker.svelte';
 	import FontPicker from './FontPicker.svelte';
 	import FontPreview from './FontPreview.svelte';
 	import InputRow from './InputRow.svelte';

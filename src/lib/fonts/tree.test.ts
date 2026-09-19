@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { osm } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import { pickerFaces, fontSample, coverageWarning } from './font_tree';
-import { labelNodes } from './label_tree';
+import { pickerFaces, fontSample, coverageWarning } from './tree';
+import { labelNodes } from '../options/labels';
 
 const defaults = osm.resolveOptions().text;
 

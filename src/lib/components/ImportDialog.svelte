@@ -6,9 +6,9 @@
 		parseImport,
 		summarizeProvenance,
 		type ImportResult,
-	} from '../import';
+	} from '../transfer/import';
 	import { is, type Diagnostic } from '@versatiles/style/migrate';
-	import { DOCS } from '../docs_links';
+	import { DOCS } from '../transfer/docs';
 
 	let {
 		currentOrigin,

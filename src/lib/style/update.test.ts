@@ -7,8 +7,8 @@ import {
 	setStyleOptions,
 	styleForEditing,
 	type RenderedStyle,
-} from './style_update';
-import { satelliteDefaults, vectorDefaults, type VectorState } from './style_config';
+} from './update';
+import { satelliteDefaults, vectorDefaults, type VectorState } from './config';
 
 const ORIGIN = 'https://tiles.example.org';
 

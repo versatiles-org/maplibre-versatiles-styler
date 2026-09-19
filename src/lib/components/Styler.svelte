@@ -2,7 +2,7 @@
 	import type { Map as MLGLMap, MapMouseEvent, StyleSpecification } from 'maplibre-gl';
 	import { osm } from '@versatiles/style';
 	import type { Palette } from '@versatiles/style';
-	import type { VersaTilesStylerConfig } from './types';
+	import type { VersaTilesStylerConfig } from '../types';
 	import {
 		PALETTES,
 		DEFAULT_STYLE_KEY,
@@ -28,29 +28,29 @@
 		type StyleSources,
 		type VectorState,
 		type SatelliteState,
-	} from './style_config';
-	import type { ImportResult } from './import';
+	} from '../style/config';
+	import type { ImportResult } from '../transfer/import';
 	import {
 		colorIndex,
 		describeFeatures,
 		groupIndex,
 		type InspectResult,
 		type RenderedFeature,
-	} from './inspect';
-	import { loadOrigin, type LoadedTileJSON } from './sources';
-	import { languageOptions } from './languages';
+	} from '../style/inspect';
+	import { loadOrigin, type LoadedTileJSON } from '../style/sources';
+	import { languageOptions } from '../options/languages';
 	import { onDestroy, untrack } from 'svelte';
-	import { HashManager } from './hash';
-	import { provideFontPickerState } from './font_picker_state.svelte';
-	import { provideColorPickerState } from './color_picker_state.svelte';
-	import { labelTexts } from './map_labels';
-	import { setStyleOptions, styleForEditing, type RenderedStyle } from './style_update';
-	import SidebarSection from './components/SidebarSection.svelte';
-	import VectorStylePanel from './components/VectorStylePanel.svelte';
-	import SatelliteStylePanel from './components/SatelliteStylePanel.svelte';
-	import ExportDialog from './components/ExportDialog.svelte';
-	import InspectPopup from './components/InspectPopup.svelte';
-	import ImportDialog from './components/ImportDialog.svelte';
+	import { HashManager } from '../transfer/hash';
+	import { provideFontPickerState } from './state/font_picker.svelte';
+	import { provideColorPickerState } from './state/color_picker.svelte';
+	import { labelTexts } from '../browser/map_labels';
+	import { setStyleOptions, styleForEditing, type RenderedStyle } from '../style/update';
+	import SidebarSection from './SidebarSection.svelte';
+	import VectorStylePanel from './VectorStylePanel.svelte';
+	import SatelliteStylePanel from './SatelliteStylePanel.svelte';
+	import ExportDialog from './ExportDialog.svelte';
+	import InspectPopup from './InspectPopup.svelte';
+	import ImportDialog from './ImportDialog.svelte';
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
 	const uid = $props.id();

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ResolvedColors } from '@versatiles/style';
-	import { colorGroups } from '../../color_groups';
+	import { colorGroups } from '../../options/colors';
 	import InputColor from '../inputs/InputColor.svelte';
 
 	let {

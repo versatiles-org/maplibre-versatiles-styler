@@ -19,7 +19,7 @@ import {
 	themeSwatch,
 	styleCode,
 	type StyleSources,
-} from './style_config';
+} from './config';
 
 const ORIGIN = 'https://tiles.example.org';
 

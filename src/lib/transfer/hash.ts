@@ -1,5 +1,5 @@
 import type { Map as MLGLMap } from 'maplibre-gl';
-import { DEFAULT_STYLE_KEY, toStyleKey, type StyleKey } from './style_config';
+import { DEFAULT_STYLE_KEY, toStyleKey, type StyleKey } from '../style/config';
 
 const THROTTLE_MS = 300;
 

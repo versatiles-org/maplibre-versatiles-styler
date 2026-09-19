@@ -1,7 +1,7 @@
 import { FONT_SCRIPTS, fontScripts } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import type { FontFamily } from './font_families';
-import { englishLanguageName } from './languages';
+import type { FontFamily } from './families';
+import { englishLanguageName } from '../options/languages';
 
 /** The scripts of `FONT_SCRIPTS` by region, like Google Fonts groups its languages. */
 const REGIONS: readonly { name: string; scripts: readonly string[] }[] = [

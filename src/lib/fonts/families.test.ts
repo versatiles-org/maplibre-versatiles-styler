@@ -11,8 +11,8 @@ import {
 	styleOf,
 	weightLabel,
 	widthLabel,
-} from './font_families';
-import { labelNodes } from './label_tree';
+} from './families';
+import { labelNodes } from '../options/labels';
 
 // Latin, Cyrillic and Greek blocks (U+0000–U+04FF), like Fira Sans
 const EUROPEAN = '0-4F';

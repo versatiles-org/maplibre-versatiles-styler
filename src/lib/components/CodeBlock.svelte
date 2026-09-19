@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { tokenize, truncateCode } from '../highlight';
-	import { byteLength, copyText, formatSize } from '../export';
+	import { tokenize, truncateCode } from '../transfer/highlight';
+	import { byteLength, copyText, formatSize } from '../transfer/export';
 
 	/**
 	 * A read-only code preview with a copy button.

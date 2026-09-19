@@ -5,7 +5,7 @@
 		overlayDefaults,
 		satelliteDefaults,
 		type SatelliteState,
-	} from '../style_config';
+	} from '../style/config';
 	import SidebarSection from './SidebarSection.svelte';
 	import RasterOptions from './sections/RasterOptions.svelte';
 	import OverlayOptions from './sections/OverlayOptions.svelte';

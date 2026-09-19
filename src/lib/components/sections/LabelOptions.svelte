@@ -5,8 +5,8 @@
 		ResolvedText,
 		TextGroupMap,
 	} from '@versatiles/style';
-	import { coverageWarning, fontSample, pickerFaces } from '../../font_tree';
-	import { fontUsage } from '../../font_families';
+	import { coverageWarning, fontSample, pickerFaces } from '../../fonts/tree';
+	import { fontUsage } from '../../fonts/families';
 	import {
 		ALL_LABELS,
 		labelNodes,
@@ -17,7 +17,7 @@
 		setNodeValue,
 		topicFonts,
 		type LabelStyleKey,
-	} from '../../label_tree';
+	} from '../../options/labels';
 	import type { SelectOption } from '../inputs/select';
 	import InputFont from '../inputs/InputFont.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { LayerGroupMap, ResolvedColors, ResolvedLayerGroups } from '@versatiles/style';
-	import { pathLabel, type InspectResult, type InspectedLayer } from '../inspect';
-	import { colorLabel } from '../color_groups';
+	import { pathLabel, type InspectResult, type InspectedLayer } from '../style/inspect';
+	import { colorLabel } from '../options/colors';
 	import {
 		findLayerNode,
 		layerModified,
@@ -9,7 +9,7 @@
 		layerValue,
 		resetLayer,
 		setLayerValue,
-	} from '../layer_tree';
+	} from '../options/layers';
 	import InputColor from './inputs/InputColor.svelte';
 	import InputVisibility from './inputs/InputVisibility.svelte';
 	import { placeAtPoint, portalTo } from './inputs/popover';

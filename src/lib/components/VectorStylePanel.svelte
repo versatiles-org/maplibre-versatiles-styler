@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { osm, type FontFaceInfo } from '@versatiles/style';
-	import { configChangeCount, type VectorState } from '../style_config';
+	import { configChangeCount, type VectorState } from '../style/config';
 	import SidebarSection from './SidebarSection.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
 	import RecolorOptions from './sections/RecolorOptions.svelte';

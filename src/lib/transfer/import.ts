@@ -8,7 +8,7 @@ import {
 	type ProvenanceMap,
 } from '@versatiles/style/migrate';
 import { decodeConfig } from './hash';
-import { toStyleKey, DEFAULT_STYLE_KEY, type StyleKey } from './style_config';
+import { toStyleKey, DEFAULT_STYLE_KEY, type StyleKey } from '../style/config';
 
 /** What the pasted text turned out to be. Shown to the user, so they learn what the tool accepts. */
 export type ImportKind =

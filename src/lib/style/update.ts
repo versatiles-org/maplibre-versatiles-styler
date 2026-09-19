@@ -1,5 +1,5 @@
 import type { StyleSpecification } from 'maplibre-gl';
-import type { StyleKey } from './style_config';
+import type { StyleKey } from './config';
 
 /** What a style on the map was built from. */
 export interface RenderedStyle {

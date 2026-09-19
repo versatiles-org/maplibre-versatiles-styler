@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { osm } from '@versatiles/style';
-import { colorGroups } from './color_groups';
+import { colorGroups } from './colors';
 
 describe('colorGroups', () => {
 	it('groups keys by their first word, single-word keys under "Base"', () => {

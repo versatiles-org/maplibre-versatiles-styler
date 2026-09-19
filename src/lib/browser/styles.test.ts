@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../assets/control-style.scss?inline', () => ({
+vi.mock('../../assets/control-style.scss?inline', () => ({
 	default: '.test { color: red; }',
 }));
 

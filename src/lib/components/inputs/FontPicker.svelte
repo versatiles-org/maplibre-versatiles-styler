@@ -18,8 +18,8 @@
 		type FontFamily,
 		type FontStyle,
 		type FontUse,
-	} from '../../font_families';
-	import { lettersOf } from '../../font_tree';
+	} from '../../fonts/families';
+	import { lettersOf } from '../../fonts/tree';
 	import {
 		EAST_ASIA_NOTE,
 		availableScripts,
@@ -35,8 +35,8 @@
 		scriptSummary,
 		regionSelection,
 		toggleRegion,
-	} from '../../font_scripts';
-	import { useFontPickerState } from '../../font_picker_state.svelte';
+	} from '../../fonts/scripts';
+	import { useFontPickerState } from '../state/font_picker.svelte';
 	import FontPreview from './FontPreview.svelte';
 	import { placeBesidePane, portalToMap, type PopoverPosition } from './popover';
 

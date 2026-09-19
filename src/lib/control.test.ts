@@ -14,11 +14,11 @@ vi.mock('svelte', () => ({
 	unmount: unmountMock,
 }));
 
-vi.mock('./Styler.svelte', () => ({
+vi.mock('./components/Styler.svelte', () => ({
 	default: {},
 }));
 
-vi.mock('./styles', () => ({
+vi.mock('./browser/styles', () => ({
 	ensureStylesInjected: vi.fn(),
 }));
 

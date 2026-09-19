@@ -14,9 +14,9 @@
 		parseColor,
 		sameColor,
 		withChannel,
-	} from '../../color_model';
-	import { useColorPickerState } from '../../color_picker_state.svelte';
-	import { frameWriter } from '../../frame';
+	} from './color_model';
+	import { useColorPickerState } from '../state/color_picker.svelte';
+	import { frameWriter } from '../../browser/frame';
 	import EditableValue from './EditableValue.svelte';
 	import { placeBesidePane, portalToMap, type PopoverPosition } from './popover';
 

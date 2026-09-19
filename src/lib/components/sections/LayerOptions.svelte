@@ -7,7 +7,7 @@
 		resetLayer,
 		setLayerValue,
 		type LayerNode,
-	} from '../../layer_tree';
+	} from '../../options/layers';
 	import InputVisibility from '../inputs/InputVisibility.svelte';
 
 	let {

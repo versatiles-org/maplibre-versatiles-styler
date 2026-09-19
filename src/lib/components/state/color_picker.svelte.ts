@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import type { Space } from './color_model';
+import type { Space } from '../inputs/color_model';
 
 /** What the color pickers of one styler share: the color space, kept from one picker to the next. */
 export class ColorPickerState {

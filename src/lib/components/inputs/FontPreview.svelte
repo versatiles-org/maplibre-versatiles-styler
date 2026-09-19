@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { loadGlyphs, renderText, type GlyphSet } from '../../glyphs';
+	import { loadGlyphs, renderText, type GlyphSet } from '../../fonts/glyphs';
 
 	let {
 		origin,

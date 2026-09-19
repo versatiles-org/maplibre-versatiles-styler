@@ -1,4 +1,4 @@
-import styles from '../assets/control-style.scss?inline';
+import styles from '../../assets/control-style.scss?inline';
 
 export function ensureStylesInjected() {
 	if (typeof document === 'undefined') return;

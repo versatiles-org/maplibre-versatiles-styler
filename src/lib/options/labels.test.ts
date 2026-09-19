@@ -10,7 +10,7 @@ import {
 	setNodeValue,
 	topicFonts,
 	topicStyle,
-} from './label_tree';
+} from './labels';
 
 const defaults = osm.resolveOptions().text;
 const nodes = labelNodes(osm.textGroups, defaults);

@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import { inScriptOrder } from './font_scripts';
+import { inScriptOrder } from '../../fonts/scripts';
 
 /**
  * What the font pickers of one styler share: the script filter, kept from one picker to the next until

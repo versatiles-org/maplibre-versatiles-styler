@@ -1,5 +1,5 @@
 import type { FontFaceInfo, ResolvedText } from '@versatiles/style';
-import { topicStyle, type LabelNode } from './label_tree';
+import { topicStyle, type LabelNode } from '../options/labels';
 
 /** A font family with its faces, as the font picker lists it. */
 export interface FontFamily {

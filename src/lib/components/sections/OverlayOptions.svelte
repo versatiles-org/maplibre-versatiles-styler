@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Palette, ResolvedOsmOverlay } from '@versatiles/style';
-	import { PALETTES, overlayDefaults, satelliteDefaults } from '../../style_config';
+	import { PALETTES, overlayDefaults, satelliteDefaults } from '../../style/config';
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputSelect from '../inputs/InputSelect.svelte';
 

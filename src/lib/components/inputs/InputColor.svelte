@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { normalizeColor, sameColor } from '../../color_model';
+	import { normalizeColor, sameColor } from './color_model';
 	import ColorPicker from './ColorPicker.svelte';
 	import InputRow from './InputRow.svelte';
 

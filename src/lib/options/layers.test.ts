@@ -9,7 +9,7 @@ import {
 	opacityToValue,
 	valueToOpacity,
 	type LayerNode,
-} from './layer_tree';
+} from './layers';
 
 const defaults = () => osm.resolveOptions().layers;
 

@@ -1,6 +1,6 @@
 import { fontCovers, labelLanguage } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import { englishLanguageName } from './languages';
+import { englishLanguageName } from '../options/languages';
 
 /**
  * The faces to pick from: the server's, plus faces in use that it does not list (`extra`), under

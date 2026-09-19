@@ -1,8 +1,8 @@
 import type { ControlPosition, IControl, Map as MLGLMap } from 'maplibre-gl';
 import { mount, unmount } from 'svelte';
-import Styler from './Styler.svelte';
+import Styler from './components/Styler.svelte';
 import type { VersaTilesStylerConfig } from './types';
-import { ensureStylesInjected } from './styles';
+import { ensureStylesInjected } from './browser/styles';
 
 /**
  * styleControl is a custom control for MapLibre GL JS maps that allows users to switch between different map styles.

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { FONT_SCRIPTS } from '@versatiles/style';
 import type { FontFaceInfo } from '@versatiles/style';
-import { fontFamilies } from './font_families';
-import { FontPickerState } from './font_picker_state.svelte';
+import { fontFamilies } from './families';
+import { FontPickerState } from '../components/state/font_picker.svelte';
 import {
 	availableScripts,
 	closestFamilies,
@@ -17,7 +17,7 @@ import {
 	scriptName,
 	scriptRegions,
 	scriptSummary,
-} from './font_scripts';
+} from './scripts';
 
 // 16-codepoint blocks: Latin U+0000–02FF, Greek U+0370–03FF, Cyrillic U+0400–04FF, Hebrew U+05D0–05DF,
 // Arabic U+0620–062F, Devanagari U+0910–091F

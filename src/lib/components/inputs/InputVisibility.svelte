@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { opacityToValue, valueToOpacity, type LayerValue } from '../../layer_tree';
+	import { opacityToValue, valueToOpacity, type LayerValue } from '../../options/layers';
 	import EditableValue from './EditableValue.svelte';
 	import InputRow from './InputRow.svelte';
 	import { parseSliderInput } from './number_slider';
