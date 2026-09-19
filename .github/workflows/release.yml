@@ -10,9 +10,45 @@ permissions:
   contents: write
 
 jobs:
+  # The same split as in ci.yml: a Linux runner has no GPU and gives Firefox no WebGL at all, so these
+  # checks belong on macOS, which also runs the real Safari engine. Runners are free for a public
+  # repository. A tag doesn't trigger CI, so the release has to run these itself.
+  cross-browser:
+    name: E2E Tests (Firefox, WebKit)
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Run E2E tests
+        run: npm run test:e2e -- --project=firefox --project=webkit
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-cross-browser
+          path: playwright-report/
+          retention-days: 30
+
   release:
     name: Build and release
     runs-on: ubuntu-latest
+    needs: cross-browser
+    timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -30,11 +66,33 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        # Chromium runs the whole suite; Firefox and WebKit the layout and stability checks.
-        run: npx playwright install --with-deps chromium firefox webkit
+        # Chromium only: the other engines run on the macOS job above.
+        run: npx playwright install --with-deps chromium
 
-      - name: Run tests
-        run: npm run check
+      # `npm run check` would run the e2e suite across every project, Firefox included. Its steps are
+      # spelled out here instead so the browsers can be split across runners.
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run E2E tests
+        run: npm run test:e2e -- --project=chromium
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-chromium
+          path: playwright-report/
+          retention-days: 30
 
       - name: Get version
         run: 'echo "RELEASE_TAG=v$(jq -r ''.version'' package.json)" >> $GITHUB_ENV'
