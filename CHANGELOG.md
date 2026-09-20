@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-20
+
+### Features
+
+- enhance release workflow with cross-browser E2E testing and improved Playwright report handling
+
+### Bug Fixes
+
+- update demo files to use correct paths for assets and ensure compatibility with GitHub Pages
+- update release workflow to improve E2E testing setup and permissions
+- update dependencies for @versatiles/style and vite-plugin-dts to latest versions
+- update @versatiles/release-tool to version 2.16.0
+
+### Chores
+
+- Add bundle composition section to README and generate SVG treemap
+
 ## [2.0.0] - 2026-09-19
 
 ### Breaking Changes
