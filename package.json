@@ -33,7 +33,8 @@
     "test": "npm run test:unit && npm run test:e2e",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
     "upgrade": "vrt deps-upgrade",
-    "doc": "npm run doc-graph",
+    "doc": "npm run build && npm run doc-bundle && npm run doc-graph",
+    "doc-bundle": "vrt bundle-treemap dist/maplibre-versatiles-styler.js --depth 3 --min-size 5000 --svg assets/bundle-treemap.svg | vrt doc-insert README.md '### Bundle Composition'",
     "doc-graph": "vrt deps-graph | vrt doc-insert README.md '### Dependency Graph'"
   },
   "devDependencies": {

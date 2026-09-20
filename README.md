@@ -200,6 +200,14 @@ the sidebar sections edit, `fonts/` everything about faces and glyphs, `transfer
 (import, export, the URL hash), `browser/` the adapters to the page and the map, and `components/` the
 Svelte UI. `control.ts` is what `src/index.ts` exports, and the only entry point.
 
+### Bundle Composition
+
+<!--- This chapter is generated automatically --->
+
+[![Bundle composition](assets/bundle-treemap.svg)](assets/bundle-treemap.svg?raw=true)
+
+Sized by the bundle's own source map: **626 KB** raw, **151.7 KB** gzipped, across 176 modules.
+
 ### Dependency Graph
 
 <!--- This chapter is generated automatically --->
