@@ -321,7 +321,8 @@ for (const size of SIZES) {
 			expect(await layoutProblems(page)).toEqual([]);
 
 			await dialog.getByRole('button', { name: 'All available' }).click();
-			await dialog.getByRole('option', { name: 'Fira Sans', exact: true }).click();
+			// Noto Sans, the style's own font, is the one family that writes every script the server has.
+			await dialog.getByRole('option', { name: 'Noto Sans', exact: true }).click();
 			expect(await layoutProblems(page)).toEqual([]);
 
 			await dialog.getByRole('button', { name: 'Clear' }).first().click();
