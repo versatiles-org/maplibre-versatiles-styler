@@ -13,7 +13,6 @@ import type {
 	TextGroupMap,
 	TileJSONSpecification,
 } from '@versatiles/style';
-import { probeColors } from './inspect';
 
 export const PALETTES: readonly Palette[] = osm.palettes;
 export const DEFAULT_STYLE_KEY: StyleKey = 'colorful';
@@ -142,22 +141,31 @@ export function inspectSources(styleKey: StyleKey): {
 	};
 }
 
+/** Recolor with every effect at zero, which leaves a palette as it is. */
+const NO_RECOLOR = osm.resolveOptions().recolor;
+
 /**
- * The same options with every colour key set to a hue of its own. The style built from these says which
- * key reaches which layer — see `inspect.ts`. A satellite style without its overlay has no palette to
+ * The same options with the palette replaced by `colors` and recolor switched off. The styles built from
+ * these say which key reaches which layer — see `colorIndex` in `inspect.ts`. Recolor goes because it
+ * could make two palettes look alike (full desaturation, a full tint), and the key a color control
+ * edits is the one before recolor anyway. A satellite style without its overlay has no palette to
  * probe, and comes back unchanged.
  */
-export function probeVectorState(state: VectorState): VectorState {
-	return { ...state, colors: probeColors(osm.colorKeys) as ResolvedColors };
+export function probeVectorState(state: VectorState, colors: Record<string, string>): VectorState {
+	return { ...state, colors: colors as ResolvedColors, recolor: NO_RECOLOR };
 }
 
-export function probeSatelliteState(state: SatelliteState): SatelliteState {
+export function probeSatelliteState(
+	state: SatelliteState,
+	colors: Record<string, string>
+): SatelliteState {
 	if (!state.osmOverlay) return state;
 	return {
 		...state,
 		osmOverlay: {
 			...state.osmOverlay,
-			colors: probeColors(satellite.colorKeys) as ResolvedColors,
+			colors: colors as ResolvedColors,
+			recolor: NO_RECOLOR,
 		},
 	};
 }

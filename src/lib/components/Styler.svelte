@@ -128,7 +128,7 @@
 	 * arrives later and changes nothing does not rebuild the style.
 	 */
 	function currentStyle(
-		probe = false
+		probeColors?: Record<string, string>
 	): { style: StyleSpecification; rendered: RenderedStyle } | undefined {
 		const styleKey = currentStyleKey;
 		if (styleKey === 'satellite') {
@@ -138,10 +138,14 @@
 			const stateSources = styleSources(state.osmOverlay !== false, state.features);
 			if (!stateSources) return undefined;
 			return {
-				style: buildSatelliteStyle(probe ? probeSatelliteState(state) : state, origin, {
-					...stateSources,
-					satellite,
-				}),
+				style: buildSatelliteStyle(
+					probeColors ? probeSatelliteState(state, probeColors) : state,
+					origin,
+					{
+						...stateSources,
+						satellite,
+					}
+				),
 				rendered: { styleKey, origin, options: state },
 			};
 		}
@@ -151,7 +155,7 @@
 		return {
 			style: buildVectorStyle(
 				styleKey,
-				probe ? probeVectorState(state) : state,
+				probeColors ? probeVectorState(state, probeColors) : state,
 				origin,
 				stateSources
 			),
@@ -233,19 +237,16 @@
 	let inspectResult = $state<InspectResult | undefined>();
 
 	/**
-	 * What names the layers of the style on the map. Built only while the inspector is on: it costs
-	 * another style build — a few milliseconds — and nothing else asks for it.
+	 * What names the layers of the style on the map. Built only while the inspector is on, and only
+	 * when a click reads it: the color index costs a style build per color key — about 100 ms — and
+	 * nothing else asks for it.
 	 */
 	let inspectIndexes = $derived.by(() => {
 		if (!inspectOn) return undefined;
-		const probe = currentStyle(true)?.style;
-		if (!probe) return undefined;
 		const { layerGroups, textGroups, colorKeys } = inspectSources(currentStyleKey);
-		return {
-			groups: groupIndex(layerGroups),
-			topics: groupIndex(textGroups),
-			colors: colorIndex(probe, colorKeys),
-		};
+		const colors = colorIndex((probeColors) => currentStyle(probeColors)?.style, colorKeys);
+		if (!colors) return undefined;
+		return { groups: groupIndex(layerGroups), topics: groupIndex(textGroups), colors };
 	});
 
 	/**

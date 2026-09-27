@@ -6,9 +6,8 @@
  * The first two are exact reverse lookups of the maps `@versatiles/style` publishes (`layerGroups`,
  * `textGroups`), whose leaves are the style layer IDs of a group.
  *
- * The colors are found by *probing*: the same style is built once more with every color key set to a
- * color of its own, and the layers of that build say which key reaches which paint property. See
- * `probeColors` for why that beats comparing the rendered colors against the palette.
+ * The colors are found by *probing*: the same style is built again with one color key changed at a
+ * time, and the paint properties that change with it say which key reaches which. See `colorIndex`.
  */
 
 import type { LayerGroupMap, StyleSpecification, TextGroupMap } from '@versatiles/style';
@@ -47,124 +46,65 @@ export function groupIndex(groups: LayerGroupMap | TextGroupMap): GroupIndex {
 
 // ── Color attribution ────────────────────────────────────────────────────────
 
-/**
- * One color per key, each with a hue of its own at full saturation.
- *
- * Hue, rather than an exact color, because a layer rarely paints a palette color unchanged: outlines and
- * casings are darkened, `land-park` is faded. Those change lightness and alpha and leave the hue alone,
- * so a hue survives to the built style where an exact value does not — it attributes every derived color
- * to the key it was derived from. Achromatic paint (the hardcoded black of the one-way markings, a white
- * halo) carries no hue and is reported as belonging to no key, which is the truth.
- */
-export function probeColors<K extends string>(keys: readonly K[]): Record<K, string> {
-	const step = 360 / keys.length;
-	return Object.fromEntries(
-		keys.map((key, index) => [key, `hsl(${(index * step).toFixed(3)},100%,50%)`])
-	) as Record<K, string>;
-}
-
-/** The r/g/b of a color the style builder wrote, which is `rgb()`, `rgba()`, `hsl()` or a hex literal. */
-function channelsOf(value: string): [number, number, number] | undefined {
-	const rgb = value.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
-	if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
-
-	// An `hsl()` the builder passed through unevaluated: its hue is what we want, so it needs no conversion.
-	const hsl = value.match(/hsla?\(\s*([\d.]+)/i);
-	if (hsl) return hueChannels(Number(hsl[1]));
-
-	const hex = value.trim().match(/^#([0-9a-f]{3,8})$/i)?.[1];
-	if (hex === undefined) return undefined;
-	const digits = hex.length < 6 ? [...hex].map((digit) => digit + digit).join('') : hex;
-	const number = Number.parseInt(digits.slice(0, 6), 16);
-	if (Number.isNaN(number)) return undefined;
-	return [(number >> 16) & 0xff, (number >> 8) & 0xff, number & 0xff];
-}
-
-/** Any color of that hue: only the hue is read back, so saturation and lightness can be anything. */
-function hueChannels(hue: number): [number, number, number] {
-	const sector = (((hue % 360) + 360) % 360) / 60;
-	const middle = Math.round(255 * (1 - Math.abs((sector % 2) - 1)));
-	const table: [number, number, number][] = [
-		[255, middle, 0],
-		[middle, 255, 0],
-		[0, 255, middle],
-		[0, middle, 255],
-		[middle, 0, 255],
-		[255, 0, middle],
-	];
-	return table[Math.floor(sector) % 6];
-}
-
-/** The hue of a color in degrees, or `undefined` for grays, which have none. */
-function hueOf(value: string): number | undefined {
-	const channels = channelsOf(value);
-	if (!channels) return undefined;
-	const [red, green, blue] = channels;
-	const max = Math.max(red, green, blue);
-	const span = max - Math.min(red, green, blue);
-	if (span === 0) return undefined;
-	const hue =
-		max === red
-			? (green - blue) / span
-			: max === green
-				? (blue - red) / span + 2
-				: (red - green) / span + 4;
-	return (((hue * 60) % 360) + 360) % 360;
-}
-
-/** Every color key a paint property's value carries, found anywhere inside an expression. */
-function keyOf(value: unknown, keys: readonly string[]): string | undefined {
-	if (typeof value === 'string') {
-		const hue = hueOf(value);
-		if (hue === undefined) return undefined;
-		const step = 360 / keys.length;
-		const index = Math.round(hue / step) % keys.length;
-		const distance = Math.abs(hue - index * step);
-		// Half a step of tolerance: rounding in the builder's color math moves a hue by a fraction of a
-		// degree, never into the next key's half of the circle.
-		return Math.min(distance, 360 - distance) <= step / 2 ? keys[index] : undefined;
-	}
-	if (Array.isArray(value)) {
-		for (const item of value) {
-			const key = keyOf(item, keys);
-			if (key !== undefined) return key;
-		}
-		return undefined;
-	}
-	if (value !== null && typeof value === 'object') {
-		for (const item of Object.values(value)) {
-			const key = keyOf(item, keys);
-			if (key !== undefined) return key;
-		}
-	}
-	return undefined;
-}
+/** What every key is set to in the base build: a gray, which no key's probe color can pass for. */
+const BASE_COLOR = '#808080';
+/** What the one key under test is set to. */
+const PROBE_COLOR = '#ff00ff';
 
 /** Layer ID → each of its color paint properties and the color key that feeds it. */
 export type ColorIndex = Map<string, Record<string, string>>;
 
 /**
- * Reads a style built with {@link probeColors} back into the mapping from paint property to color key.
+ * Finds which color key feeds which paint property by building the style once per key.
  *
- * Build the probe style from the options the map is showing — the layers a style has depend on its
- * features (extruded buildings, landcover), and an index built from other options would miss them.
- * Recolor can stay on or off: it moves every color the same way, so a hue still identifies its key. The
- * key it names is the palette entry *before* recolor, which is what the color controls edit.
+ * `build` makes the style the map shows with its palette replaced by `colors`. It is called once with
+ * every key set to the same gray, then once per key with only that key changed; a property whose value
+ * moves is fed by that key. Comparing builds rather than reading the colors back holds whatever the
+ * builder does to a key on the way — darkening, fading, mixing two keys, clipping — and a property
+ * that never moves (the hardcoded black of the one-way markings) is fed by no key, which is the truth.
+ *
+ * Build from the options the map is showing: the layers a style has depend on its features (extruded
+ * buildings, landcover), and an index built from other options would miss them. A property fed by
+ * several keys, like a blend of wood and sand, is claimed by the first of them in palette order.
+ *
+ * Returns `undefined` when `build` does, which is while a source the style needs is still loading.
  */
-export function colorIndex(style: StyleSpecification, keys: readonly string[]): ColorIndex {
+export function colorIndex(
+	build: (colors: Record<string, string>) => StyleSpecification | undefined,
+	keys: readonly string[]
+): ColorIndex | undefined {
+	const base = Object.fromEntries(keys.map((key) => [key, BASE_COLOR]));
+	const baseStyle = build(base);
+	if (!baseStyle) return undefined;
+	const before = paintColors(baseStyle);
 	const index: ColorIndex = new Map();
-	for (const layer of style.layers) {
-		const paint = (layer as { paint?: Record<string, unknown> }).paint;
-		if (!paint) continue;
-		const found: Record<string, string> = {};
-		for (const [property, value] of Object.entries(paint)) {
-			if (!property.includes('color')) continue;
-			const key = keyOf(value, keys);
-			if (key !== undefined) found[property] = key;
+	for (const key of keys) {
+		const style = build({ ...base, [key]: PROBE_COLOR });
+		if (!style) return undefined;
+		for (const [id, colors] of paintColors(style)) {
+			for (const [property, value] of Object.entries(colors)) {
+				if (value === before.get(id)?.[property]) continue;
+				const found = index.get(id) ?? {};
+				if (found[property] === undefined) found[property] = key;
+				index.set(id, found);
+			}
 		}
-		if (Object.keys(found).length > 0) index.set(layer.id, found);
 	}
 	return index;
+}
+
+/** Layer ID → its color paint properties, serialized so that two builds compare by value. */
+function paintColors(style: StyleSpecification): Map<string, Record<string, string>> {
+	const result = new Map<string, Record<string, string>>();
+	for (const layer of style.layers) {
+		const paint = (layer as { paint?: Record<string, unknown> }).paint ?? {};
+		const colors: Record<string, string> = {};
+		for (const [property, value] of Object.entries(paint)) {
+			if (property.includes('color')) colors[property] = JSON.stringify(value);
+		}
+		result.set(layer.id, colors);
+	}
+	return result;
 }
 
 // ── Hits ─────────────────────────────────────────────────────────────────────

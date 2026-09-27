@@ -7,7 +7,6 @@ import {
 	describeFeatures,
 	groupIndex,
 	pathLabel,
-	probeColors,
 	type RenderedFeature,
 } from './inspect';
 
@@ -40,25 +39,43 @@ describe('groupIndex', () => {
 	});
 });
 
-describe('probeColors', () => {
-	it('gives every key a hue of its own', () => {
-		const colors = probeColors(['a', 'b', 'c']);
-		expect(colors).toEqual({
-			a: 'hsl(0.000,100%,50%)',
-			b: 'hsl(120.000,100%,50%)',
-			c: 'hsl(240.000,100%,50%)',
-		});
-	});
-
-	it('covers every color key of the palette', () => {
-		expect(Object.keys(probeColors(osm.colorKeys))).toEqual([...osm.colorKeys]);
-	});
-});
+/**
+ * The reference `colorIndex` is checked against: which keys each color property changes with.
+ *
+ * Works like `colorIndex`, but from the real palette rather than an all-gray one, and records every key
+ * a property moves with rather than the first: a gray base that hid a key's effect would show here. Two
+ * replacement colors, so a key whose default happens to equal one of them still shows.
+ */
+function keysByChange(keys: readonly string[]): Map<string, Record<string, string[]>> {
+	const paints = (colors: Record<string, string>) =>
+		new Map(
+			osm({ theme: 'colorful', colors }).layers.map((layer) => [
+				layer.id,
+				(layer as { paint?: Record<string, unknown> }).paint ?? {},
+			])
+		);
+	const base = paints({});
+	const reference = new Map<string, Record<string, string[]>>();
+	for (const key of keys) {
+		for (const color of ['#ff00ff', '#00ff80']) {
+			for (const [id, paint] of paints({ [key]: color })) {
+				for (const [property, value] of Object.entries(paint)) {
+					if (!property.includes('color')) continue;
+					if (JSON.stringify(value) === JSON.stringify(base.get(id)?.[property])) continue;
+					const found = reference.get(id) ?? {};
+					found[property] = [...new Set([...(found[property] ?? []), key])];
+					reference.set(id, found);
+				}
+			}
+		}
+	}
+	return reference;
+}
 
 describe('colorIndex', () => {
 	const keys = osm.colorKeys;
-	const style = osm({ theme: 'colorful', colors: probeColors(keys) });
-	const index = colorIndex(style, keys);
+	const build = (colors: Record<string, string>) => osm({ theme: 'colorful', colors });
+	const index = colorIndex(build, keys)!;
 
 	it('attributes a color the style paints unchanged', () => {
 		expect(index.get('water-area')).toEqual({ 'fill-color': 'water' });
@@ -66,7 +83,7 @@ describe('colorIndex', () => {
 	});
 
 	it('attributes colors the style derives from a key', () => {
-		// `land-park` is `naturePark` faded, the river lines are `water` darkened: both keep the hue.
+		// `land-park` is `naturePark` faded, the river lines are `water` darkened.
 		expect(index.get('land-park')?.['fill-color']).toBe('naturePark');
 		expect(index.get('water-river')?.['line-color']).toBe('water');
 	});
@@ -78,11 +95,38 @@ describe('colorIndex', () => {
 		});
 	});
 
-	it('attributes the colors of nearly every layer', () => {
-		const painted = style.layers.filter((layer) =>
-			Object.keys((layer as { paint?: object }).paint ?? {}).some((p) => p.includes('color'))
-		);
-		expect(index.size / painted.length).toBeGreaterThan(0.95);
+	it('attributes every color to the key that feeds it', () => {
+		const reference = keysByChange(keys);
+		const mismatches: string[] = [];
+		for (const [id, properties] of reference) {
+			for (const [property, fed] of Object.entries(properties)) {
+				const claimed = index.get(id)?.[property];
+				// A property fed by several keys (a zoom interpolation between two) is one key's to claim.
+				if (claimed === undefined || !fed.includes(claimed)) {
+					mismatches.push(
+						`${id} ${property}: ${claimed ?? 'nothing'}, expected ${fed.join(' or ')}`
+					);
+				}
+			}
+		}
+		for (const [id, properties] of index) {
+			for (const [property, claimed] of Object.entries(properties)) {
+				if (!reference.get(id)?.[property]) {
+					mismatches.push(`${id} ${property}: ${claimed}, expected nothing`);
+				}
+			}
+		}
+		expect(mismatches).toEqual([]);
+	});
+
+	it('gives a color mixed from several keys to the first of them', () => {
+		// Vegetation is a blend of wood and sand; its hue lands on neither.
+		expect(keys.indexOf('natureWood')).toBeLessThan(keys.indexOf('natureSand'));
+		expect(index.get('land-vegetation')?.['fill-color']).toBe('natureWood');
+	});
+
+	it('has no index while the style cannot be built', () => {
+		expect(colorIndex(() => undefined, keys)).toBeUndefined();
 	});
 
 	it('claims no key for a color the layer paints itself', () => {
@@ -95,7 +139,7 @@ describe('describeFeatures', () => {
 	const indexes = {
 		groups: groupIndex(osm.layerGroups),
 		topics: groupIndex(osm.textGroups),
-		colors: colorIndex(osm({ colors: probeColors(osm.colorKeys) }), osm.colorKeys),
+		colors: colorIndex((colors) => osm({ colors }), osm.colorKeys)!,
 	};
 	const feature = (id: string, overrides: Partial<RenderedFeature> = {}): RenderedFeature => ({
 		layer: { id, type: 'fill', paint: { 'fill-color': '#fff', 'fill-opacity': 1 } },
