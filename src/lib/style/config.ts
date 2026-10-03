@@ -7,7 +7,7 @@ import type {
 	Palette,
 	ResolvedColors,
 	ResolvedOsm,
-	ResolvedOsmOverlay,
+	ResolvedSatelliteOverlay,
 	ResolvedSatellite,
 	SatelliteOptions,
 	TextGroupMap,
@@ -86,8 +86,8 @@ export function satelliteDefaults(): SatelliteState {
 }
 
 /** The satellite overlay's defaults for a theme: its colours, plus the imagery treatment (bold fonts, …). */
-export function overlayDefaults(theme: Palette): ResolvedOsmOverlay {
-	return satellite.resolveOptions({ osmOverlay: { theme } }).osmOverlay as ResolvedOsmOverlay;
+export function overlayDefaults(theme: Palette): ResolvedSatelliteOverlay {
+	return satellite.resolveOptions({ osmOverlay: { theme } }).osmOverlay as ResolvedSatelliteOverlay;
 }
 
 /**

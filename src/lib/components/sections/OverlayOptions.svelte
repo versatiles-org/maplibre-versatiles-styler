@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Palette, ResolvedOsmOverlay } from '@versatiles/style';
+	import type { Palette, ResolvedSatelliteOverlay } from '@versatiles/style';
 	import { PALETTES, overlayDefaults, satelliteDefaults } from '../../style/config';
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputSelect from '../inputs/InputSelect.svelte';
@@ -8,11 +8,11 @@
 		overlay = $bindable(),
 		disabled = false,
 	}: {
-		overlay: false | ResolvedOsmOverlay;
+		overlay: false | ResolvedSatelliteOverlay;
 		disabled?: boolean;
 	} = $props();
 
-	const defaults = satelliteDefaults().osmOverlay as ResolvedOsmOverlay;
+	const defaults = satelliteDefaults().osmOverlay as ResolvedSatelliteOverlay;
 	const THEMES = PALETTES.map((palette) => ({ value: palette, label: palette }));
 
 	/** A new theme brings its own colours: the overlay's colours are reset to that theme's. */
