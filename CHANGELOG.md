@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-10-03
+
+### Bug Fixes
+
+- add ignore rule for typescript dependency in dependabot configuration
+- update overlay types from ResolvedOsmOverlay to ResolvedSatelliteOverlay
+
+### Build System
+
+- **deps-dev:** bump markdown-it
+
+### Chores
+
+- update devDependencies to latest versions
+- update @versatiles/release-tool to v2.19.1 and @versatiles/style to v6.1.1
+- update brace-expansion to v5.0.12 and markdown-it to v14.3.2 in package-lock.json
+
 ## [2.0.2] - 2026-09-27
 
 ### Bug Fixes
