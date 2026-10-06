@@ -555,14 +555,26 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 
 			.expander {
 				flex: 0 0 auto;
-				width: 1em;
-				font-size: 11px;
+				display: grid;
+				place-items: center;
+				width: 14px;
+				height: 14px;
+				padding: 0;
 				color: var(--subtle);
-				transition: transform 0.1s ease;
-				text-align: center;
 
-				&.expanded {
-					transform: rotate(90deg);
+				// The chevron of the sections: pointing right while closed, down once open.
+				&:is(button)::before {
+					@include icon($chevron-down, 14px);
+					transform: rotate(-90deg);
+					transition: transform 0.15s ease;
+				}
+
+				&:is(button):hover {
+					color: var(--ink);
+				}
+
+				&.expanded::before {
+					transform: none;
 				}
 			}
 

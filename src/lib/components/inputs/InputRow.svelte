@@ -42,8 +42,8 @@
 				class:expanded
 				aria-expanded={expanded}
 				aria-label="{expanded ? 'Collapse' : 'Expand'} {label}"
-				onclick={onToggle}>▸</button
-			>
+				onclick={onToggle}
+			></button>
 		{:else if expanded !== undefined}
 			<!-- Keeps the label in line with rows that have an expander. -->
 			<span class="expander" aria-hidden="true"></span>
