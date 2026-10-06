@@ -74,6 +74,7 @@ $github-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%
 $import-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2.5v6.8M5.2 6.6L8 9.4l2.8-2.8M3 12.6h10' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 $export-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 9.4V2.6M5.2 5.4L8 2.6l2.8 2.8M3 12.6h10' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 $inspect-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2.2v2.4M8 11.4v2.4M2.2 8h2.4M11.4 8h2.4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3.1' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E";
+$edit-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10.6 2.9l2.5 2.5-7.3 7.3-3.1.6.6-3.1zM9.1 4.4l2.5 2.5' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 
 .maplibregl-versatiles-styler {
@@ -862,6 +863,36 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 					&:focus-visible {
 						background-color: var(--bg);
 						color: var(--ink);
+					}
+				}
+
+				// Opens the picker, like the swatch: the text beside it looks like a plain field.
+				button.color-edit {
+					display: grid;
+					place-items: center;
+					width: 20px;
+					height: 20px;
+					margin-left: -6px;
+					border-radius: 4px;
+
+					&::before {
+						@include icon($edit-icon);
+					}
+
+					&:hover:not(:disabled),
+					&[aria-expanded='true'] {
+						background: var(--sunken);
+						color: var(--ink);
+					}
+
+					&:focus-visible {
+						outline: 2px solid var(--accent);
+						outline-offset: 1px;
+					}
+
+					&:disabled {
+						visibility: visible;
+						opacity: 0.45;
 					}
 				}
 

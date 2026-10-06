@@ -25,6 +25,7 @@
 		value,
 		alpha = true,
 		anchor,
+		spare,
 		onwrite,
 		onclose,
 	}: {
@@ -36,6 +37,8 @@
 		alpha?: boolean;
 		/** The swatch button that opened the picker. */
 		anchor: HTMLElement;
+		/** The edit button of the row, which opens and closes the picker as well. */
+		spare?: HTMLElement;
 		/** Writes a color to the row — at most once per animation frame while dragging. */
 		onwrite: (color: string) => void;
 		onclose: () => void;
@@ -196,6 +199,7 @@
 		onkeydown={handleKeydown}
 		{@attach placeBesidePane({
 			anchor,
+			spare,
 			onclose: close,
 			onescape: cancel,
 			onplace: (p) => (position = p),

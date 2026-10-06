@@ -395,6 +395,18 @@ test.describe('color picker', () => {
 		await expect(colorRow(page, 'water').locator('button.color-swatch')).toBeFocused();
 	});
 
+	test('the edit button beside the text opens and closes the picker', async ({ page }) => {
+		const edit = colorRow(page, 'water').locator('button.color-edit');
+		await edit.click();
+		const dialog = page.getByRole('dialog', { name: 'Color for Water' });
+		await expect(dialog).toBeVisible();
+		await expect(edit).toHaveAttribute('aria-expanded', 'true');
+
+		await edit.click();
+		await expect(dialog).toHaveCount(0);
+		await expect(edit).toBeFocused();
+	});
+
 	test('the old swatch reverts; Close keeps the new color', async ({ page }) => {
 		const field = colorRow(page, 'water').locator('input.color-text');
 		const dialog = await openPicker(page, 'water', 'Water');

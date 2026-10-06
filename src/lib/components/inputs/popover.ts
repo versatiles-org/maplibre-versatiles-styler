@@ -120,6 +120,8 @@ export function placeAtPoint(options: PointPlacementOptions) {
 export interface PlacementOptions {
 	/** The button that opened the popover: it is placed next to it, and clicks on it do not close it. */
 	anchor: HTMLElement;
+	/** Another button that opens and closes the popover: clicks on it do not close it either. */
+	spare?: HTMLElement;
 	/** Called with the position on opening and whenever the window scrolls or resizes. */
 	onplace: (position: PopoverPosition) => void;
 	/** A click outside the popover and its anchor. */
@@ -139,6 +141,7 @@ export interface PlacementOptions {
 export function placeBesidePane(options: PlacementOptions) {
 	const {
 		anchor,
+		spare,
 		onplace,
 		onclose,
 		onescape = onclose,
@@ -168,7 +171,8 @@ export function placeBesidePane(options: PlacementOptions) {
 		};
 		const closeOutside = (event: PointerEvent) => {
 			const target = event.target as Node;
-			if (!popup.contains(target) && !anchor.contains(target)) onclose();
+			if (popup.contains(target) || anchor.contains(target) || spare?.contains(target)) return;
+			onclose();
 		};
 		// Escape wherever the focus is in the popover, e.g. on a button inside it.
 		const handleEscape = (event: KeyboardEvent) => {

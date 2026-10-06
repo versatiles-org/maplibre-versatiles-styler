@@ -29,6 +29,9 @@
 	let invalid = $state(false);
 	let open = $state(false);
 	let swatch = $state<HTMLButtonElement>();
+	let edit = $state<HTMLButtonElement>();
+	/** The button the picker was opened with, which gets the focus back. */
+	let opener: HTMLButtonElement | undefined;
 
 	/** A color from the picker. */
 	function write(color: string) {
@@ -37,9 +40,14 @@
 		onchange?.();
 	}
 
+	function toggle(e: MouseEvent) {
+		opener = e.currentTarget as HTMLButtonElement;
+		open = !open;
+	}
+
 	function close() {
 		open = false;
-		swatch?.focus();
+		(opener ?? swatch)?.focus();
 	}
 
 	/** Applies the typed text if it is a color, else puts the value back. */
@@ -89,7 +97,7 @@
 			aria-expanded={open}
 			title="Choose a color"
 			bind:this={swatch}
-			onclick={() => (open = !open)}
+			onclick={toggle}
 		></button>
 	{/snippet}
 	{#snippet children(uid)}
@@ -108,8 +116,27 @@
 			onkeydown={handleKeydown}
 			onchange={(e) => commit(e.currentTarget)}
 		/>
+		<button
+			type="button"
+			class="color-edit"
+			{disabled}
+			aria-label="Edit {label} in the color picker"
+			aria-haspopup="dialog"
+			aria-expanded={open}
+			title="Open the color picker"
+			bind:this={edit}
+			onclick={toggle}
+		></button>
 		{#if open && swatch}
-			<ColorPicker title={label} {value} {alpha} anchor={swatch} onwrite={write} onclose={close} />
+			<ColorPicker
+				title={label}
+				{value}
+				{alpha}
+				anchor={swatch}
+				spare={edit}
+				onwrite={write}
+				onclose={close}
+			/>
 		{/if}
 	{/snippet}
 </InputRow>
