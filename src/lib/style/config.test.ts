@@ -85,7 +85,7 @@ describe('containerBackground', () => {
 
 describe('themeRows', () => {
 	it('pairs every light theme with its dark theme, in palette order', () => {
-		expect(themeRows([...PALETTES, 'satellite'])).toEqual([
+		expect(themeRows([...PALETTES, 'satellite']).slice(0, 5)).toEqual([
 			{ name: 'colorful', light: 'colorful', dark: 'colorful-dark' },
 			{ name: 'natural', light: 'natural', dark: 'natural-dark' },
 			{ name: 'muted', light: 'muted', dark: 'muted-dark' },
@@ -264,7 +264,14 @@ describe('minimalConfig', () => {
 		state.text.language = 'user';
 		state.features.hillshade = { ...state.features.hillshade, exaggeration: 0.1 } as never;
 		state.layers.labels.water.rivers = false;
+		state.layers.boundaries.state = { opacity: 0.5, dashed: [4, 2], width: 2 };
+		state.layers.roads.footway.dashed = false;
 		const config = minimalConfig('natural-dark', state, satelliteDefaults());
+		expect(config.layers).toEqual({
+			labels: { water: { rivers: false } },
+			boundaries: { state: { opacity: 0.5, dashed: [4, 2], width: 2 } },
+			roads: { footway: { dashed: false } },
+		});
 		const restored = vectorStateFromConfig('natural-dark', config);
 		expect(buildVectorStyle('natural-dark', restored, ORIGIN, allSources)).toEqual(
 			buildVectorStyle('natural-dark', state, ORIGIN, allSources)

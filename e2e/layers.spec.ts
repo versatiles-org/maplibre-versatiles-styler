@@ -90,6 +90,58 @@ test.describe('layers', () => {
 		await expect.poll(() => hashConfig(page)).toEqual({});
 	});
 
+	test('a border has a dash and a width behind its expander', async ({ page }) => {
+		const layers = section(page, 'Layers');
+		await layers.locator('summary').click();
+		await row(layers, 'Boundaries').locator('button.expander').click();
+		await expect(row(layers, 'Disputed')).toHaveCount(1);
+		const dash = async () => (await layer(page, 'boundary-state'))?.paint?.['line-dasharray'];
+		const usual = JSON.stringify(await dash());
+		expect(usual).toBeDefined();
+
+		const states = row(layers, 'States');
+		await states.locator('button.expander').click();
+		const line = row(layers, 'Line');
+		await expect(line.getByRole('radio', { name: 'Dashed' })).toBeChecked();
+		await expect(row(layers, 'Pattern')).toHaveCount(0);
+
+		await line.getByRole('radio', { name: 'Solid' }).click();
+		await expect.poll(dash).toBeUndefined();
+		await expect
+			.poll(() => hashConfig(page))
+			.toEqual({ layers: { boundaries: { state: { dashed: false } } } });
+
+		await line.getByRole('radio', { name: 'Custom' }).click();
+		const pattern = row(layers, 'Pattern').locator('input[type="text"]');
+		await pattern.fill('4 2');
+		await pattern.press('Enter');
+		await expect.poll(dash).toEqual([4, 2]);
+
+		// The opacity of the group and of its parent leave the line style alone.
+		await setRange(row(layers, 'Boundaries').locator('input[type="range"]'), 50);
+		await setRange(row(layers, 'Width').locator('input[type="range"]'), 42);
+		await expect(row(layers, 'Width').locator('.value')).toHaveText('2×');
+		await expect
+			.poll(() => hashConfig(page))
+			.toEqual({
+				layers: {
+					boundaries: {
+						country: 0.5,
+						state: { opacity: 0.5, dashed: [4, 2], width: 2 },
+						disputed: 0.5,
+					},
+				},
+			});
+
+		// The reset of the row takes back the whole line: its opacity, its dash and its width.
+		await states.locator('button.reset').click();
+		await expect.poll(async () => JSON.stringify(await dash())).toBe(usual);
+		await expect(line.getByRole('radio', { name: 'Dashed' })).toBeChecked();
+		await expect
+			.poll(() => hashConfig(page))
+			.toEqual({ layers: { boundaries: { country: 0.5, disputed: 0.5 } } });
+	});
+
 	test('3D buildings extrude the buildings', async ({ page }) => {
 		const layers = section(page, 'Layers');
 		await layers.locator('summary').click();
