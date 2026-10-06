@@ -5,6 +5,7 @@ import {
 	PALETTES,
 	toStyleKey,
 	themeRows,
+	themeGroups,
 	vectorDefaults,
 	satelliteDefaults,
 	overlayDefaults,
@@ -110,6 +111,28 @@ describe('themeRows', () => {
 			{ name: 'fnord', dark: 'fnord' },
 			{ name: 'protozoa', light: 'protozoa' },
 		]);
+	});
+});
+
+describe('themeGroups', () => {
+	it('splits the themes into the own palettes, the lookalikes and satellite', () => {
+		const groups = themeGroups([...PALETTES, 'satellite']);
+		expect(groups.own.map((row) => row.name)).toEqual([
+			'colorful',
+			'natural',
+			'muted',
+			'gray',
+			'toner',
+		]);
+		expect(groups.own[3]).toEqual({ name: 'gray', light: 'gray', dark: 'gray-dark' });
+		expect(groups.lookalikes).toEqual(PALETTES.slice(10));
+		expect(groups.lookalikes).toContain('positrino-dark');
+		expect(groups.satellite).toBe(true);
+	});
+
+	it('is empty without style keys', () => {
+		expect(themeGroups([])).toEqual({ own: [], lookalikes: [], satellite: false });
+		expect(themeGroups(['satellite'])).toEqual({ own: [], lookalikes: [], satellite: true });
 	});
 });
 

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { osm } from '@versatiles/style';
+import { openThemePicker, selectStyle } from './helpers';
 
 type SourceName = 'osm' | 'satellite' | 'elevation';
 
@@ -17,9 +18,11 @@ async function open(page: Page) {
 	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
 }
 
-function styleValues(page: Page) {
-	return page
-		.locator('.maplibregl-versatiles-styler .style-list input[type="radio"]')
+/** The styles the theme picker offers. It stays open, so that a poll sees a source arrive. */
+async function styleValues(page: Page) {
+	const picker = await openThemePicker(page);
+	return picker
+		.locator('input[type="radio"]')
 		.evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
 }
 
@@ -43,7 +46,7 @@ test.describe('tile source discovery', () => {
 		await open(page);
 		await expect.poll(() => styleValues(page)).toEqual(['satellite']);
 		await expect(
-			page.locator('.maplibregl-versatiles-styler input[type="radio"][value="satellite"]')
+			page.locator('.maplibregl-versatiles-styler .theme-picker input[value="satellite"]')
 		).toBeChecked();
 	});
 
@@ -76,8 +79,7 @@ test.describe('tile source discovery', () => {
 	test('shows overlay enabled when osm and satellite are available', async ({ page }) => {
 		await open(page);
 
-		const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-		await styleList.locator('label:has(input[value="satellite"])').click();
+		await selectStyle(page, 'satellite');
 
 		const overlayDetails = page.locator(
 			'.maplibregl-versatiles-styler details:has(summary .section-title:text-is("Overlay"))'

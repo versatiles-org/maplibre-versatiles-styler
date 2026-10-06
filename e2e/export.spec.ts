@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { getMapStyle } from './helpers';
+import { getMapStyle, selectStyle } from './helpers';
 
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Export style' });
 
@@ -65,8 +65,7 @@ test('downloads a self-contained style.json', async ({ page }) => {
 test('records the options in the exported style, so it can be imported back exactly', async ({
 	page,
 }) => {
-	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-	await styleList.locator('label:has(input[value="toner"])').click();
+	await selectStyle(page, 'toner');
 
 	const panel = await openExport(page);
 	const [download] = await Promise.all([
@@ -109,8 +108,7 @@ test('copies a v6 npm snippet, and a script-tag one for a plain page', async ({
 }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-	await styleList.locator('label:has(input[value="gray-dark"])').click();
+	await selectStyle(page, 'gray-dark');
 
 	const panel = await openExport(page);
 	await panel.getByRole('tab', { name: 'Code' }).click();

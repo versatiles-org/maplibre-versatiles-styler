@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { getMapStyle } from './helpers';
+import { getMapStyle, selectStyle } from './helpers';
 
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Import style' });
 
@@ -98,8 +98,7 @@ test('rejects text that is neither a link nor JSON', async ({ page }) => {
 
 test('round-trips a style.json exported from this styler, exactly', async ({ page }) => {
 	// Export a style with a distinctive setting…
-	const styleList = page.locator('.maplibregl-versatiles-styler .style-list');
-	await styleList.locator('label:has(input[value="muted"])').click();
+	await selectStyle(page, 'muted');
 
 	await getMapStyle(page);
 	await page.getByRole('button', { name: 'Export' }).click();
@@ -113,7 +112,7 @@ test('round-trips a style.json exported from this styler, exactly', async ({ pag
 
 	// …switch away, then import the file back. Through the file picker rather than the textarea: it is
 	// what someone actually does with a downloaded file, and pasting half a megabyte is slow.
-	await styleList.locator('label:has(input[value="colorful"])').click();
+	await selectStyle(page, 'colorful');
 
 	const panel = await openImport(page);
 	await panel.locator('input[type="file"]').setInputFiles(file);

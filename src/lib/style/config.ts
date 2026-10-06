@@ -37,7 +37,7 @@ export interface ThemeRow {
 }
 
 /**
- * The themes among `keys` as rows of the theme table: each light theme with its `-dark` theme. A dark
+ * The themes among `keys` as rows: each light theme with its `-dark` theme. A dark
  * theme without a light one, as `fnord`, has a row of its own and sits in the dark column.
  */
 export function themeRows(keys: readonly StyleKey[]): ThemeRow[] {
@@ -50,6 +50,29 @@ export function themeRows(keys: readonly StyleKey[]): ThemeRow[] {
 		row[isDarkPalette(key) ? 'dark' : 'light'] = key;
 	}
 	return rows;
+}
+
+/** The palettes of this project. Every other theme is a lookalike of another project's map. */
+const OWN_THEMES: readonly string[] = ['colorful', 'natural', 'muted', 'gray', 'toner'];
+
+export interface ThemeGroups {
+	/** The project's own palettes, each light theme with its dark theme. */
+	own: ThemeRow[];
+	/** The lookalike themes, in the order the style lists them. */
+	lookalikes: Palette[];
+	satellite: boolean;
+}
+
+/** The style keys as the theme picker groups them. */
+export function themeGroups(keys: readonly StyleKey[]): ThemeGroups {
+	const isOwn = (name: string) => OWN_THEMES.includes(name);
+	return {
+		own: themeRows(keys).filter((row) => isOwn(row.name)),
+		lookalikes: keys.filter(
+			(key): key is Palette => key !== 'satellite' && !isOwn(key.replace(/-dark$/, ''))
+		),
+		satellite: keys.includes('satellite'),
+	};
 }
 
 /** v5 style keys in links shared before v6, and the v6 theme closest to each. */
@@ -315,7 +338,7 @@ export interface ThemeSwatch {
 	motorway: string;
 }
 
-/** The colors of a theme for its card in the theme table. */
+/** The colors of a theme for its card in the theme picker. */
 export function themeSwatch(theme: Palette): ThemeSwatch {
 	const colors = osm.resolveOptions({ theme }).colors;
 	return {

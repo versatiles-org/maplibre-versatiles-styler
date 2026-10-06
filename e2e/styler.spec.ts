@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { selectStyle } from './helpers';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/#panel=open');
@@ -161,9 +162,7 @@ test('a dark theme gives the panel dark colors', async ({ page }) => {
 	const background = () => pane.evaluate((el) => getComputedStyle(el).backgroundColor);
 	const light = await background();
 
-	await page
-		.locator('.maplibregl-versatiles-styler .style-list label:has(input[value="toner-dark"])')
-		.click();
+	await selectStyle(page, 'toner-dark');
 	await expect.poll(background).not.toBe(light);
 	await expect(page.locator('.maplibregl-map.versatiles-styler-dark')).toHaveCount(1);
 });

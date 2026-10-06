@@ -10,8 +10,6 @@
 		satelliteDefaults,
 		vectorStateFromConfig,
 		satelliteStateFromConfig,
-		themeRows,
-		themeSwatch,
 		buildVectorStyle,
 		buildSatelliteStyle,
 		configChangeCount,
@@ -48,6 +46,7 @@
 	import SidebarSection from './SidebarSection.svelte';
 	import VectorStylePanel from './VectorStylePanel.svelte';
 	import SatelliteStylePanel from './SatelliteStylePanel.svelte';
+	import ThemeSelect from './ThemeSelect.svelte';
 	import ExportDialog from './ExportDialog.svelte';
 	import InspectPopup from './InspectPopup.svelte';
 	import ImportDialog from './ImportDialog.svelte';
@@ -93,7 +92,6 @@
 		...(osmTileJSON === null ? [] : PALETTES),
 		...(satelliteTileJSON ? (['satellite'] as const) : []),
 	]);
-	let themes = $derived(themeRows(styleKeys));
 	let overlayAvailable = $derived(osmTileJSON !== null);
 	let hasElevation = $derived(Boolean(elevationTileJSON));
 	let languages = $derived(languageOptions(osmTileJSON ? osm.languages(osmTileJSON) : []));
@@ -418,17 +416,6 @@
 	});
 </script>
 
-{#snippet styleRadio(key: StyleKey, label: string)}
-	<input
-		type="radio"
-		name="{uid}-style"
-		value={key}
-		checked={currentStyleKey === key}
-		aria-label={label}
-		onclick={() => setBaseStyle(key)}
-	/>
-{/snippet}
-
 <!--
 	The styler's buttons: opening the editor, and the inspector attached to its right. One control with
 	two buttons, because the inspector is part of the styler — it reads the style the pane edits, and
@@ -522,57 +509,8 @@
 		</SidebarSection>
 		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
-			{#if themes.length > 0 || styleKeys.includes('satellite')}
-				<table class="theme-table">
-					{#if themes.length > 0}
-						<thead>
-							<tr>
-								<td></td>
-								<th scope="col">light</th>
-								<th scope="col">dark</th>
-							</tr>
-						</thead>
-					{/if}
-					<tbody>
-						{#each themes as theme (theme.name)}
-							<tr>
-								<th scope="row">{theme.name}</th>
-								{#each [theme.light, theme.dark] as key, index (index)}
-									<td>
-										{#if key}
-											{@const swatch = themeSwatch(key)}
-											<label title={key}>
-												{@render styleRadio(key, `${theme.name} ${index === 0 ? 'light' : 'dark'}`)}
-												<span
-													class="theme-card"
-													style:--land={swatch.land}
-													style:--water={swatch.water}
-													style:--park={swatch.park}
-													style:--street={swatch.street}
-													style:--motorway={swatch.motorway}
-												></span>
-											</label>
-										{/if}
-									</td>
-								{/each}
-							</tr>
-						{/each}
-						<!-- Satellite has no light/dark pair: it rides in the light column so every card
-						     stays on the same grid. -->
-						{#if styleKeys.includes('satellite')}
-							<tr>
-								<th scope="row">satellite</th>
-								<td>
-									<label title="satellite">
-										{@render styleRadio('satellite', 'satellite')}
-										<span class="theme-card satellite-card"></span>
-									</label>
-								</td>
-								<td></td>
-							</tr>
-						{/if}
-					</tbody>
-				</table>
+			{#if styleKeys.length > 0}
+				<ThemeSelect {styleKeys} value={currentStyleKey} onselect={(key) => setBaseStyle(key)} />
 			{/if}
 		</SidebarSection>
 		{#if isSatellite}

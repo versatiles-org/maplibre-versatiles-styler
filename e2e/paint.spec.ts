@@ -114,7 +114,7 @@ test('a slider shows its filled part, and a mixed slider does not', async ({ pag
 });
 
 test('a theme card is painted in the colors of its theme', async ({ page }) => {
-	const card = section(page, 'Base style').locator('.theme-card').first();
+	const card = section(page, 'Base style').locator('.theme-button .theme-card');
 	const image = await shoot(card);
 	// two rows: the water and the park sit in different parts of the card
 	const colors = [...colorsAcross(image, 9, 0.3), ...colorsAcross(image, 9, 0.85)];

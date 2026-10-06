@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 export interface MapStyle {
 	version: number;
@@ -36,4 +36,21 @@ export async function getMapStyle(page: Page): Promise<MapStyle> {
 			await new Promise<void>((resolve) => map.once('style.load', () => resolve()));
 		}
 	});
+}
+
+/** Opens the theme picker, if it is not open, and returns it. */
+export async function openThemePicker(page: Page): Promise<Locator> {
+	const picker = page.locator('.maplibregl-versatiles-styler .theme-picker');
+	if ((await picker.count()) === 0) {
+		await page.locator('.maplibregl-versatiles-styler button.theme-button').click();
+	}
+	await picker.waitFor();
+	return picker;
+}
+
+/** Picks a base style in the theme picker, which closes on the click: a theme, or `satellite`. */
+export async function selectStyle(page: Page, key: string): Promise<void> {
+	const picker = await openThemePicker(page);
+	await picker.locator(`label:has(input[value="${key}"])`).click();
+	await picker.waitFor({ state: 'detached' });
 }
