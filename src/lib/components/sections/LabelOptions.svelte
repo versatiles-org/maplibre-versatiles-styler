@@ -67,7 +67,7 @@
 			label: 'Spacing',
 			hint: 'Keep labels further apart (above 100%) so fewer are shown, or closer together.',
 			min: 0.5,
-			max: 4,
+			max: 10,
 			scale: 100,
 			unit: '%',
 		},
