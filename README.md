@@ -16,9 +16,10 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 ## Features
 
 - Interactive styling UI directly inside MapLibre
-- Ten vector themes — `colorful`, `natural`, `muted`, `gray`, `toner`, each with a `-dark` variant — and satellite imagery
+- Ten vector themes — `colorful`, `natural`, `muted`, `gray`, `toner`, each with a `-dark` variant — fourteen lookalike themes whose colors resemble other well-known maps, and satellite imagery, all in a theme picker that shows each one as a small map in its own colors
 - Sections grouped the way a style is made: style, content, appearance, scene, setup
 - Show, hide or fade every layer group; 3D buildings
+- Borders and paths as lines: solid, dashed in the style's own pattern or in one of your own, and wider or narrower
 - Colors: global adjustments (hue, saturation, brightness, contrast, gamma, tint, blend) and every individual color, grouped by feature — with a color picker (RGB, HSL, hex, transparency) that updates the map while you drag
 - Labels in any language of the tileset, or in the browser's language; tilt of line labels
 - Label style for all labels, a group or a topic (places, streets, water, …): font, size, spacing, capitalization, letter spacing, line height, wrap width and halo — with a font picker that previews each family, filters by writing system and warns when a font lacks the letters of the label language
@@ -155,8 +156,8 @@ so importing the file again restores those settings exactly rather than approxim
 - a `style.json` — pasted, dropped as a file, or as a URL,
 - a `@versatiles/style` options object, e.g. `{"theme": "gray", "text": {"scale": 1.5}}`.
 
-A style this styler wrote comes back exactly. Any other MapLibre style — built for OpenMapTiles,
-Protomaps or Shortbread tiles — is reconstructed by `@versatiles/style/migrate`, which works out what the
+A style this styler wrote comes back exactly. Any other MapLibre style — built for Mapbox,
+OpenMapTiles, Protomaps or Shortbread tiles — is reconstructed by `@versatiles/style/migrate`, which works out what the
 style draws and finds the closest options. That is a close copy rather than the original, and whatever
 could not be carried over is listed before you apply it. Nothing is applied until you press **Apply**.
 
@@ -206,7 +207,7 @@ Svelte UI. `control.ts` is what `src/index.ts` exports, and the only entry point
 
 [![Bundle composition](assets/bundle-treemap.svg)](assets/bundle-treemap.svg?raw=true)
 
-Sized by the bundle's own source map: **626 KB** raw, **151.7 KB** gzipped, across 176 modules.
+Sized by the bundle's own source map: **655.7 KB** raw, **160.2 KB** gzipped, across 178 modules.
 
 ### Dependency Graph
 
