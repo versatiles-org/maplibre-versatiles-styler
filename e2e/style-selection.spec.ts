@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { osm } from '@versatiles/style';
 import { getMapStyle } from './helpers';
+
+/** The vector themes, in the order the style lists them: the styler shows every one. */
+const THEMES: string[] = [...osm.palettes];
+/** The rows of the theme table: a light theme names the row it shares with its dark theme. */
+const ROWS = THEMES.filter((theme) => !theme.endsWith('-dark'));
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/#panel=open');
@@ -21,32 +27,13 @@ test('lists every theme with its dark variant next to it', async ({ page }) => {
 	const values = await radios.evaluateAll((inputs) =>
 		inputs.map((input) => (input as HTMLInputElement).value)
 	);
-	expect(values).toEqual([
-		'colorful',
-		'colorful-dark',
-		'natural',
-		'natural-dark',
-		'muted',
-		'muted-dark',
-		'gray',
-		'gray-dark',
-		'toner',
-		'toner-dark',
-		'satellite',
-	]);
+	expect(values).toEqual([...THEMES, 'satellite']);
 });
 
 test('shows the themes as a table: name, light, dark', async ({ page }) => {
 	const table = page.locator('.maplibregl-versatiles-styler .style-list table');
 	await expect(table.locator('thead th')).toHaveText(['light', 'dark']);
-	await expect(table.locator('tbody th[scope="row"]')).toHaveText([
-		'colorful',
-		'natural',
-		'muted',
-		'gray',
-		'toner',
-		'satellite',
-	]);
+	await expect(table.locator('tbody th[scope="row"]')).toHaveText([...ROWS, 'satellite']);
 
 	const row = table.locator('tbody tr', { has: page.locator('th:text-is("gray")') });
 	await expect(row.locator('td').nth(0).locator('input[type="radio"]')).toHaveValue('gray');
@@ -64,7 +51,7 @@ test('shows the themes as a table: name, light, dark', async ({ page }) => {
 test('every theme card is the same size, on the golden ratio', async ({ page }) => {
 	const cards = page.locator('.maplibregl-versatiles-styler .style-list .theme-card');
 	// the satellite card only joins once its TileJSON has loaded
-	await expect(cards).toHaveCount(11);
+	await expect(cards).toHaveCount(THEMES.length + 1);
 	const boxes = await cards.evaluateAll((nodes) =>
 		nodes.map((node) => {
 			const { x, width, height } = node.getBoundingClientRect();

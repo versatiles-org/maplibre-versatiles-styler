@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { osm } from '@versatiles/style';
 
 type SourceName = 'osm' | 'satellite' | 'elevation';
 
@@ -22,18 +23,8 @@ function styleValues(page: Page) {
 		.evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
 }
 
-const THEMES = [
-	'colorful',
-	'colorful-dark',
-	'natural',
-	'natural-dark',
-	'muted',
-	'muted-dark',
-	'gray',
-	'gray-dark',
-	'toner',
-	'toner-dark',
-];
+/** The vector themes, in the order the style lists them: the styler shows every one. */
+const THEMES: string[] = [...osm.palettes];
 
 test.describe('tile source discovery', () => {
 	test('shows all styles when osm and satellite are available', async ({ page }) => {
