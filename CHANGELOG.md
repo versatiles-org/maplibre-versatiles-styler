@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-10-06
+
+### Features
+
+- support line styles (opacity, dashed, width) on border and path layer groups
+- choose the base style in a picker with swatch cards instead of the theme table
+
+### Bug Fixes
+
+- adjust width of color input field for better layout
+- ask isDarkPalette whether a theme is dark, so fnord gets the dark panel and column
+- unlink local versatiles-style
+
+### Documentation
+
+- describe lookalike themes, the theme picker and line styles; update bundle size and graphs
+
+### Tests
+
+- derive the expected theme list from osm.palettes in e2e
+
+### Chores
+
+- update dependencies in package.json
+
 ## [2.0.3] - 2026-10-03
 
 ### Bug Fixes
