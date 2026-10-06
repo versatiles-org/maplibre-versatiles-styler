@@ -39,30 +39,32 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@microsoft/api-extractor": "^7.59.3",
+    "@microsoft/api-extractor": "^7.59.4",
     "@playwright/test": "^1.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/node": "^26.6.4",
     "@versatiles/release-tool": "^2.19.1",
-    "@versatiles/style": "^6.1.1",
+    "@versatiles/style": "^6.2.0",
     "@vitest/coverage-v8": "^5.0.3",
     "eslint": "^10.12.0",
     "eslint-plugin-svelte": "^3.23.0",
-    "jsdom": "^30.1.1",
-    "maplibre-gl": "^6.11.2",
+    "jsdom": "^30.1.2",
+    "maplibre-gl": "^6.12.0",
     "prettier": "^3.9.9",
     "prettier-plugin-svelte": "^4.1.1",
     "sass-embedded": "^1.105.1",
     "svelte": "^5.57.1",
     "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.0",
-    "vite": "^8.3.2",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.3",
     "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.0.3"
   },
   "allowScripts": {
     "@parcel/watcher": true,
-    "fsevents": true
+    "fsevents": true,
+    "@maplibre/maplibre-gl-native": true,
+    "esbuild": true
   }
 }
