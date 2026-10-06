@@ -80,6 +80,8 @@ describe('containerBackground', () => {
 		expect(containerBackground('colorful-dark')).toBe('#000000');
 		expect(containerBackground('gray-dark')).toBe('#000000');
 		expect(containerBackground('satellite')).toBe('#000000');
+		expect(containerBackground('fnord')).toBe('#000000');
+		expect(containerBackground('protozoa')).toBe('#ffffff');
 	});
 });
 
@@ -101,6 +103,13 @@ describe('themeRows', () => {
 
 	it('keeps a row whose light or dark theme is missing', () => {
 		expect(themeRows(['gray-dark'])).toEqual([{ name: 'gray', dark: 'gray-dark' }]);
+	});
+
+	it('puts a dark theme without a light one in the dark column', () => {
+		expect(themeRows(['fnord', 'protozoa'])).toEqual([
+			{ name: 'fnord', dark: 'fnord' },
+			{ name: 'protozoa', light: 'protozoa' },
+		]);
 	});
 });
 

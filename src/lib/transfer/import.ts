@@ -230,7 +230,7 @@ function fromGuess(guess: OptionsGuess): ImportOutcome {
 			error: 'That style could not be read.',
 			detail:
 				diagnostics.map((d) => d.message).join('\n') ||
-				'It does not look like a style built for OpenMapTiles, Protomaps or Shortbread tiles.',
+				'It does not look like a style built for Mapbox, OpenMapTiles, Protomaps or Shortbread tiles.',
 		};
 	}
 

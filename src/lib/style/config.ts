@@ -1,5 +1,5 @@
 import type { StyleSpecification } from 'maplibre-gl';
-import { osm, satellite, styleMetadata } from '@versatiles/style';
+import { isDarkPalette, osm, satellite, styleMetadata } from '@versatiles/style';
 import type { CodeTarget } from '@versatiles/style';
 import type {
 	LayerGroupMap,
@@ -36,7 +36,10 @@ export interface ThemeRow {
 	dark?: Palette;
 }
 
-/** The themes among `keys` as rows of the theme table: each light theme with its `-dark` theme. */
+/**
+ * The themes among `keys` as rows of the theme table: each light theme with its `-dark` theme. A dark
+ * theme without a light one, as `fnord`, has a row of its own and sits in the dark column.
+ */
 export function themeRows(keys: readonly StyleKey[]): ThemeRow[] {
 	const rows: ThemeRow[] = [];
 	for (const key of keys) {
@@ -44,7 +47,7 @@ export function themeRows(keys: readonly StyleKey[]): ThemeRow[] {
 		const name = key.replace(/-dark$/, '');
 		let row = rows.find((r) => r.name === name);
 		if (!row) rows.push((row = { name }));
-		row[key === name ? 'light' : 'dark'] = key as Palette;
+		row[isDarkPalette(key) ? 'dark' : 'light'] = key;
 	}
 	return rows;
 }
@@ -70,7 +73,7 @@ export function toStyleKey(key: string | null | undefined): StyleKey | undefined
  * so it goes on the map container as CSS.
  */
 export function isDarkStyle(styleKey: StyleKey): boolean {
-	return styleKey === 'satellite' || styleKey.endsWith('-dark');
+	return styleKey === 'satellite' || isDarkPalette(styleKey);
 }
 
 export function containerBackground(styleKey: StyleKey): string {
