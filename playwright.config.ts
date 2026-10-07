@@ -52,6 +52,7 @@ export default defineConfig({
 	webServer: {
 		command: 'npm run dev',
 		url: 'http://localhost:5173',
-		reuseExistingServer: !process.env.CI,
+		// A server that is already running may predate a dependency update and serve the old code.
+		reuseExistingServer: false,
 	},
 });
