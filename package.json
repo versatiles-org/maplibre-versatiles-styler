@@ -16,6 +16,10 @@
     "dist"
   ],
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/versatiles-org/maplibre-versatiles-styler.git"
+  },
   "scripts": {
     "build": "rm -rf dist && vite build",
     "check:deps": "node scripts/check-release-deps.mjs",
