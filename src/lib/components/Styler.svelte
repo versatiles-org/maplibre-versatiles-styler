@@ -40,8 +40,10 @@
 	import {
 		loadSources,
 		openFreeMapSources,
+		protomapsSources,
 		providerOf,
 		MAPTERHORN_TILES,
+		PROTOMAPS_ARCHIVE,
 		vectorSchema,
 		versatilesSources,
 		type LoadedTileJSON,
@@ -49,6 +51,7 @@
 		type SourceConfig,
 		type VectorSchema,
 	} from '../style/sources';
+	import { archiveUrl, pmtilesUrl, registerPMTiles } from '../style/pmtiles';
 	import { languageOptions } from '../options/languages';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from '../transfer/hash';
@@ -81,6 +84,7 @@
 	let versatilesOrigin = $state(untrack(() => sourceConfig.assets));
 	let sourcesLabel = $derived.by(() => {
 		if (provider === 'openfreemap') return 'OpenFreeMap';
+		if (provider === 'protomaps') return 'Protomaps';
 		try {
 			return new URL(sourceConfig.assets).host;
 		} catch {
@@ -88,9 +92,16 @@
 		}
 	});
 
+	// A PMTiles archive is read through a protocol, which only the page can register with MapLibre.
+	const pmtiles = untrack(() => config.addProtocol);
+	if (pmtiles) registerPMTiles(pmtiles);
+	// The archive to come back to from another provider.
+	let protomapsArchive = $state(PROTOMAPS_ARCHIVE);
+
 	const PROVIDERS: { value: Provider; label: string }[] = [
 		{ value: 'versatiles', label: 'VersaTiles' },
 		{ value: 'openfreemap', label: 'OpenFreeMap' },
+		...(pmtiles ? [{ value: 'protomaps' as const, label: 'Protomaps' }] : []),
 	];
 	const ELEVATION_SOURCES = [
 		{ value: '', label: 'None' },
@@ -98,9 +109,19 @@
 	];
 
 	function setProvider(next: Provider) {
-		setSourceConfig(
-			next === 'openfreemap' ? openFreeMapSources() : versatilesSources(versatilesOrigin)
-		);
+		if (next === 'openfreemap') setSourceConfig(openFreeMapSources());
+		else if (next === 'protomaps') setSourceConfig(protomapsSources(protomapsArchive));
+		else setSourceConfig(versatilesSources(versatilesOrigin));
+	}
+
+	function setElevation(url: string) {
+		const { elevation: _elevation, ...rest } = sourceConfig;
+		setSourceConfig(url ? { ...rest, elevation: url } : rest);
+	}
+
+	function handleArchiveChange(e: Event) {
+		protomapsArchive = archiveUrl((e.target as HTMLInputElement).value.trim());
+		setSourceConfig({ ...sourceConfig, vector: pmtilesUrl(protomapsArchive) });
 	}
 	let paneOpen = $state(untrack(() => config.open ?? false));
 
@@ -579,13 +600,23 @@
 					</div>
 				</div>
 			{:else}
+				{#if provider === 'protomaps'}
+					<div class="entry text-container">
+						<label for="{uid}-archive">Archive</label>
+						<div class="input">
+							<input
+								id="{uid}-archive"
+								type="text"
+								value={archiveUrl(sourceConfig.vector ?? '')}
+								onchange={handleArchiveChange}
+							/>
+						</div>
+					</div>
+				{/if}
 				<InputSelect
 					label="Elevation"
-					hint="OpenFreeMap has no elevation data. Mapterhorn provides it for terrain and hillshade."
-					bind:value={
-						() => sourceConfig.elevation ?? '',
-						(value) => setSourceConfig(openFreeMapSources(value || undefined))
-					}
+					hint="These tiles come without elevation data. Mapterhorn provides it for terrain and hillshade."
+					bind:value={() => sourceConfig.elevation ?? '', (value) => setElevation(value ?? '')}
 					defaultValue={undefined}
 					modified={false}
 					options={ELEVATION_SOURCES}

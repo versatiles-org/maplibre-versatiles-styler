@@ -1,11 +1,12 @@
 import { fetchFontFaces, fetchTileJSON, guessSchema } from '@versatiles/style';
 import type { FontFaceInfo, TileJSONSpecification } from '@versatiles/style';
+import { isPMTilesUrl, loadArchiveTileJSON, pmtilesUrl } from './pmtiles';
 
 export type SourceName = 'vector' | 'satellite' | 'elevation';
 
 /**
- * Where a style gets its tiles and assets from. The tile sources are TileJSON URLs; one that is left
- * out is not available. `assets` is the base URL of the server the glyphs, the sprites and the font list
+ * Where a style gets its tiles and assets from. The tile sources are TileJSON URLs, or the `pmtiles://`
+ * URLs of PMTiles archives; one that is left out is not available. `assets` is the base URL of the server the glyphs, the sprites and the font list
  * come from, which need not be the one serving the tiles.
  */
 export interface SourceConfig {
@@ -40,9 +41,14 @@ export interface LoadedSources {
 export const VERSATILES_ASSETS = 'https://tiles.versatiles.org';
 export const OPENFREEMAP_TILES = 'https://tiles.openfreemap.org/planet';
 export const MAPTERHORN_TILES = 'https://tiles.mapterhorn.com/tilejson.json';
+/**
+ * The mirror of the Protomaps basemap on Source Cooperative: the only build that any page may read.
+ * Protomaps asks not to rely on it, so the archive is a field in the sidebar.
+ */
+export const PROTOMAPS_ARCHIVE = 'https://data.source.coop/protomaps/openstreetmap/v4.pmtiles';
 
 /** Whose tiles a style is built from. */
-export type Provider = 'versatiles' | 'openfreemap';
+export type Provider = 'versatiles' | 'openfreemap' | 'protomaps';
 
 /**
  * The sources of OpenFreeMap: vector tiles in the OpenMapTiles schema and nothing else, so elevation
@@ -56,9 +62,19 @@ export function openFreeMapSources(elevation?: string): SourceConfig {
 	};
 }
 
+/**
+ * The sources of a Protomaps basemap: a PMTiles archive of vector tiles in the Protomaps schema. As with
+ * OpenFreeMap, everything else comes from elsewhere.
+ */
+export function protomapsSources(archive: string = PROTOMAPS_ARCHIVE): SourceConfig {
+	return { vector: pmtilesUrl(archive), assets: VERSATILES_ASSETS };
+}
+
 /** The provider of a source config, told by its vector tiles. */
 export function providerOf(config: SourceConfig): Provider {
-	return config.vector === OPENFREEMAP_TILES ? 'openfreemap' : 'versatiles';
+	if (config.vector === OPENFREEMAP_TILES) return 'openfreemap';
+	if (config.vector !== undefined && isPMTilesUrl(config.vector)) return 'protomaps';
+	return 'versatiles';
 }
 
 /**
@@ -94,7 +110,7 @@ export function loadSources(config: SourceConfig): LoadedSources {
 	const load = (name: SourceName): Promise<LoadedTileJSON> => {
 		const url = config[name];
 		if (url === undefined) return Promise.resolve(null);
-		return fetchTileJSON(url)
+		return (isPMTilesUrl(url) ? loadArchiveTileJSON(url) : fetchTileJSON(url))
 			.then((tileJSON) => ({ ...TILEJSON_DEFAULTS[url], ...tileJSON }) as TileJSONSpecification)
 			.catch(() => null);
 	};
