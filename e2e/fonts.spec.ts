@@ -628,7 +628,10 @@ test.describe('label style', () => {
 		await expect(options.filter({ hasText: '•' })).toHaveText([
 			'All labels •',
 			/Places •/,
+			/Capitals •/,
+			/State capitals •/,
 			/Cities •/,
+			/Towns •/,
 			/Villages •/,
 			/Hamlets •/,
 			/Districts •/,
