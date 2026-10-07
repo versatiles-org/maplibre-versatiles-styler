@@ -44,7 +44,7 @@
 		title,
 		faces,
 		value,
-		origin,
+		assetsBase,
 		sample,
 		language,
 		layers = [],
@@ -58,7 +58,7 @@
 		faces: FontFaceInfo[];
 		/** The current face, `undefined` when several are in use. */
 		value: string | undefined;
-		origin: string;
+		assetsBase: string;
 		/** The text faces are previewed with. */
 		sample: string;
 		/** `text.language`, to mark families without its letters. */
@@ -409,7 +409,7 @@
 						onclick={() => onselect(face.id, true)}
 						onkeydown={(e) => e.key === 'Enter' && onselect(face.id, true)}
 					>
-						<FontPreview {origin} faceId={face.id} text={sample} size={16} lazy />
+						<FontPreview {assetsBase} faceId={face.id} text={sample} size={16} lazy />
 						<span class="font-picker-caption">{face.title} · {labels.join(', ')}</span>
 					</li>
 				{/each}
@@ -440,7 +440,7 @@
 					onclick={() => pickFamily(family, face, false)}
 					onkeydown={(e) => e.key === 'Enter' && pickFamily(family, face, true)}
 				>
-					<FontPreview {origin} faceId={face.id} text={sample} size={18} lazy />
+					<FontPreview {assetsBase} faceId={face.id} text={sample} size={18} lazy />
 					<span class="font-picker-caption">
 						{family.name}{#if searching}&nbsp;· {face.title}{/if} · {family.faces.length}
 						{family.faces.length === 1 ? 'style' : 'styles'}

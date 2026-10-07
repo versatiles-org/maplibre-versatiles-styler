@@ -20,7 +20,7 @@
 	let {
 		options = $bindable(),
 		config,
-		origin,
+		assetsBase,
 		overlayAvailable,
 		elevationAvailable,
 		fontFaces,
@@ -30,7 +30,7 @@
 		/** The minimal config of the current options, to tell which sections have changes. */
 		config: Record<string, unknown>;
 		/** The server the font previews load their glyphs from. */
-		origin: string;
+		assetsBase: string;
 		overlayAvailable: boolean;
 		elevationAvailable: boolean;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
@@ -148,7 +148,7 @@
 			textGroups={satellite.textGroups}
 			{fontFaces}
 			{languages}
-			{origin}
+			{assetsBase}
 			disabled={!overlayAvailable}
 		/>
 	</SidebarSection>

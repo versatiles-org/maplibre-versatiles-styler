@@ -14,7 +14,7 @@
 		defaultValue,
 		modified,
 		faces,
-		origin,
+		assetsBase,
 		sample,
 		pickerTitle,
 		language,
@@ -33,7 +33,7 @@
 		/** Overrides `value !== defaultValue`, when `value` summarises several settings. */
 		modified?: boolean;
 		faces: FontFaceInfo[];
-		origin: string;
+		assetsBase: string;
 		/** The preview text in the picker. */
 		sample: string;
 		/** What the picker is for, "Font for …". Default: `label`. */
@@ -114,7 +114,7 @@
 			{#if value === undefined}
 				<span class="font-button-mixed">Mixed</span>
 			{:else}
-				<FontPreview {origin} faceId={value} text={current?.title ?? value} size={12} />
+				<FontPreview {assetsBase} faceId={value} text={current?.title ?? value} size={12} />
 			{/if}
 			<span class="font-button-caret" aria-hidden="true">▾</span>
 		</button>
@@ -123,7 +123,7 @@
 				title={pickerTitle ?? label}
 				{faces}
 				{value}
-				{origin}
+				{assetsBase}
 				{sample}
 				{language}
 				{layers}

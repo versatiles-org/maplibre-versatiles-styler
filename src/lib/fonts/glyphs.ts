@@ -135,11 +135,11 @@ class ProtobufReader {
 const cache = new Map<string, Promise<GlyphSet | undefined>>();
 
 /**
- * The Latin glyphs (U+0000–U+00FF) of a face, loaded once per origin and face. `undefined` when the
+ * The Latin glyphs (U+0000–U+00FF) of a face, loaded once per assets server and face. `undefined` when the
  * server has none for it.
  */
-export function loadGlyphs(origin: string, faceId: string): Promise<GlyphSet | undefined> {
-	const url = new URL(`/assets/glyphs/${encodeURIComponent(faceId)}/0-255.pbf`, origin).href;
+export function loadGlyphs(assetsBase: string, faceId: string): Promise<GlyphSet | undefined> {
+	const url = new URL(`/assets/glyphs/${encodeURIComponent(faceId)}/0-255.pbf`, assetsBase).href;
 	let glyphs = cache.get(url);
 	if (!glyphs) {
 		glyphs = fetch(url)

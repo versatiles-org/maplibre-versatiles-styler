@@ -9,13 +9,14 @@ import {
 	type RenderedStyle,
 } from './update';
 import { satelliteDefaults, vectorDefaults, type VectorState } from './config';
+import { versatilesSources } from './sources';
 
-const ORIGIN = 'https://tiles.example.org';
+const SOURCES = versatilesSources('https://tiles.example.org');
 
 function vector(edit?: (state: VectorState) => void): RenderedStyle {
 	const options = vectorDefaults('colorful');
 	edit?.(options);
-	return { styleKey: 'colorful', origin: ORIGIN, options };
+	return { styleKey: 'colorful', sources: SOURCES, options };
 }
 
 const hillshadeOn = osm.resolveOptions({ features: { hillshade: true } }).features.hillshade;
@@ -45,14 +46,16 @@ describe('canDiff', () => {
 		expect(canDiff(vector(), { ...vector(), styleKey: 'toner-dark' })).toBe(true);
 		const satellite: RenderedStyle = {
 			styleKey: 'satellite',
-			origin: ORIGIN,
+			sources: SOURCES,
 			options: satelliteDefaults(),
 		};
 		expect(canDiff(vector(), satellite)).toBe(true);
 	});
 
-	it('reloads in full when the origin changes', () => {
-		expect(canDiff(vector(), { ...vector(), origin: 'https://other.example.org' })).toBe(false);
+	it('reloads in full when the sources change', () => {
+		expect(
+			canDiff(vector(), { ...vector(), sources: versatilesSources('https://other.example.org') })
+		).toBe(false);
 	});
 
 	it('reloads in full when terrain changes, in any detail', () => {

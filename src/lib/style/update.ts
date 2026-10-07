@@ -1,10 +1,11 @@
 import type { StyleSpecification } from 'maplibre-gl';
 import type { StyleKey } from './config';
+import type { SourceConfig } from './sources';
 
 /** What a style on the map was built from. */
 export interface RenderedStyle {
 	styleKey: StyleKey;
-	origin: string;
+	sources: SourceConfig;
 	/** The options the style was built from: a `VectorState` or a `SatelliteState`. */
 	options: object;
 }
@@ -28,8 +29,8 @@ export const FULL_RELOAD_PATHS: readonly string[] = [
 export function canDiff(previous: RenderedStyle | undefined, next: RenderedStyle): boolean {
 	// The first style replaces whatever the host page had set; there is nothing of ours to diff against.
 	if (previous === undefined) return false;
-	// A new origin changes every source, glyph and sprite URL.
-	if (previous.origin !== next.origin) return false;
+	// Other sources change the source, glyph and sprite URLs.
+	if (!same(previous.sources, next.sources)) return false;
 	return FULL_RELOAD_PATHS.every((path) =>
 		same(valueAt(previous.options, path), valueAt(next.options, path))
 	);

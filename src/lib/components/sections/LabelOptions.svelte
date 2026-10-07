@@ -31,7 +31,7 @@
 		defaults,
 		textGroups,
 		fontFaces,
-		origin,
+		assetsBase,
 		languages,
 		disabled = false,
 	}: {
@@ -41,7 +41,7 @@
 		textGroups: TextGroupMap;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
 		/** The server the glyphs for the font previews come from. */
-		origin: string;
+		assetsBase: string;
 		/** The tileset's languages, `{ title: code }`. */
 		languages: Record<string, string>;
 		disabled?: boolean;
@@ -209,7 +209,7 @@
 				defaultValue={nodeValue(defaults, node, 'font')}
 				modified={modified('font')}
 				faces={pickerFaces(faces, [...topicFonts(text, nodes), ...topicFonts(defaults, nodes)])}
-				{origin}
+				{assetsBase}
 				sample={fontSample(node.path)}
 				language={text.language}
 				layers={nodeLayers(textGroups, node)}

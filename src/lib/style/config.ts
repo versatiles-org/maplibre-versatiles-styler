@@ -21,7 +21,7 @@ export type StyleKey = Palette | 'satellite';
 
 /**
  * The options the vector panel edits: `osm`'s resolved options without `theme` (the style key) and
- * `urls` (derived from the origin when building). `features.landcover` is never edited — it is set
+ * `urls` (derived from the sources when building). `features.landcover` is never edited — it is set
  * from the tileset when building.
  */
 export type VectorState = Omit<ResolvedOsm, 'theme' | 'urls'>;
@@ -203,11 +203,11 @@ export interface StyleSources {
 	elevation?: TileJSONSpecification;
 }
 
-/** The full `osm` options for a theme and state, as built on `origin` with these sources. */
+/** The full `osm` options for a theme and state, as built with the assets of `assetsBase` and these sources. */
 export function vectorOptions(
 	theme: Palette,
 	state: VectorState,
-	origin: string,
+	assetsBase: string,
 	sources: StyleSources
 ): OsmOptions {
 	const elevation = sources.elevation !== undefined;
@@ -220,14 +220,14 @@ export function vectorOptions(
 			hillshade: elevation ? state.features.hillshade : false,
 			landcover: sources.osm !== undefined && osm.supportsLandcover(sources.osm),
 		},
-		urls: { base: origin, ...sourceUrls(sources, ['osm', 'elevation']) },
+		urls: { base: assetsBase, ...sourceUrls(sources, ['osm', 'elevation']) },
 	};
 }
 
-/** The full `satellite` options for a state, as built on `origin` with these sources. */
+/** The full `satellite` options for a state, as built with the assets of `assetsBase` and these sources. */
 export function satelliteOptions(
 	state: SatelliteState,
-	origin: string,
+	assetsBase: string,
 	sources: StyleSources
 ): SatelliteOptions {
 	const elevation = sources.elevation !== undefined;
@@ -239,7 +239,7 @@ export function satelliteOptions(
 			terrain: elevation ? state.features.terrain : false,
 			hillshade: elevation ? state.features.hillshade : false,
 		},
-		urls: { base: origin, ...sourceUrls(sources, ['satellite', 'osm', 'elevation']) },
+		urls: { base: assetsBase, ...sourceUrls(sources, ['satellite', 'osm', 'elevation']) },
 	};
 }
 
@@ -256,23 +256,23 @@ function sourceUrls(sources: StyleSources, names: (keyof StyleSources)[]): Style
 export function buildVectorStyle(
 	theme: Palette,
 	state: VectorState,
-	origin: string,
+	assetsBase: string,
 	sources: StyleSources
 ): StyleSpecification {
-	return osm(vectorOptions(theme, state, origin, sources)) as StyleSpecification;
+	return osm(vectorOptions(theme, state, assetsBase, sources)) as StyleSpecification;
 }
 
 export function buildSatelliteStyle(
 	state: SatelliteState,
-	origin: string,
+	assetsBase: string,
 	sources: StyleSources
 ): StyleSpecification {
-	return satellite(satelliteOptions(state, origin, sources)) as StyleSpecification;
+	return satellite(satelliteOptions(state, assetsBase, sources)) as StyleSpecification;
 }
 
 /**
  * The smallest options for the URL hash. Leaves out `theme` (the hash stores the style key),
- * `features.landcover` (detected from the tileset) and `urls` (the origin is not part of the hash).
+ * `features.landcover` (detected from the tileset) and `urls` (the sources are not part of the hash).
  */
 export function minimalConfig(
 	styleKey: StyleKey,
@@ -360,19 +360,22 @@ export function styleCode(
 	styleKey: StyleKey,
 	vectorState: VectorState,
 	satelliteState: SatelliteState,
-	origin: string,
+	assetsBase: string,
 	sources: StyleSources,
 	target: CodeTarget = 'npm'
 ): string {
 	// `toCode` must see URLs only, never the loaded TileJSONs: the snippet loads its own.
-	const urls = { base: origin };
+	const urls = { base: assetsBase };
 	if (styleKey === 'satellite') {
 		return satellite.toCode(
-			{ ...satelliteOptions(satelliteState, origin, sources), urls },
+			{ ...satelliteOptions(satelliteState, assetsBase, sources), urls },
 			{ target }
 		);
 	}
-	return osm.toCode({ ...vectorOptions(styleKey, vectorState, origin, sources), urls }, { target });
+	return osm.toCode(
+		{ ...vectorOptions(styleKey, vectorState, assetsBase, sources), urls },
+		{ target }
+	);
 }
 
 /**

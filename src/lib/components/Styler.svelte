@@ -35,7 +35,12 @@
 		type InspectResult,
 		type RenderedFeature,
 	} from '../style/inspect';
-	import { loadOrigin, type LoadedTileJSON } from '../style/sources';
+	import {
+		loadSources,
+		versatilesSources,
+		type LoadedTileJSON,
+		type SourceConfig,
+	} from '../style/sources';
 	import { languageOptions } from '../options/languages';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from '../transfer/hash';
@@ -58,21 +63,24 @@
 	fontPicker.labelTexts = (layerIds) => labelTexts(map, layerIds);
 	// The color pickers share their channel tab.
 	provideColorPickerState();
-	let origin = $state(untrack(() => config.origin ?? window.location.origin));
+	// Where the tiles and the assets come from: a VersaTiles server, which provides all of them.
+	let sourceConfig = $state.raw<SourceConfig>(
+		untrack(() => versatilesSources(config.origin ?? window.location.origin))
+	);
 	let originHost = $derived.by(() => {
 		try {
-			return new URL(origin).host;
+			return new URL(sourceConfig.assets).host;
 		} catch {
-			return origin;
+			return sourceConfig.assets;
 		}
 	});
 	let paneOpen = $state(untrack(() => config.open ?? false));
 
 	// ── Sources ──────────────────────────────────────────────────────────────────
-	// All TileJSONs of an origin load in parallel. `undefined` while loading, `null` when the
-	// server does not provide the source.
+	// All TileJSONs load in parallel. `undefined` while loading, `null` when the
+	// source is not available.
 
-	let sources = $derived(loadOrigin(origin));
+	let sources = $derived(loadSources(sourceConfig));
 	let osmTileJSON = $state<LoadedTileJSON | undefined>();
 	let satelliteTileJSON = $state<LoadedTileJSON | undefined>();
 	let elevationTileJSON = $state<LoadedTileJSON | undefined>();
@@ -81,7 +89,7 @@
 		const current = sources;
 		osmTileJSON = satelliteTileJSON = elevationTileJSON = undefined;
 		let outdated = false;
-		current.osm.then((tj) => !outdated && (osmTileJSON = tj));
+		current.vector.then((tj) => !outdated && (osmTileJSON = tj));
 		current.satellite.then((tj) => !outdated && (satelliteTileJSON = tj));
 		current.elevation.then((tj) => !outdated && (elevationTileJSON = tj));
 		return () => (outdated = true);
@@ -138,13 +146,13 @@
 			return {
 				style: buildSatelliteStyle(
 					probeColors ? probeSatelliteState(state, probeColors) : state,
-					origin,
+					sourceConfig.assets,
 					{
 						...stateSources,
 						satellite,
 					}
 				),
-				rendered: { styleKey, origin, options: state },
+				rendered: { styleKey, sources: sourceConfig, options: state },
 			};
 		}
 		const state = $state.snapshot(vectorState) as VectorState;
@@ -154,10 +162,10 @@
 			style: buildVectorStyle(
 				styleKey,
 				probeColors ? probeVectorState(state, probeColors) : state,
-				origin,
+				sourceConfig.assets,
 				stateSources
 			),
-			rendered: { styleKey, origin, options: state },
+			rendered: { styleKey, sources: sourceConfig, options: state },
 		};
 	}
 
@@ -358,7 +366,7 @@
 			currentStyleKey,
 			$state.snapshot(vectorState) as VectorState,
 			$state.snapshot(satelliteState) as SatelliteState,
-			origin,
+			sourceConfig.assets,
 			loadedSources,
 			target
 		);
@@ -367,8 +375,8 @@
 	/** Applies an imported style, optionally moving to the tile server it came from. */
 	function applyImport(result: ImportResult, newOrigin?: string) {
 		importOpen = false;
-		if (newOrigin && newOrigin !== origin) {
-			origin = newOrigin;
+		if (newOrigin && newOrigin !== sourceConfig.assets) {
+			sourceConfig = versatilesSources(newOrigin);
 			fontPicker.clearScripts();
 		}
 		setBaseStyle(result.styleKey, result.config);
@@ -383,7 +391,7 @@
 	}
 
 	function handleOriginChange(e: Event) {
-		origin = (e.target as HTMLInputElement).value;
+		sourceConfig = versatilesSources((e.target as HTMLInputElement).value);
 		// Another server has other fonts.
 		fontPicker.clearScripts();
 	}
@@ -503,7 +511,12 @@
 			<div class="entry text-container">
 				<label for="{uid}-origin">Origin</label>
 				<div class="input">
-					<input id="{uid}-origin" type="text" value={origin} onchange={handleOriginChange} />
+					<input
+						id="{uid}-origin"
+						type="text"
+						value={sourceConfig.assets}
+						onchange={handleOriginChange}
+					/>
 				</div>
 			</div>
 		</SidebarSection>
@@ -517,7 +530,7 @@
 			<SatelliteStylePanel
 				bind:options={satelliteState}
 				config={minimal}
-				{origin}
+				assetsBase={sourceConfig.assets}
 				{overlayAvailable}
 				elevationAvailable={hasElevation}
 				fontFaces={sources.fontFaces()}
@@ -527,7 +540,7 @@
 			<VectorStylePanel
 				bind:options={vectorState}
 				config={minimal}
-				{origin}
+				assetsBase={sourceConfig.assets}
 				defaults={currentVectorDefaults}
 				{hasElevation}
 				fontFaces={sources.fontFaces()}
@@ -555,7 +568,11 @@
 	<ExportDialog style={exportStyle} code={exportCode} onclose={() => (exportOpen = false)} />
 {/if}
 {#if importOpen}
-	<ImportDialog currentOrigin={origin} onapply={applyImport} onclose={() => (importOpen = false)} />
+	<ImportDialog
+		currentOrigin={sourceConfig.assets}
+		onapply={applyImport}
+		onclose={() => (importOpen = false)}
+	/>
 {/if}
 {#if inspectResult}
 	<InspectPopup

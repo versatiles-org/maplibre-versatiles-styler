@@ -3,13 +3,13 @@
 	import { loadGlyphs, renderText, type GlyphSet } from '../../fonts/glyphs';
 
 	let {
-		origin,
+		assetsBase,
 		faceId,
 		text,
 		size = 16,
 		lazy = false,
 	}: {
-		origin: string;
+		assetsBase: string;
 		faceId: string;
 		/** The sample text, drawn in the face. Shown as plain text while the glyphs load, or if there are none. */
 		text: string;
@@ -49,7 +49,7 @@
 		const fontSize = size;
 		let cancelled = false;
 		status = 'loading';
-		loadGlyphs(origin, faceId).then((glyphs) => {
+		loadGlyphs(assetsBase, faceId).then((glyphs) => {
 			if (cancelled) return;
 			if (!glyphs) {
 				status = 'missing';

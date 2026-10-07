@@ -15,7 +15,7 @@
 		options = $bindable(),
 		defaults,
 		config,
-		origin,
+		assetsBase,
 		hasElevation,
 		fontFaces,
 		languages,
@@ -25,7 +25,7 @@
 		/** The minimal config of the current options, to tell which sections have changes. */
 		config: Record<string, unknown>;
 		/** The server the font previews load their glyphs from. */
-		origin: string;
+		assetsBase: string;
 		hasElevation: boolean;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
 		languages: Record<string, string>;
@@ -111,7 +111,7 @@
 		textGroups={osm.textGroups}
 		{fontFaces}
 		{languages}
-		{origin}
+		{assetsBase}
 	/>
 </SidebarSection>
 <SidebarSection
