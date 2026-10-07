@@ -4,7 +4,6 @@
 		sourceStatus,
 		sourceUrl,
 		vectorSchema,
-		versatilesSources,
 		MAPTERHORN_TILES,
 		SCHEMA_OPTIONS,
 		type LoadedTileJSON,
@@ -22,6 +21,7 @@
 		config,
 		tileJSONs,
 		pmtiles,
+		server,
 		onprovider,
 		onconfig,
 	}: {
@@ -33,6 +33,8 @@
 		tileJSONs: Record<SourceName, LoadedTileJSON | undefined>;
 		/** Whether the map can read PMTiles archives. */
 		pmtiles: boolean;
+		/** The sources of the VersaTiles server at an origin. */
+		server: (origin: string) => SourceConfig;
 		onprovider: (provider: Provider) => void;
 		onconfig: (config: SourceConfig) => void;
 	} = $props();
@@ -119,7 +121,7 @@
 				id="{uid}-origin"
 				type="text"
 				value={config.assets}
-				onchange={(e) => onconfig(versatilesSources(value(e).trim()))}
+				onchange={(e) => onconfig(server(value(e).trim()))}
 			/>
 		</div>
 	</div>

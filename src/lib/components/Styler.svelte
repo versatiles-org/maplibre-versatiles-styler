@@ -43,7 +43,6 @@
 		parseSources,
 		serializeSources,
 		protomapsSources,
-		providerOf,
 		vectorSchema,
 		versatilesSources,
 		type ChosenSources,
@@ -75,13 +74,18 @@
 	fontPicker.labelTexts = (layerIds) => labelTexts(map, layerIds);
 	// The color pickers share their channel tab.
 	provideColorPickerState();
+	/** The sources of a VersaTiles server, with the tilesets the page says it has under other names. */
+	function ownServer(origin: string): SourceConfig {
+		return versatilesSources(origin, config.sources);
+	}
+
 	// Where the tiles and the assets come from: a VersaTiles server, which provides all of them.
 	let sourceConfig = $state.raw<SourceConfig>(
-		untrack(() => versatilesSources(config.origin ?? window.location.origin))
+		untrack(() => ownServer(config.origin ?? window.location.origin))
 	);
 	// Which provider's sources these are. It is a choice, not a reading of the config: a custom set of
 	// sources may be the same as a provider's.
-	let provider = $state<Provider>(untrack(() => providerOf(sourceConfig)));
+	let provider = $state<Provider>('versatiles');
 	/** The sources each provider was left with, to come back to. */
 	const leftSources: Partial<Record<Provider, SourceConfig>> = {};
 
@@ -116,7 +120,7 @@
 		if (next === 'openfreemap') return openFreeMapSources();
 		if (next === 'protomaps') return protomapsSources();
 		if (next === 'custom') return sourceConfig;
-		return versatilesSources(config.origin ?? window.location.origin);
+		return ownServer(config.origin ?? window.location.origin);
 	}
 
 	function setProvider(next: Provider) {
@@ -459,7 +463,8 @@
 	 */
 	function applySources(next: ChosenSources) {
 		provider = next.provider;
-		setSourceConfig(next.config);
+		// A VersaTiles server is known by its origin: its tilesets are the ones this page names.
+		setSourceConfig(next.provider === 'versatiles' ? ownServer(next.config.assets) : next.config);
 	}
 
 	function setSourceConfig(next: SourceConfig) {
@@ -472,7 +477,7 @@
 	/** The sources of the page itself: the VersaTiles server it names, or the one it is on. */
 	const ownSources: ChosenSources = untrack(() => ({
 		provider: 'versatiles',
-		config: versatilesSources(config.origin ?? window.location.origin),
+		config: ownServer(config.origin ?? window.location.origin),
 	}));
 
 	function sourcesFromHash(encoded: string | null | undefined): ChosenSources | undefined {
@@ -621,6 +626,7 @@
 					elevation: elevationTileJSON,
 				}}
 				pmtiles={pmtiles !== undefined}
+				server={ownServer}
 				onprovider={setProvider}
 				onconfig={setSourceConfig}
 			/>

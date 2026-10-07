@@ -110,21 +110,28 @@ const TILEJSON_DEFAULTS: Record<string, Partial<TileJSONSpecification>> = {
 	[MAPTERHORN_TILES]: { maxzoom: 12 },
 };
 
+/** The addresses of tile sources, by what they are used for. */
+export type SourceUrls = Partial<Record<SourceName, string>>;
+
 /**
  * The sources of a VersaTiles server: its tilesets `osm`, `satellite` and `elevation`, and its assets.
- * An origin that is no URL has no tiles.
+ * A server that has a tileset under another name says so in `tilesets`, by the address of its TileJSON,
+ * which may be relative to the origin. An origin that is no URL has no tiles.
  */
-export function versatilesSources(origin: string): SourceConfig {
-	const tileJSON = (name: string) => new URL(`/tiles/${name}/tiles.json`, origin).href;
+export function versatilesSources(origin: string, tilesets: SourceUrls = {}): SourceConfig {
+	const tileJSON = (name: SourceName, tileset: string) => {
+		const url = tilesets[name] ?? `/tiles/${tileset}/tiles.json`;
+		return isPMTilesUrl(url) ? url : new URL(url, origin).href;
+	};
 	try {
 		new URL(origin);
 	} catch {
 		return { assets: origin };
 	}
 	return {
-		vector: tileJSON('osm'),
-		satellite: tileJSON('satellite'),
-		elevation: tileJSON('elevation'),
+		vector: tileJSON('vector', 'osm'),
+		satellite: tileJSON('satellite', 'satellite'),
+		elevation: tileJSON('elevation', 'elevation'),
 		assets: origin,
 	};
 }

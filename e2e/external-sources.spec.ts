@@ -504,3 +504,58 @@ test.describe('the tile sources travel with the style', () => {
 		await expect(dialog).not.toContainText('inlineSources');
 	});
 });
+
+test.describe('a server with a tileset under another name', () => {
+	const TILESET = 'https://tiles.versatiles.org/tiles/planet/tiles.json';
+
+	test.beforeEach(async ({ page }) => {
+		await page.route('https://tiles.versatiles.org/tiles/planet/**', (route) =>
+			route.fulfill({ status: 204 })
+		);
+		await page.route(TILESET, (route) =>
+			route.fulfill({
+				json: {
+					tilejson: '3.0.0',
+					tiles: ['/tiles/planet/{z}/{x}/{y}'],
+					minzoom: 0,
+					maxzoom: 14,
+					vector_layers: vectorLayers(OMT_SCHEMA),
+				},
+			})
+		);
+	});
+
+	test('is styled for the schema its tiles have, without offering other sources', async ({
+		page,
+	}) => {
+		await open(page, '/?external=0&vector=/tiles/planet/tiles.json#panel=open');
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		const style = await getMapStyle(page);
+		expect(style.sources.openmaptiles).toMatchObject({
+			tiles: ['https://tiles.versatiles.org/tiles/planet/{z}/{x}/{y}'],
+		});
+
+		const server = section(page, 'Tile server');
+		await server.locator('summary').click();
+		await expect(found(server, 'Vector tiles')).toContainText('OpenMapTiles · zoom 0–14');
+		await expect(found(server, 'Satellite')).toContainText('zoom');
+		await expect(row(server, 'Provider')).toHaveCount(0);
+	});
+
+	test('keeps its tileset when the styler comes back to it from another provider', async ({
+		page,
+	}) => {
+		await open(page, '/?vector=/tiles/planet/tiles.json#panel=open');
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		await chooseProvider(page, 'protomaps');
+		await expect.poll(() => sourceNames(page)).toEqual(['protomaps']);
+		// The hash is written a moment after the change.
+		await expect.poll(() => page.url()).toContain('sources=');
+		await page.reload();
+		await expect.poll(() => sourceNames(page)).toEqual(['protomaps']);
+
+		const sources = await chooseProvider(page, 'versatiles');
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		await expect(found(sources, 'Vector tiles')).toContainText('OpenMapTiles');
+	});
+});

@@ -18,12 +18,15 @@ window.addEventListener('DOMContentLoaded', () => {
 	(window as any)._map = map;
 
 	map.addControl(new maplibregl.NavigationControl(), 'top-right');
+	const query = new URLSearchParams(window.location.search);
 	map.addControl(
 		new VersaTilesStylerControl({
 			origin: 'https://tiles.versatiles.org',
+			// `?vector=…` names the vector tileset, as a server does that has it under another name.
+			sources: { vector: query.get('vector') ?? undefined },
 			// The demo offers the tiles of other providers; `?external=0` shows it as a VersaTiles server does.
 			addProtocol: maplibregl.addProtocol,
-			externalSources: new URLSearchParams(window.location.search).get('external') !== '0',
+			externalSources: query.get('external') !== '0',
 		}),
 		'top-left'
 	);

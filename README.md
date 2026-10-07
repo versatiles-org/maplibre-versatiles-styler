@@ -113,8 +113,16 @@ When using the UMD build, the control is available as the global `VersaTilesStyl
 
 The `VersaTilesStylerControl` constructor accepts an optional config object:
 
-| Option   | Type      | Default                  | Description                                                               |
-| -------- | --------- | ------------------------ | ------------------------------------------------------------------------- |
+| Option            | Type       | Default                  | Description                                                                                                |
+| ----------------- | ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `origin`          | `string`   | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.                                     |
+| `sources`         | `object`   | –                        | TileJSON addresses of tilesets the server has under other names: `{ vector, satellite, elevation }`        |
+| `externalSources` | `boolean`  | `false`                  | Offer tiles of other providers in the sidebar: OpenFreeMap, Protomaps and custom addresses                 |
+| `addProtocol`     | `function` | –                        | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives               |
+| `open`            | `boolean`  | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise                                  |
+| `hash`            | `boolean`  | `true`                   | Keep the map view, the style, its options and other tile sources in the URL hash fragment                  |
+
+-------- | --------- | ------------------------ | ------------------------------------------------------------------------- |
 | `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.    |
 | `externalSources` | `boolean` | `false` | Offer tiles of other providers in the sidebar, such as OpenFreeMap |
 | `addProtocol` | `function` | – | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives, such as Protomaps |
@@ -125,7 +133,7 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 
 ## Server requirements
 
-The styler reads everything from the `origin`. Each of these is optional — what is missing is left out of the sidebar:
+By default the styler reads everything from the `origin`. Each of these is optional — what is missing is left out of the sidebar:
 
 | Path                                     | Used for                                                          |
 | ---------------------------------------- | ----------------------------------------------------------------- |
@@ -137,6 +145,47 @@ The styler reads everything from the `origin`. Each of these is optional — wha
 | `/assets/sprites/base`                   | Icons                                                             |
 
 The three TileJSON files are loaded in parallel when the control is added, and the style is set once they are in.
+
+### Tile schemas
+
+The vector tiles may be in the [Shortbread](https://shortbread-tiles.org/), the OpenMapTiles or the Protomaps schema. The styler reads the schema from the layers the TileJSON lists and builds the style with the matching function of `@versatiles/style` (`osm`, `omt` or `protomaps`). The options are the same for all three. Two things depend on the schema:
+
+- The overlay of the satellite style is drawn from Shortbread tiles only.
+- The code snippet for a plain HTML page exists for Shortbread tiles only.
+
+A server that has its vector tileset under another name than `osm` names it in `sources`. A path is resolved against the `origin`:
+
+```js
+new VersaTilesStylerControl({
+  sources: { vector: '/tiles/planet/tiles.json' },
+});
+```
+
+### Tiles of other providers
+
+With `externalSources: true` the sidebar offers a choice of provider:
+
+| Provider    | Vector tiles                                   | Elevation            | Satellite |
+| ----------- | ---------------------------------------------- | -------------------- | --------- |
+| VersaTiles  | The server at `origin`                         | The server's own     | The server's own |
+| OpenFreeMap | `tiles.openfreemap.org` (OpenMapTiles)         | None, or Mapterhorn  | –         |
+| Protomaps   | A PMTiles archive (Protomaps), with an address | None, or Mapterhorn  | –         |
+| Custom      | Any TileJSON or PMTiles address                | Any TileJSON address | Any TileJSON or PMTiles address |
+
+Fonts and icons always come from a VersaTiles server: `tiles.versatiles.org` for OpenFreeMap and Protomaps, and the one named under "Fonts & icons" for custom sources.
+
+A PMTiles archive is read through MapLibre's `pmtiles` protocol, which only the page can register. Pass MapLibre's `addProtocol` and the styler registers it; without it, Protomaps is not offered:
+
+```js
+new VersaTilesStylerControl({
+  externalSources: true,
+  addProtocol: maplibregl.addProtocol,
+});
+```
+
+A style exported with a PMTiles source needs the same protocol in the page that uses it.
+
+Without `externalSources`, the styler only ever loads tiles from its VersaTiles server, and ignores other sources named in a link.
 
 ---
 

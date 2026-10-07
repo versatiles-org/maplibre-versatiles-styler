@@ -52,7 +52,12 @@
 				? { provider: 'versatiles' as const, config: versatilesSources(result.origin) }
 				: undefined);
 		if (!named || (named.provider !== 'versatiles' && !externalSources)) return undefined;
-		return JSON.stringify(named.config) === JSON.stringify(current.config) ? undefined : named;
+		// A VersaTiles server is the same one by its origin, whatever its tilesets are called here.
+		const same =
+			named.provider === 'versatiles' && current.provider === 'versatiles'
+				? named.config.assets === current.config.assets
+				: JSON.stringify(named.config) === JSON.stringify(current.config);
+		return same ? undefined : named;
 	});
 	/** What the other sources are called: the server, or the address of the vector tiles. */
 	let otherName = $derived(

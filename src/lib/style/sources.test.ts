@@ -89,6 +89,29 @@ describe('loadSources', () => {
 		expect(await sources.elevation).not.toBeNull();
 	});
 
+	it('takes the tilesets a server has under other names, by address or by path', () => {
+		expect(
+			versatilesSources('https://tiles.example.org', {
+				vector: '/tiles/planet/tiles.json',
+				elevation: 'https://dem.example.org/tiles.json',
+			})
+		).toEqual({
+			vector: 'https://tiles.example.org/tiles/planet/tiles.json',
+			satellite: 'https://tiles.example.org/tiles/satellite/tiles.json',
+			elevation: 'https://dem.example.org/tiles.json',
+			assets: 'https://tiles.example.org',
+		});
+		// A path follows the server; an archive is no path.
+		expect(
+			versatilesSources('https://b.example.org', { vector: '/tiles/planet/tiles.json' }).vector
+		).toBe('https://b.example.org/tiles/planet/tiles.json');
+		expect(
+			versatilesSources('https://b.example.org', {
+				vector: 'pmtiles://https://c.example.org/a.pmtiles',
+			}).vector
+		).toBe('pmtiles://https://c.example.org/a.pmtiles');
+	});
+
 	it('has no tiles for an origin that is no URL', () => {
 		expect(versatilesSources('not a url')).toEqual({ assets: 'not a url' });
 	});
