@@ -9,16 +9,20 @@
 	} from '../transfer/import';
 	import { is, type Diagnostic } from '@versatiles/style/migrate';
 	import { DOCS } from '../transfer/docs';
+	import { versatilesSources, type ChosenSources } from '../style/sources';
 
 	let {
-		currentOrigin,
+		current,
+		externalSources = false,
 		onapply,
 		onclose,
 	}: {
-		/** The tile server in use, to notice when an imported style names another one. */
-		currentOrigin: string;
-		/** Applies the import. `origin` is set only when the user chose to switch tile server too. */
-		onapply: (result: ImportResult, origin?: string) => void;
+		/** The tile sources in use, to notice when an imported style names others. */
+		current: ChosenSources;
+		/** Whether the styler offers the tiles of other providers; if not, an import cannot bring them. */
+		externalSources?: boolean;
+		/** Applies the import. `sources` is set only when the user chose to switch tile sources too. */
+		onapply: (result: ImportResult, sources?: ChosenSources) => void;
 		onclose: () => void;
 	} = $props();
 
@@ -28,8 +32,8 @@
 	let busy = $state(false);
 	let result = $state<ImportResult | undefined>();
 	let error = $state<{ error: string; detail?: string } | undefined>();
-	/** Whether to adopt the tile server the imported style names. */
-	let adoptOrigin = $state(true);
+	/** Whether to adopt the tile sources the imported style names. */
+	let adoptSources = $state(true);
 	let dragging = $state(false);
 
 	/** What each recognised input is called, and how exact it is. */
@@ -40,8 +44,21 @@
 		derived: { name: 'a MapLibre style', exact: false },
 	} as const;
 
-	let otherOrigin = $derived(
-		result?.origin && result.origin !== currentOrigin ? result.origin : undefined
+	/** The tile sources the import names, if they are others than the ones in use. */
+	let otherSources = $derived.by((): ChosenSources | undefined => {
+		const named =
+			result?.sources ??
+			(result?.origin
+				? { provider: 'versatiles' as const, config: versatilesSources(result.origin) }
+				: undefined);
+		if (!named || (named.provider !== 'versatiles' && !externalSources)) return undefined;
+		return JSON.stringify(named.config) === JSON.stringify(current.config) ? undefined : named;
+	});
+	/** What the other sources are called: the server, or the address of the vector tiles. */
+	let otherName = $derived(
+		otherSources?.provider === 'versatiles'
+			? otherSources.config.assets
+			: (otherSources?.config.vector ?? otherSources?.config.assets)
 	);
 
 	let groups = $derived(groupDiagnostics(result?.diagnostics ?? []));
@@ -86,7 +103,7 @@
 
 	function apply() {
 		if (!result) return;
-		onapply(result, otherOrigin && adoptOrigin ? otherOrigin : undefined);
+		onapply(result, adoptSources ? otherSources : undefined);
 	}
 
 	/** Any change invalidates what was checked, so Apply never acts on stale text. */
@@ -239,10 +256,11 @@
 						</ul>
 					</details>
 				{/if}
-				{#if otherOrigin}
+				{#if otherSources}
 					<label class="import-origin">
-						<input type="checkbox" bind:checked={adoptOrigin} />
-						Also switch the tile server to <code>{otherOrigin}</code>
+						<input type="checkbox" bind:checked={adoptSources} />
+						Also switch the tile {otherSources.provider === 'versatiles' ? 'server' : 'sources'} to
+						<code>{otherName}</code>
 					</label>
 				{/if}
 			</div>

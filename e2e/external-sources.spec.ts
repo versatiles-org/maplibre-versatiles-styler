@@ -396,3 +396,111 @@ test.describe('custom tile sources', () => {
 			.toBe(`${CUSTOM}/assets/glyphs/{fontstack}/{range}.pbf`);
 	});
 });
+
+test.describe('the tile sources travel with the style', () => {
+	/** The sources the hash names, decoded. */
+	async function hashSources(page: Page): Promise<unknown> {
+		const match = /sources=([^&]+)/.exec(new URL(page.url()).hash);
+		if (!match) return undefined;
+		return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
+	}
+
+	test('a link names them, and opens with them', async ({ page }) => {
+		await open(page);
+		expect(await hashSources(page)).toBeUndefined();
+		const sources = await chooseProvider(page, 'openfreemap');
+		await row(sources, 'Elevation').locator('select').selectOption({ label: 'Mapterhorn' });
+		await expect
+			.poll(() => hashSources(page))
+			.toEqual({
+				provider: 'openfreemap',
+				vector: `${OPENFREEMAP}/planet`,
+				elevation: `${MAPTERHORN}/tilejson.json`,
+				assets: 'https://tiles.versatiles.org',
+			});
+
+		await page.reload();
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		const reopened = section(page, 'Tile sources');
+		await expect(reopened.locator('summary')).toContainText('OpenFreeMap');
+		await reopened.locator('summary').click();
+		await expect(row(reopened, 'Provider').locator('select')).toHaveValue('openfreemap');
+		await expect(row(reopened, 'Elevation').locator('select')).toHaveValue(
+			`${MAPTERHORN}/tilejson.json`
+		);
+	});
+
+	test('the page\u2019s own server is left out of the link again', async ({ page }) => {
+		await open(page);
+		await chooseProvider(page, 'openfreemap');
+		await expect.poll(() => hashSources(page)).toBeDefined();
+		await chooseProvider(page, 'versatiles');
+		await expect.poll(() => hashSources(page)).toBeUndefined();
+	});
+
+	test('a styler that offers no other sources does not take them from a link', async ({ page }) => {
+		await open(page);
+		await chooseProvider(page, 'openfreemap');
+		await expect.poll(() => hashSources(page)).toBeDefined();
+		const link = new URL(page.url());
+		link.searchParams.set('external', '0');
+
+		await page.goto(link.href);
+		await page.reload();
+		await expect.poll(() => sourceNames(page)).toContain('versatiles-shortbread');
+		await expect.poll(() => hashSources(page)).toBeUndefined();
+	});
+
+	test('an exported style brings its sources back when it is imported', async ({ page }) => {
+		await open(page);
+		await chooseProvider(page, 'openfreemap');
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+
+		await page.getByRole('button', { name: 'Export' }).click();
+		const exportDialog = page.getByRole('dialog', { name: 'Export style' });
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			exportDialog.getByRole('button', { name: 'Download' }).click(),
+		]);
+		const stream = await download.createReadStream();
+		const chunks: Buffer[] = [];
+		for await (const chunk of stream) chunks.push(chunk as Buffer);
+		const json = Buffer.concat(chunks).toString('utf8');
+		expect(JSON.parse(json).metadata['versatiles:sources']).toMatchObject({
+			provider: 'openfreemap',
+		});
+		await exportDialog.getByRole('button', { name: 'Close' }).first().click();
+
+		await chooseProvider(page, 'versatiles');
+		await expect.poll(() => sourceNames(page)).toContain('versatiles-shortbread');
+
+		await page.locator('.styler-toolbar').getByRole('button', { name: 'Import…' }).click();
+		const importDialog = page.getByRole('dialog', { name: 'Import style' });
+		// A whole style is a lot to type: it is put in at once, as a paste is.
+		await importDialog.getByRole('textbox').evaluate((element, value) => {
+			(element as HTMLTextAreaElement).value = value;
+			element.dispatchEvent(new Event('input', { bubbles: true }));
+		}, json);
+		await importDialog.getByRole('button', { name: 'Check' }).click();
+		await expect(importDialog.locator('.import-origin')).toContainText(
+			`Also switch the tile sources to ${OPENFREEMAP}/planet`
+		);
+		await importDialog.getByRole('button', { name: 'Apply to the map' }).click();
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		await expect(section(page, 'Tile sources').locator('summary')).toContainText('OpenFreeMap');
+	});
+
+	test('the code for a PMTiles archive says what MapLibre needs to read it', async ({ page }) => {
+		await open(page);
+		await chooseProvider(page, 'protomaps');
+		await expect.poll(() => sourceNames(page)).toEqual(['protomaps']);
+
+		await page.getByRole('button', { name: 'Export' }).click();
+		const dialog = page.getByRole('dialog', { name: 'Export style' });
+		await expect(dialog).toContainText('register the pmtiles protocol');
+		await dialog.getByRole('tab', { name: 'Code' }).click();
+		await expect(dialog).toContainText("maplibregl.addProtocol('pmtiles', new Protocol().tile);");
+		await expect(dialog).toContainText(`protomaps: "pmtiles://${PROTOMAPS}"`);
+		await expect(dialog).not.toContainText('inlineSources');
+	});
+});

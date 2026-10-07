@@ -211,3 +211,47 @@ export function sourceStatus(
 	}
 	return { state: 'ok', text: parts.join(' · ') || 'Available' };
 }
+
+/** The sources in use and the provider they were chosen as. */
+export interface ChosenSources {
+	provider: Provider;
+	config: SourceConfig;
+}
+
+const PROVIDER_NAMES: readonly Provider[] = ['versatiles', 'openfreemap', 'protomaps', 'custom'];
+
+/**
+ * The chosen sources as plain data, for a link and for the record in an exported style. A VersaTiles
+ * server is its origin alone: its tilesets follow from it.
+ */
+export function serializeSources({ provider, config }: ChosenSources): Record<string, unknown> {
+	if (provider === 'versatiles') return { provider, origin: config.assets };
+	return { provider, ...config };
+}
+
+/**
+ * The chosen sources from data that may come from anywhere: a link, a file. `undefined` for anything
+ * that is not a set of sources.
+ */
+export function parseSources(value: unknown): ChosenSources | undefined {
+	if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
+	const data = value as Record<string, unknown>;
+	const text = (key: string) => (typeof data[key] === 'string' ? (data[key] as string) : undefined);
+
+	if (data.provider === 'versatiles') {
+		const origin = text('origin');
+		return origin ? { provider: 'versatiles', config: versatilesSources(origin) } : undefined;
+	}
+
+	const assets = text('assets');
+	if (!assets) return undefined;
+	const config: SourceConfig = { assets };
+	for (const name of ['vector', 'satellite', 'elevation'] as const) {
+		const url = text(name);
+		if (url) config[name] = url;
+	}
+	const schema = text('schema');
+	if (schema && schema in SCHEMA_LABELS) config.schema = schema as VectorSchema;
+	const provider = PROVIDER_NAMES.find((name) => name === data.provider);
+	return { provider: provider ?? providerOf(config), config };
+}

@@ -40,10 +40,13 @@
 	import {
 		loadSources,
 		openFreeMapSources,
+		parseSources,
+		serializeSources,
 		protomapsSources,
 		providerOf,
 		vectorSchema,
 		versatilesSources,
+		type ChosenSources,
 		type LoadedTileJSON,
 		type Provider,
 		type SourceConfig,
@@ -52,7 +55,7 @@
 	import { registerPMTiles } from '../style/pmtiles';
 	import { languageOptions } from '../options/languages';
 	import { onDestroy, untrack } from 'svelte';
-	import { HashManager } from '../transfer/hash';
+	import { decodeConfig, encodeConfig, HashManager } from '../transfer/hash';
 	import { provideFontPickerState } from './state/font_picker.svelte';
 	import { provideColorPickerState } from './state/color_picker.svelte';
 	import { labelTexts } from '../browser/map_labels';
@@ -416,7 +419,12 @@
 	 */
 	let exportStyle = $derived.by(() => {
 		const current = currentStyle();
-		return current ? styleForExport(current.style, currentStyleKey, minimal, schema) : undefined;
+		return current
+			? styleForExport(current.style, currentStyleKey, minimal, schema, {
+					provider,
+					config: sourceConfig,
+				})
+			: undefined;
 	});
 
 	function exportCode(target: 'npm' | 'browser') {
@@ -424,19 +432,16 @@
 			currentStyleKey,
 			$state.snapshot(vectorState) as VectorState,
 			$state.snapshot(satelliteState) as SatelliteState,
-			sourceConfig.assets,
+			sourceConfig,
 			loadedSources,
 			target
 		);
 	}
 
 	/** Applies an imported style, optionally moving to the tile server it came from. */
-	function applyImport(result: ImportResult, newOrigin?: string) {
+	function applyImport(result: ImportResult, newSources?: ChosenSources) {
 		importOpen = false;
-		if (newOrigin) {
-			provider = 'versatiles';
-			setSourceConfig(versatilesSources(newOrigin));
-		}
+		if (newSources) applySources(newSources);
 		setBaseStyle(result.styleKey, result.config);
 		// Only the warnings are counted here: the notes are true of almost every import, and counting
 		// them would make a clean one look like it went badly.
@@ -452,6 +457,11 @@
 	 * Moves to other sources. The same sources again change nothing: an input reports its value a second
 	 * time when it loses focus, and reloading then would take the panel away under the click that did it.
 	 */
+	function applySources(next: ChosenSources) {
+		provider = next.provider;
+		setSourceConfig(next.config);
+	}
+
 	function setSourceConfig(next: SourceConfig) {
 		if (JSON.stringify(next) === JSON.stringify(sourceConfig)) return;
 		sourceConfig = next;
@@ -459,16 +469,36 @@
 		fontPicker.clearScripts();
 	}
 
+	/** The sources of the page itself: the VersaTiles server it names, or the one it is on. */
+	const ownSources: ChosenSources = untrack(() => ({
+		provider: 'versatiles',
+		config: versatilesSources(config.origin ?? window.location.origin),
+	}));
+
+	function sourcesFromHash(encoded: string | null | undefined): ChosenSources | undefined {
+		return encoded ? parseSources(decodeConfig(encoded)) : undefined;
+	}
+
 	// Initialize hash management and style
 	let hashManager: HashManager | undefined;
 	untrack(() => {
 		if (config.hash !== false) {
-			hashManager = new HashManager(map, (key, cfg) => setBaseStyle(key, cfg), {
-				defaultOpen: config.open ?? false,
-				onChange: (open) => (paneOpen = open),
-			});
-			const { styleKey, config: hashConfig, panelOpen } = hashManager.initialize();
+			hashManager = new HashManager(
+				map,
+				(key, cfg) => setBaseStyle(key, cfg),
+				{
+					defaultOpen: config.open ?? false,
+					onChange: (open) => (paneOpen = open),
+				},
+				// A page that offers no other sources has none to keep in a link.
+				config.externalSources
+					? { onChange: (encoded) => applySources(sourcesFromHash(encoded) ?? ownSources) }
+					: undefined
+			);
+			const { styleKey, config: hashConfig, panelOpen, sources } = hashManager.initialize();
 			if (panelOpen !== undefined) paneOpen = panelOpen;
+			const hashSources = sourcesFromHash(sources);
+			if (hashSources) applySources(hashSources);
 			setBaseStyle(styleKey, hashConfig);
 		} else {
 			setBaseStyle(DEFAULT_STYLE_KEY);
@@ -477,6 +507,12 @@
 
 	// Opening and closing the panel is part of the shared state: a link shows the map as it was left.
 	$effect(() => hashManager?.setPanelOpen(paneOpen));
+	// And so are the tile sources, unless they are the page's own.
+	$effect(() => {
+		const chosen = { provider, config: sourceConfig };
+		const own = JSON.stringify(chosen) === JSON.stringify(ownSources);
+		hashManager?.setSources(own ? null : encodeConfig(serializeSources(chosen)));
+	});
 
 	onDestroy(() => {
 		hashManager?.destroy();
@@ -645,7 +681,8 @@
 {/if}
 {#if importOpen}
 	<ImportDialog
-		currentOrigin={sourceConfig.assets}
+		current={{ provider, config: sourceConfig }}
+		externalSources={config.externalSources}
 		onapply={applyImport}
 		onclose={() => (importOpen = false)}
 	/>

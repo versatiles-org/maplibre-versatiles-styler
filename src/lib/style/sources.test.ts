@@ -6,6 +6,8 @@ import { PROTOMAPS_SCHEMA } from '@versatiles/style/protomaps';
 import type { TileJSONSpecification } from '@versatiles/style';
 import {
 	loadSources,
+	parseSources,
+	serializeSources,
 	openFreeMapSources,
 	providerOf,
 	protomapsSources,
@@ -176,6 +178,50 @@ describe('providerOf', () => {
 		);
 		expect(providerOf({ ...openFreeMapSources(), schema: 'shortbread' })).toBe('custom');
 		expect(providerOf({ assets: VERSATILES_ASSETS })).toBe('custom');
+	});
+});
+
+describe('sources as data', () => {
+	it('keeps a VersaTiles server as its origin, and brings its tilesets back', () => {
+		const chosen = { provider: 'versatiles' as const, config: versatilesSources('https://a.org') };
+		expect(serializeSources(chosen)).toEqual({ provider: 'versatiles', origin: 'https://a.org' });
+		expect(parseSources(serializeSources(chosen))).toEqual(chosen);
+	});
+
+	it('keeps other sources by their addresses', () => {
+		for (const chosen of [
+			{ provider: 'openfreemap' as const, config: openFreeMapSources(MAPTERHORN_TILES) },
+			{ provider: 'protomaps' as const, config: protomapsSources() },
+			// The same sources as a provider's, chosen as custom ones: the choice is kept.
+			{
+				provider: 'custom' as const,
+				config: { ...openFreeMapSources(), schema: 'shortbread' as const },
+			},
+		]) {
+			expect(parseSources(JSON.parse(JSON.stringify(serializeSources(chosen))))).toEqual(chosen);
+		}
+	});
+
+	it('refuses what is not a set of sources, and reads over what does not belong', () => {
+		for (const value of [
+			null,
+			'openfreemap',
+			[],
+			{},
+			{ provider: 'versatiles' },
+			{ vector: 'x' },
+		]) {
+			expect(parseSources(value)).toBeUndefined();
+		}
+		expect(
+			parseSources({
+				provider: 'nobody',
+				assets: VERSATILES_ASSETS,
+				vector: OPENFREEMAP_TILES,
+				satellite: 5,
+				schema: 'mapbox',
+			})
+		).toEqual({ provider: 'openfreemap', config: openFreeMapSources() });
 	});
 });
 

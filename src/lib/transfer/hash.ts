@@ -3,7 +3,7 @@ import { DEFAULT_STYLE_KEY, toStyleKey, type StyleKey } from '../style/config';
 
 const THROTTLE_MS = 300;
 
-function encodeConfig(obj: Record<string, unknown>): string {
+export function encodeConfig(obj: Record<string, unknown>): string {
 	const json = JSON.stringify(obj);
 	const bytes = new TextEncoder().encode(json);
 	let binary = '';
@@ -36,10 +36,20 @@ export interface PanelHash {
 	onChange: (open: boolean) => void;
 }
 
+/**
+ * How the tile sources are told to the hash: as one parameter, whose value the hash does not read.
+ * `null` is the styler's own sources, which the hash leaves out.
+ */
+export interface SourcesHash {
+	onChange: (sources: string | null) => void;
+}
+
 export class HashManager {
 	private map: MLGLMap;
 	private onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void;
 	private panel: PanelHash | undefined;
+	private sources: SourcesHash | undefined;
+	private currentSources: string | null = null;
 	private currentStyleKey: StyleKey = DEFAULT_STYLE_KEY;
 	private currentConfigEncoded: string | null = null;
 	private currentPanelOpen = false;
@@ -52,11 +62,13 @@ export class HashManager {
 	constructor(
 		map: MLGLMap,
 		onStyleChange: (key: StyleKey, config: Record<string, unknown> | null) => void,
-		panel?: PanelHash
+		panel?: PanelHash,
+		sources?: SourcesHash
 	) {
 		this.map = map;
 		this.onStyleChange = onStyleChange;
 		this.panel = panel;
+		this.sources = sources;
 		this.boundOnMoveEnd = () => this.onMoveEnd();
 		this.boundOnHashChange = () => this.onHashChange();
 	}
@@ -66,10 +78,13 @@ export class HashManager {
 		config: Record<string, unknown> | null;
 		/** Whether the panel is open, when the hash says so. */
 		panelOpen: boolean | undefined;
+		/** The tile sources the hash names, if it is told about sources at all. */
+		sources: string | undefined;
 	} {
 		this.tryDisableMapHash();
 
-		const { mapView, styleKey, config, panelOpen } = this.parseHash();
+		const { mapView, styleKey, config, panelOpen, sources } = this.parseHash();
+		this.currentSources = sources;
 		this.currentStyleKey = styleKey;
 		this.currentConfigEncoded = config ? encodeConfig(config) : null;
 		this.currentPanelOpen = panelOpen ?? this.panel?.defaultOpen ?? false;
@@ -93,13 +108,20 @@ export class HashManager {
 			this.map.once('load', () => this.updateHash());
 		}
 
-		return { styleKey: this.currentStyleKey, config, panelOpen };
+		return { styleKey: this.currentStyleKey, config, panelOpen, sources: sources ?? undefined };
 	}
 
 	/** The panel was opened or closed: the hash carries it, unless it is the styler's own default. */
 	setPanelOpen(open: boolean): void {
 		if (open === this.currentPanelOpen) return;
 		this.currentPanelOpen = open;
+		this.updateHash();
+	}
+
+	/** Other tile sources are in use; `null` for the styler's own. */
+	setSources(sources: string | null): void {
+		if (!this.sources || sources === this.currentSources) return;
+		this.currentSources = sources;
 		this.updateHash();
 	}
 
@@ -130,10 +152,17 @@ export class HashManager {
 		styleKey: StyleKey;
 		config: Record<string, unknown> | null;
 		panelOpen: boolean | undefined;
+		sources: string | null;
 	} {
 		const hash = window.location.hash.replace(/^#/, '');
 		if (!hash)
-			return { mapView: null, styleKey: DEFAULT_STYLE_KEY, config: null, panelOpen: undefined };
+			return {
+				mapView: null,
+				styleKey: DEFAULT_STYLE_KEY,
+				config: null,
+				panelOpen: undefined,
+				sources: null,
+			};
 
 		const params = new Map<string, string>();
 		for (const segment of hash.split('&')) {
@@ -170,7 +199,10 @@ export class HashManager {
 		const panelStr = params.get('panel');
 		const panelOpen = panelStr === 'open' ? true : panelStr === 'closed' ? false : undefined;
 
-		return { mapView, styleKey, config, panelOpen };
+		// A page that does not offer other sources is not told about them by a link either.
+		const sources = this.sources ? (params.get('sources') ?? null) : null;
+
+		return { mapView, styleKey, config, panelOpen, sources };
 	}
 
 	private buildHash(): string {
@@ -195,6 +227,9 @@ export class HashManager {
 		const parts = [`map=${mapValue}`];
 		if (this.panel && this.currentPanelOpen !== this.panel.defaultOpen) {
 			parts.push(`panel=${this.currentPanelOpen ? 'open' : 'closed'}`);
+		}
+		if (this.currentSources) {
+			parts.push(`sources=${this.currentSources}`);
 		}
 		if (this.currentStyleKey !== DEFAULT_STYLE_KEY) {
 			parts.push(`style=${this.currentStyleKey}`);
@@ -228,7 +263,7 @@ export class HashManager {
 		if (this.updating) return;
 		this.updating = true;
 
-		const { mapView, styleKey, config, panelOpen } = this.parseHash();
+		const { mapView, styleKey, config, panelOpen, sources } = this.parseHash();
 
 		if (mapView) {
 			this.map.jumpTo({
@@ -237,6 +272,11 @@ export class HashManager {
 				bearing: mapView.bearing,
 				pitch: mapView.pitch,
 			});
+		}
+
+		if (this.sources && sources !== this.currentSources) {
+			this.currentSources = sources;
+			this.sources.onChange(sources);
 		}
 
 		if (this.panel) {

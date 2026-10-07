@@ -24,10 +24,18 @@ import {
 	themeSwatch,
 	styleCode,
 	styleForExport,
+	METADATA_SOURCES_KEY,
 	type StyleSources,
 } from './config';
+import {
+	openFreeMapSources,
+	protomapsSources,
+	versatilesSources,
+	MAPTERHORN_TILES,
+} from './sources';
 
 const ORIGIN = 'https://tiles.example.org';
+const CONFIG = versatilesSources(ORIGIN);
 
 function tileJSON(name: string, extra: Partial<TileJSONSpecification> = {}): TileJSONSpecification {
 	return {
@@ -303,7 +311,7 @@ describe('vector tiles of another schema', () => {
 		expect(codeTargets('gray', 'protomaps')).toEqual(['npm']);
 		expect(codeTargets('satellite', 'openmaptiles')).toEqual(['npm', 'browser']);
 		const sources: StyleSources = { vector: omtTileJSON, schema: 'openmaptiles' };
-		expect(styleCode('gray', state, satelliteDefaults(), ORIGIN, sources)).toContain(
+		expect(styleCode('gray', state, satelliteDefaults(), CONFIG, sources)).toContain(
 			"import { omt } from '@versatiles/style/omt';"
 		);
 	});
@@ -449,7 +457,7 @@ describe('styleCode', () => {
 	it('emits a runnable snippet with the origin as base', () => {
 		const state = vectorDefaults('toner');
 		state.colors.water = '#ff0000';
-		const code = styleCode('toner', state, satelliteDefaults(), ORIGIN, allSources);
+		const code = styleCode('toner', state, satelliteDefaults(), CONFIG, allSources);
 		expect(code).toContain("import { osm, inlineSources } from '@versatiles/style';");
 		expect(code).toContain('theme: "toner"');
 		expect(code).toContain('water: "#ff0000"');
@@ -459,7 +467,7 @@ describe('styleCode', () => {
 	});
 
 	it('carries the detected landcover flag', () => {
-		const code = styleCode('colorful', vectorDefaults('colorful'), satelliteDefaults(), ORIGIN, {
+		const code = styleCode('colorful', vectorDefaults('colorful'), satelliteDefaults(), CONFIG, {
 			vector: landcoverTileJSON,
 		});
 		expect(code).toContain('landcover: true');
@@ -468,9 +476,64 @@ describe('styleCode', () => {
 	it('emits a satellite snippet', () => {
 		const state = satelliteDefaults();
 		state.raster.opacity = 0.5;
-		const code = styleCode('satellite', vectorDefaults('colorful'), state, ORIGIN, allSources);
+		const code = styleCode('satellite', vectorDefaults('colorful'), state, CONFIG, allSources);
 		expect(code).toContain("import { satellite, inlineSources } from '@versatiles/style';");
 		expect(code).toContain('opacity: 0.5');
+	});
+});
+
+describe('styleCode for other sources', () => {
+	const state = vectorDefaults('gray');
+
+	it('names every source that is not the assets server\u2019s own', () => {
+		const config = { ...CONFIG, satellite: 'https://imagery.example.org/tiles.json' };
+		const code = styleCode('satellite', state, satelliteDefaults(), config, allSources);
+		expect(code).toContain(`base: "${ORIGIN}"`);
+		expect(code).toContain('satellite: "https://imagery.example.org/tiles.json"');
+		expect(code).not.toContain('osm:');
+		expect(code).not.toContain('elevation:');
+	});
+
+	it('names the elevation tiles added to OpenFreeMap', () => {
+		const code = styleCode(
+			'gray',
+			state,
+			satelliteDefaults(),
+			openFreeMapSources(MAPTERHORN_TILES),
+			{
+				vector: omtTileJSON,
+				elevation: elevationTileJSON,
+				schema: 'openmaptiles',
+			}
+		);
+		expect(code).toContain("import { omt } from '@versatiles/style/omt';");
+		expect(code).toContain(`elevation: "${MAPTERHORN_TILES}"`);
+	});
+
+	it('leaves a PMTiles archive for MapLibre to read, and says what that takes', () => {
+		const code = styleCode('gray', state, satelliteDefaults(), protomapsSources(), {
+			vector: omtTileJSON,
+			schema: 'protomaps',
+		});
+		expect(code).toContain("maplibregl.addProtocol('pmtiles', new Protocol().tile);");
+		expect(code).toContain("import { protomaps } from '@versatiles/style/protomaps';");
+		expect(code).toContain('const style = protomaps({');
+		expect(code).toContain(
+			'protomaps: "pmtiles://https://data.source.coop/protomaps/openstreetmap/v4.pmtiles"'
+		);
+		expect(code).not.toContain('inlineSources');
+		expect(code.trimEnd().endsWith('});')).toBe(true);
+	});
+});
+
+describe('styleForExport', () => {
+	it('records the sources next to the options', () => {
+		const style = buildVectorStyle('gray', vectorDefaults('gray'), ORIGIN, allSources);
+		const chosen = { provider: 'openfreemap' as const, config: openFreeMapSources() };
+		const exported = styleForExport(style, 'gray', {}, 'openmaptiles', chosen);
+		const metadata = exported.metadata as Record<string, unknown>;
+		expect(metadata[METADATA_SOURCES_KEY]).toEqual({ provider: 'openfreemap', ...chosen.config });
+		expect(readStyleOptions(exported)?.options).toEqual({ theme: 'gray' });
 	});
 });
 

@@ -31,6 +31,12 @@
 	let target = $state<'npm' | 'browser'>('npm');
 
 	// Stringifying a large style is not free, so it happens for the tab actually being looked at.
+	/** Whether the style reads a PMTiles archive, which a page has to prepare MapLibre for. */
+	let pmtiles = $derived(
+		Object.values(style?.sources ?? {}).some((source) =>
+			((source as { tiles?: string[] }).tiles ?? []).some((url) => url.startsWith('pmtiles://'))
+		)
+	);
 	let json = $derived(tab === 'json' && style ? styleJson(style, format) : '');
 	// The choice is the user's as long as the style has that form.
 	let usedTarget = $derived(targets.includes(target) ? target : targets[0]);
@@ -110,6 +116,12 @@
 					>What is in a style.json?</a
 				>
 			</p>
+			{#if pmtiles}
+				<p class="dialog-note">
+					This style reads its tiles from a <strong>PMTiles archive</strong>. The page that uses it
+					has to register the <code>pmtiles</code> protocol with MapLibre.
+				</p>
+			{/if}
 			{#if style}
 				<div class="dialog-choice">
 					<span class="dialog-choice-label">Format</span>

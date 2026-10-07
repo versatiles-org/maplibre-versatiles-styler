@@ -15,7 +15,9 @@ import type {
 	TextGroupMap,
 	TileJSONSpecification,
 } from '@versatiles/style';
-import type { VectorSchema } from './sources';
+import { isPMTilesUrl } from './pmtiles';
+import { serializeSources, versatilesSources } from './sources';
+import type { ChosenSources, SourceConfig, VectorSchema } from './sources';
 
 export const PALETTES: readonly Palette[] = osm.palettes;
 export const DEFAULT_STYLE_KEY: StyleKey = 'colorful';
@@ -427,6 +429,49 @@ export function codeTargets(
 }
 
 /**
+ * The `urls` a snippet names for these sources: the assets server as `base`, and every tile source that
+ * is not the one a VersaTiles server at `base` would have.
+ */
+function codeUrls(
+	styleKey: StyleKey,
+	config: SourceConfig,
+	schema: VectorSchema
+): Record<string, string> {
+	const defaults = versatilesSources(config.assets);
+	const urls: Record<string, string> = { base: config.assets };
+	const add = (key: string, name: 'vector' | 'satellite' | 'elevation') => {
+		const url = config[name];
+		if (url !== undefined && url !== defaults[name]) urls[key] = url;
+	};
+	if (styleKey === 'satellite') {
+		add('satellite', 'satellite');
+		if (overlaySupported(schema)) add('osm', 'vector');
+	} else {
+		add(VECTOR_BUILDERS[schema].name, 'vector');
+	}
+	add('elevation', 'elevation');
+	return urls;
+}
+
+/**
+ * A snippet as it works with a PMTiles archive: without `inlineSources`, which can only download a
+ * TileJSON, and with a note on the protocol the page has to register. MapLibre then reads the archive
+ * itself.
+ */
+function withoutInlining(code: string): string {
+	return [
+		'// The tiles come from a PMTiles archive, which MapLibre reads through a protocol:',
+		"//   import { Protocol } from 'pmtiles';",
+		"//   maplibregl.addProtocol('pmtiles', new Protocol().tile);",
+		code
+			.replace(/^import \{ inlineSources \} from '@versatiles\/style';\n/m, '')
+			.replace(/import \{ (\w+), inlineSources \} from/, 'import { $1 } from')
+			.replace(/await inlineSources\((\w+)\(/, '$1(')
+			.replace(/\}\)\);\s*$/, '});\n'),
+	].join('\n');
+}
+
+/**
  * A runnable `@versatiles/style` snippet for the current style.
  *
  * `target` picks the form: an ES module for a project with a bundler, or the `<script>` tag and
@@ -436,24 +481,28 @@ export function styleCode(
 	styleKey: StyleKey,
 	vectorState: VectorState,
 	satelliteState: SatelliteState,
-	assetsBase: string,
+	config: SourceConfig,
 	sources: StyleSources,
 	target: CodeTarget = 'npm'
 ): string {
+	const schema = sources.schema ?? 'shortbread';
 	// `toCode` must see URLs only, never the loaded TileJSONs: the snippet loads its own.
-	const urls = { base: assetsBase };
-	if (styleKey === 'satellite') {
-		return satellite.toCode(
-			{ ...satelliteOptions(satelliteState, assetsBase, sources), urls },
-			{ target }
-		);
-	}
-	const builder = VECTOR_BUILDERS[sources.schema ?? 'shortbread'];
-	return builder.style.toCode(
-		{ ...vectorOptions(styleKey, vectorState, assetsBase, sources), urls } as never,
-		{ target }
-	);
+	const urls = codeUrls(styleKey, config, schema);
+	const code =
+		styleKey === 'satellite'
+			? satellite.toCode(
+					{ ...satelliteOptions(satelliteState, config.assets, sources), urls },
+					{ target }
+				)
+			: VECTOR_BUILDERS[schema].style.toCode(
+					{ ...vectorOptions(styleKey, vectorState, config.assets, sources), urls } as never,
+					{ target }
+				);
+	return Object.values(urls).some(isPMTilesUrl) ? withoutInlining(code) : code;
 }
+
+/** The key under which an exported style records the tile sources it was built for. */
+export const METADATA_SOURCES_KEY = 'versatiles:sources';
 
 /**
  * The style as it is exported: the built style, plus a record in its `metadata` of the options it came
@@ -462,12 +511,15 @@ export function styleCode(
  * Without it, reading a style.json back means reconstructing the options from what the style draws —
  * what `@versatiles/style/migrate` does for foreign styles, and necessarily approximate. The options
  * written here are the minimal ones, the same few hundred bytes the URL hash carries.
+ *
+ * The options say nothing of where the tiles come from, so the sources are recorded next to them.
  */
 export function styleForExport(
 	style: StyleSpecification,
 	styleKey: StyleKey,
 	minimal: Record<string, unknown>,
-	schema: VectorSchema = 'shortbread'
+	schema: VectorSchema = 'shortbread',
+	sources?: ChosenSources
 ): StyleSpecification {
 	const options = styleKey === 'satellite' ? minimal : { ...minimal, theme: styleKey };
 	return {
@@ -475,7 +527,9 @@ export function styleForExport(
 		metadata: styleMetadata(
 			styleKey === 'satellite' ? 'satellite' : VECTOR_BUILDERS[schema].name,
 			options,
-			style.metadata
+			sources
+				? { ...(style.metadata as object), [METADATA_SOURCES_KEY]: serializeSources(sources) }
+				: style.metadata
 		),
 	} as StyleSpecification;
 }

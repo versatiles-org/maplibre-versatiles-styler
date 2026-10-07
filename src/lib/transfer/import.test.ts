@@ -88,6 +88,24 @@ describe('parseImport: a styler link', () => {
 	}, 30_000);
 });
 
+describe('parseImport: a styler link with tile sources', () => {
+	it('reads the sources the link names', async () => {
+		const sources = btoa(
+			JSON.stringify({ provider: 'versatiles', origin: 'https://a.example.org' })
+		);
+		const result = await imported(`https://example.org/#style=toner&sources=${sources}`);
+		expect(result.sources?.provider).toBe('versatiles');
+		expect(result.sources?.config.assets).toBe('https://a.example.org');
+	});
+
+	it('names none for a link without them, or with ones it cannot read', async () => {
+		expect((await imported('https://example.org/#style=toner')).sources).toBeUndefined();
+		expect(
+			(await imported('https://example.org/#style=toner&sources=%%%')).sources
+		).toBeUndefined();
+	});
+});
+
 describe('parseImport: an options object', () => {
 	it('takes a bare options object and splits the theme off', async () => {
 		const result = await imported('{"theme":"gray","text":{"scale":1.5}}');
@@ -153,6 +171,26 @@ describe('parseImport: a style.json this styler wrote', () => {
 		expect(result.config).toEqual({ text: { scale: 1.5 } });
 		expect(result.diagnostics).toEqual([]);
 		expect(result.provenance).toEqual({});
+	});
+
+	it('reads the sources an exported style was built for, of any builder', async () => {
+		const options = { theme: 'gray' as const };
+		const sources = {
+			provider: 'openfreemap',
+			vector: 'https://tiles.openfreemap.org/planet',
+			assets: 'https://tiles.versatiles.org',
+		};
+		const style = {
+			...osm(options),
+			metadata: styleMetadata('omt', options, { 'versatiles:sources': sources }),
+		};
+		const result = await imported(JSON.stringify(style));
+		expect(result.kind).toBe('recorded');
+		expect(result.styleKey).toBe('gray');
+		expect(result.sources).toEqual({
+			provider: 'openfreemap',
+			config: { vector: sources.vector, assets: sources.assets },
+		});
 	});
 
 	it('reads a recorded satellite style back as satellite', async () => {

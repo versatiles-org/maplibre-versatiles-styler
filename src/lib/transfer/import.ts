@@ -8,7 +8,13 @@ import {
 	type ProvenanceMap,
 } from '@versatiles/style/migrate';
 import { decodeConfig } from './hash';
-import { toStyleKey, DEFAULT_STYLE_KEY, type StyleKey } from '../style/config';
+import {
+	toStyleKey,
+	DEFAULT_STYLE_KEY,
+	METADATA_SOURCES_KEY,
+	type StyleKey,
+} from '../style/config';
+import { parseSources, type ChosenSources } from '../style/sources';
 
 /** What the pasted text turned out to be. Shown to the user, so they learn what the tool accepts. */
 export type ImportKind =
@@ -42,6 +48,11 @@ export interface ImportResult {
 	provenance: ProvenanceMap;
 	/** A tile server the imported style names, when it differs from the one in use. */
 	origin?: string;
+	/**
+	 * The tile sources the import was made for, where it says so: a styler link, or a style.json this
+	 * styler exported. They say more than `origin`, and go before it.
+	 */
+	sources?: ChosenSources;
 }
 
 /** The exact paths report nothing: there was nothing to reconstruct. */
@@ -166,6 +177,7 @@ function parseLink(text: string): ImportOutcome | undefined {
 
 	const encoded = params.get('config');
 	const config = encoded ? decodeConfig(encoded) : {};
+	const sources = parseSources(decodeConfig(params.get('sources') ?? ''));
 	if (encoded && config === null) {
 		return {
 			ok: false,
@@ -180,6 +192,7 @@ function parseLink(text: string): ImportOutcome | undefined {
 			styleKey: toStyleKey(params.get('style')) ?? DEFAULT_STYLE_KEY,
 			config: config ?? {},
 			...NOTHING_TO_REPORT,
+			...(sources ? { sources } : {}),
 		},
 	};
 }
@@ -252,8 +265,13 @@ function fromGuess(guess: OptionsGuess): ImportOutcome {
 async function parseStyle(style: StyleSpecification): Promise<ImportOutcome> {
 	// A style this styler exported says what it was built from, so there is nothing to work out.
 	const recorded = readStyleOptions(style);
-	if (recorded && (recorded.builder === 'osm' || recorded.builder === 'satellite')) {
+	// The options of `omt` and `protomaps` are those of `osm`: what differs is the tiles, which the
+	// sources recorded next to the options name.
+	if (recorded) {
 		const { styleKey, config, base } = splitOptions(recorded.options);
+		const sources = parseSources(
+			(style.metadata as Record<string, unknown> | undefined)?.[METADATA_SOURCES_KEY]
+		);
 		return {
 			ok: true,
 			result: {
@@ -262,6 +280,7 @@ async function parseStyle(style: StyleSpecification): Promise<ImportOutcome> {
 				config,
 				...NOTHING_TO_REPORT,
 				origin: base,
+				...(sources ? { sources } : {}),
 			},
 		};
 	}

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Map as MLGLMap } from 'maplibre-gl';
-import { HashManager } from './hash';
+import { decodeConfig, encodeConfig, HashManager } from './hash';
 
 function createMockMap(overrides: Partial<Record<string, any>> = {}) {
 	return {
@@ -581,6 +581,59 @@ describe('HashManager', () => {
 			vi.advanceTimersByTime(300); // let timer fire so throttleTimer is null
 
 			expect(() => hm.destroy()).not.toThrow();
+		});
+	});
+
+	describe('the tile sources', () => {
+		const SOURCES = encodeConfig({ provider: 'openfreemap', vector: 'https://tiles.example.org' });
+
+		it('carries what it is given through encoding', () => {
+			expect(decodeConfig(SOURCES)).toEqual({
+				provider: 'openfreemap',
+				vector: 'https://tiles.example.org',
+			});
+		});
+
+		it('reads the sources a link names, for a styler that offers other sources', () => {
+			window.location.hash = `#sources=${SOURCES}`;
+			const hm = new HashManager(createMockMap(), vi.fn(), undefined, { onChange: vi.fn() });
+			expect(hm.initialize().sources).toBe(SOURCES);
+		});
+
+		it('does not read them for a styler that offers none, and drops them from the hash', () => {
+			window.location.hash = `#sources=${SOURCES}`;
+			const hm = new HashManager(createMockMap(), vi.fn());
+			expect(hm.initialize().sources).toBeUndefined();
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe('#map=10/51.5/-0.12');
+			// Nor does it write any.
+			hm.setSources(SOURCES);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy).toHaveBeenCalledTimes(1);
+		});
+
+		it('writes other sources to the hash, and leaves the own ones out', () => {
+			const hm = new HashManager(createMockMap(), vi.fn(), undefined, { onChange: vi.fn() });
+			hm.initialize();
+			hm.setSources(SOURCES);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[0][2]).toBe(`#map=10/51.5/-0.12&sources=${SOURCES}`);
+			hm.setSources(null);
+			vi.advanceTimersByTime(300);
+			expect(replaceStateSpy.mock.calls[1][2]).toBe('#map=10/51.5/-0.12');
+		});
+
+		it('reports sources that change in the hash, back to the own ones too', () => {
+			const onChange = vi.fn();
+			const hm = new HashManager(createMockMap(), vi.fn(), undefined, { onChange });
+			hm.initialize();
+			window.location.hash = `#map=10/51.5/-0.12&sources=${SOURCES}`;
+			window.dispatchEvent(new HashChangeEvent('hashchange'));
+			expect(onChange).toHaveBeenLastCalledWith(SOURCES);
+			window.location.hash = '#map=10/51.5/-0.12';
+			window.dispatchEvent(new HashChangeEvent('hashchange'));
+			expect(onChange).toHaveBeenLastCalledWith(null);
+			expect(onChange).toHaveBeenCalledTimes(2);
 		});
 	});
 });
