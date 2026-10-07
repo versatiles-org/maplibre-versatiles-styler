@@ -73,6 +73,11 @@ function row(scope: Locator, label: string): Locator {
 	return scope.locator('.entry', { has: scope.page().locator(`label:text-is("${label}")`) });
 }
 
+/** The row of a source that is not typed, which says what was found of it. */
+function found(scope: Locator, name: string): Locator {
+	return scope.locator('.entry.source-found', { hasText: name });
+}
+
 async function open(page: Page, url = '/#panel=open') {
 	await mockProviders(page);
 	await page.goto(url);
@@ -223,5 +228,171 @@ test.describe('tiles of other providers', () => {
 		await archive.dispatchEvent('change');
 		// Without vector tiles and without imagery there is no style left to pick.
 		await expect(page.locator('.maplibregl-versatiles-styler button.theme-button')).toHaveCount(0);
+	});
+
+	test('going back to a provider restores what was set for it', async ({ page }) => {
+		await open(page);
+		let sources = await chooseProvider(page, 'openfreemap');
+		await row(sources, 'Elevation').locator('select').selectOption({ label: 'Mapterhorn' });
+		await chooseProvider(page, 'versatiles');
+		sources = await chooseProvider(page, 'openfreemap');
+		await expect(row(sources, 'Elevation').locator('select')).toHaveValue(
+			`${MAPTERHORN}/tilejson.json`
+		);
+	});
+});
+
+test.describe('the state of the tile sources', () => {
+	test('a VersaTiles server shows what it provides', async ({ page }) => {
+		await page.route('**/tiles/satellite/tiles.json', (route) => route.fulfill({ status: 404 }));
+		await open(page);
+		const sources = section(page, 'Tile sources');
+		await sources.locator('summary').click();
+		await expect(found(sources, 'Vector tiles')).toContainText(
+			/Shortbread · zoom 0–14 · \d+ languages/
+		);
+		await expect(found(sources, 'Elevation')).toContainText('zoom 0–12');
+		await expect(found(sources, 'Satellite')).toContainText('Not on this server');
+	});
+
+	test('OpenFreeMap shows the schema of its tiles', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'openfreemap');
+		await expect(found(sources, 'Vector tiles')).toContainText('OpenMapTiles · zoom 0–14');
+	});
+
+	test('an archive that cannot be read says so', async ({ page }) => {
+		await open(page);
+		await page.route('https://archives.example.org/missing.pmtiles', (route) =>
+			route.fulfill({ status: 404 })
+		);
+		const sources = await chooseProvider(page, 'protomaps');
+		const archive = row(sources, 'Archive');
+		await expect(archive).toContainText('Protomaps · zoom 0–15');
+		await archive.locator('input').fill('https://archives.example.org/missing.pmtiles');
+		await archive.locator('input').dispatchEvent('change');
+		await expect(archive.locator('.source-status.error')).toHaveText(
+			'No vector tiles could be loaded from this address.'
+		);
+	});
+});
+
+test.describe('custom tile sources', () => {
+	const CUSTOM = 'https://custom.example.org';
+
+	/** Types an address into a row of the custom sources. */
+	async function setAddress(sources: Locator, label: string, address: string) {
+		const input = row(sources, label).locator('input');
+		await input.fill(address);
+		await input.dispatchEvent('change');
+	}
+
+	async function mockTileJSON(page: Page, name: string, extra: object = {}) {
+		await page.route(`${CUSTOM}/${name}.json`, (route) =>
+			route.fulfill({
+				json: {
+					tilejson: '3.0.0',
+					tiles: [`${CUSTOM}/${name}/{z}/{x}/{y}`],
+					minzoom: 0,
+					maxzoom: 10,
+					...extra,
+				},
+			})
+		);
+	}
+
+	test.beforeEach(async ({ page }) => {
+		await page.route(`${CUSTOM}/**`, (route) => route.fulfill({ status: 204 }));
+		await mockTileJSON(page, 'omt', { vector_layers: vectorLayers(OMT_SCHEMA) });
+		await mockTileJSON(page, 'parcels', {
+			vector_layers: [{ id: 'parcels', fields: { owner: 'String' } }],
+		});
+		await mockTileJSON(page, 'imagery');
+		await mockArchive(
+			page,
+			`${CUSTOM}/extract.pmtiles`,
+			pmtilesArchive({ vector_layers: vectorLayers(PROTOMAPS_SCHEMA) }, { maxZoom: 9 })
+		);
+	});
+
+	test('start as the sources in use, and take any address', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'custom');
+		await expect(sources.locator('summary')).toContainText('Custom');
+		await expect(row(sources, 'Vector tiles').locator('input')).toHaveValue(
+			'https://tiles.versatiles.org/tiles/osm/tiles.json'
+		);
+		await expect(row(sources, 'Vector tiles')).toContainText('Shortbread');
+
+		await setAddress(sources, 'Vector tiles', `${CUSTOM}/omt.json`);
+		await expect(row(sources, 'Vector tiles')).toContainText('OpenMapTiles · zoom 0–10');
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		// The imagery of the server is still there, and with it the satellite style.
+		const picker = await openThemePicker(page);
+		await expect(picker.locator('input[value="satellite"]')).toHaveCount(1);
+	});
+
+	test('a source is removed by emptying its address', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'custom');
+		await setAddress(sources, 'Satellite', '');
+		await expect(row(sources, 'Satellite').locator('.source-status')).toHaveCount(0);
+		const picker = await openThemePicker(page);
+		await expect(picker.locator('input[value="colorful"]')).toHaveCount(1);
+		await expect(picker.locator('input[value="satellite"]')).toHaveCount(0);
+	});
+
+	test('a PMTiles archive is told by its name', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'custom');
+		await setAddress(sources, 'Vector tiles', `${CUSTOM}/extract.pmtiles`);
+		await expect(row(sources, 'Vector tiles')).toContainText('Protomaps · zoom 0–9');
+		await expect.poll(() => sourceNames(page)).toEqual(['protomaps']);
+		const style = await getMapStyle(page);
+		expect(style.sources.protomaps).toMatchObject({
+			tiles: [`pmtiles://${CUSTOM}/extract.pmtiles/{z}/{x}/{y}.mvt`],
+		});
+	});
+
+	test('tiles of the wrong kind are refused', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'custom');
+		await setAddress(sources, 'Vector tiles', `${CUSTOM}/imagery.json`);
+		await expect(row(sources, 'Vector tiles').locator('.source-status.error')).toHaveText(
+			'No vector tiles could be loaded from this address.'
+		);
+		await setAddress(sources, 'Satellite', `${CUSTOM}/omt.json`);
+		await expect(row(sources, 'Satellite').locator('.source-status.error')).toHaveText(
+			'No image tiles could be loaded from this address.'
+		);
+	});
+
+	test('the schema of tiles that do not tell it can be chosen', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'custom');
+		await expect(row(sources, 'Schema')).toHaveCount(0);
+
+		await setAddress(sources, 'Vector tiles', `${CUSTOM}/parcels.json`);
+		await expect(row(sources, 'Vector tiles')).toContainText('Unknown schema');
+		// Taken for Shortbread until someone says otherwise.
+		await expect.poll(() => sourceNames(page)).toContain('versatiles-shortbread');
+
+		await row(sources, 'Schema').locator('select').selectOption('protomaps');
+		await expect(row(sources, 'Vector tiles')).toContainText('Protomaps · zoom 0–10');
+		await expect.poll(() => sourceNames(page)).toEqual(['protomaps']);
+
+		// Other tiles have a schema of their own.
+		await setAddress(sources, 'Vector tiles', `${CUSTOM}/omt.json`);
+		await expect.poll(() => sourceNames(page)).toEqual(['openmaptiles']);
+		await expect(row(sources, 'Schema')).toHaveCount(0);
+	});
+
+	test('fonts and icons come from the server named for them', async ({ page }) => {
+		await open(page);
+		const sources = await chooseProvider(page, 'custom');
+		await setAddress(sources, 'Fonts & icons', CUSTOM);
+		await expect
+			.poll(async () => (await getMapStyle(page)).glyphs)
+			.toBe(`${CUSTOM}/assets/glyphs/{fontstack}/{range}.pbf`);
 	});
 });

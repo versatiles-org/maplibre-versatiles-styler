@@ -622,6 +622,19 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 				color: var(--warn);
 			}
 
+			// What loading a tile source gave: below the address it was typed as, or beside its name.
+			.source-status {
+				min-width: 0;
+				margin: 0;
+				font-size: 12px;
+				line-height: 1.35;
+				color: var(--muted);
+
+				&.error {
+					color: var(--warn);
+				}
+			}
+
 			.input {
 				display: flex;
 				align-items: center;

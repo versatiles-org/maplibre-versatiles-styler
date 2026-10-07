@@ -8,6 +8,9 @@ import {
 	loadSources,
 	openFreeMapSources,
 	providerOf,
+	protomapsSources,
+	sourceStatus,
+	sourceUrl,
 	vectorSchema,
 	versatilesSources,
 	MAPTERHORN_TILES,
@@ -48,7 +51,11 @@ describe('loadSources', () => {
 
 	it('resolves relative tile URLs and reports missing sources as null', async () => {
 		mockServer({
-			'/tiles/osm/tiles.json': { tilejson: '3.0.0', tiles: ['/tiles/osm/{z}/{x}/{y}'] },
+			'/tiles/osm/tiles.json': {
+				tilejson: '3.0.0',
+				tiles: ['/tiles/osm/{z}/{x}/{y}'],
+				vector_layers: [],
+			},
 		});
 		const sources = loadSources(versatilesSources('https://missing.example.org'));
 		expect((await sources.vector)?.tiles).toEqual([
@@ -65,6 +72,23 @@ describe('loadSources', () => {
 		expect(await sources.satellite).toBeNull();
 		expect(await sources.elevation).toBeNull();
 		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it('counts tiles of the wrong kind as a missing source', async () => {
+		const raster = { tilejson: '3.0.0', tiles: ['/tiles/{z}/{x}/{y}'] };
+		mockServer({
+			'/tiles/osm/tiles.json': raster,
+			'/tiles/satellite/tiles.json': { ...raster, vector_layers: [] },
+			'/tiles/elevation/tiles.json': raster,
+		});
+		const sources = loadSources(versatilesSources('https://kinds.example.org'));
+		expect(await sources.vector).toBeNull();
+		expect(await sources.satellite).toBeNull();
+		expect(await sources.elevation).not.toBeNull();
+	});
+
+	it('has no tiles for an origin that is no URL', () => {
+		expect(versatilesSources('not a url')).toEqual({ assets: 'not a url' });
 	});
 
 	it('treats a network failure as a missing source', async () => {
@@ -131,6 +155,88 @@ describe('OpenFreeMap', () => {
 		// A `maxzoom` a TileJSON does name is kept, and so is one of any other server.
 		const other = loadSources(openFreeMapSources('https://dem.example.org/tiles.json'));
 		expect((await other.elevation)?.maxzoom).toBe(9);
+	});
+});
+
+describe('providerOf', () => {
+	it('recognises the sources of each provider', () => {
+		expect(providerOf(versatilesSources('https://tiles.example.org'))).toBe('versatiles');
+		expect(providerOf(openFreeMapSources())).toBe('openfreemap');
+		expect(providerOf(protomapsSources('https://example.org/extract.pmtiles'))).toBe('protomaps');
+		expect(providerOf({ ...protomapsSources(), elevation: MAPTERHORN_TILES })).toBe('protomaps');
+	});
+
+	it('takes everything else for custom sources', () => {
+		const versatiles = versatilesSources('https://tiles.example.org');
+		expect(providerOf({ ...versatiles, satellite: 'https://other.example.org/tiles.json' })).toBe(
+			'custom'
+		);
+		expect(providerOf({ ...openFreeMapSources(), assets: 'https://tiles.example.org' })).toBe(
+			'custom'
+		);
+		expect(providerOf({ ...openFreeMapSources(), schema: 'shortbread' })).toBe('custom');
+		expect(providerOf({ assets: VERSATILES_ASSETS })).toBe('custom');
+	});
+});
+
+describe('sourceUrl', () => {
+	it('takes an address as typed, and tells a PMTiles archive by its name', () => {
+		expect(sourceUrl('  https://example.org/tiles.json ')).toBe('https://example.org/tiles.json');
+		expect(sourceUrl('https://example.org/a.pmtiles')).toBe(
+			'pmtiles://https://example.org/a.pmtiles'
+		);
+		expect(sourceUrl('https://example.org/a.PMTiles?v=2')).toBe(
+			'pmtiles://https://example.org/a.PMTiles?v=2'
+		);
+		expect(sourceUrl('pmtiles://https://example.org/a.pmtiles')).toBe(
+			'pmtiles://https://example.org/a.pmtiles'
+		);
+		expect(sourceUrl('   ')).toBeUndefined();
+	});
+});
+
+describe('sourceStatus', () => {
+	const url = 'https://tiles.example.org/tiles.json';
+	const raster = {
+		tilejson: '3.0.0',
+		tiles: [url],
+		minzoom: 0,
+		maxzoom: 12,
+	} as TileJSONSpecification;
+
+	it('tells a source that is not set, loading or failed', () => {
+		expect(sourceStatus('satellite', undefined, undefined)).toEqual({
+			state: 'none',
+			text: 'None',
+		});
+		expect(sourceStatus('satellite', url, undefined).state).toBe('loading');
+		expect(sourceStatus('satellite', url, null)).toEqual({
+			state: 'error',
+			text: 'No image tiles could be loaded from this address.',
+		});
+		expect(sourceStatus('vector', url, null).text).toContain('vector tiles');
+	});
+
+	it('describes loaded tiles by their zoom range', () => {
+		expect(sourceStatus('elevation', url, raster)).toEqual({ state: 'ok', text: 'zoom 0–12' });
+		const { minzoom: _minzoom, ...open } = raster;
+		expect(sourceStatus('elevation', url, open as TileJSONSpecification).text).toBe('zoom 0–12');
+		const bare = { tilejson: '3.0.0', tiles: [url] } as TileJSONSpecification;
+		expect(sourceStatus('elevation', url, bare).text).toBe('Available');
+	});
+
+	it('describes vector tiles by their schema and languages too', () => {
+		const vector = {
+			...raster,
+			maxzoom: 14,
+			vector_layers: [{ id: 'parcels', fields: { name_de: 'String', name_en: 'String' } }],
+		} as TileJSONSpecification;
+		expect(sourceStatus('vector', url, vector).text).toBe(
+			'Unknown schema · zoom 0–14 · 2 languages'
+		);
+		expect(sourceStatus('vector', url, vector, 'openmaptiles').text).toBe(
+			'OpenMapTiles · zoom 0–14 · 2 languages'
+		);
 	});
 });
 

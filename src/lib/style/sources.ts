@@ -1,4 +1,4 @@
-import { fetchFontFaces, fetchTileJSON, guessSchema } from '@versatiles/style';
+import { fetchFontFaces, fetchTileJSON, guessSchema, osm } from '@versatiles/style';
 import type { FontFaceInfo, TileJSONSpecification } from '@versatiles/style';
 import { isPMTilesUrl, loadArchiveTileJSON, pmtilesUrl } from './pmtiles';
 
@@ -6,11 +6,13 @@ export type SourceName = 'vector' | 'satellite' | 'elevation';
 
 /**
  * Where a style gets its tiles and assets from. The tile sources are TileJSON URLs, or the `pmtiles://`
- * URLs of PMTiles archives; one that is left out is not available. `assets` is the base URL of the server the glyphs, the sprites and the font list
- * come from, which need not be the one serving the tiles.
+ * URLs of PMTiles archives; one that is left out is not available. `assets` is the base URL of the server
+ * the glyphs, the sprites and the font list come from, which need not be the one serving the tiles.
  */
 export interface SourceConfig {
 	vector?: string;
+	/** The schema of the vector tiles, for tiles whose layers do not tell it. */
+	schema?: VectorSchema;
 	satellite?: string;
 	elevation?: string;
 	assets: string;
@@ -48,7 +50,7 @@ export const MAPTERHORN_TILES = 'https://tiles.mapterhorn.com/tilejson.json';
 export const PROTOMAPS_ARCHIVE = 'https://data.source.coop/protomaps/openstreetmap/v4.pmtiles';
 
 /** Whose tiles a style is built from. */
-export type Provider = 'versatiles' | 'openfreemap' | 'protomaps';
+export type Provider = 'versatiles' | 'openfreemap' | 'protomaps' | 'custom';
 
 /**
  * The sources of OpenFreeMap: vector tiles in the OpenMapTiles schema and nothing else, so elevation
@@ -70,11 +72,32 @@ export function protomapsSources(archive: string = PROTOMAPS_ARCHIVE): SourceCon
 	return { vector: pmtilesUrl(archive), assets: VERSATILES_ASSETS };
 }
 
-/** The provider of a source config, told by its vector tiles. */
+/**
+ * The provider whose sources a config is: a VersaTiles server, or the vector tiles of OpenFreeMap or of a
+ * Protomaps archive with nothing but elevation added. Anything else is a custom set of sources.
+ */
 export function providerOf(config: SourceConfig): Provider {
-	if (config.vector === OPENFREEMAP_TILES) return 'openfreemap';
-	if (config.vector !== undefined && isPMTilesUrl(config.vector)) return 'protomaps';
-	return 'versatiles';
+	if (same(config, versatilesSources(config.assets))) return 'versatiles';
+	const { vector, elevation: _elevation, ...rest } = config;
+	if (vector !== undefined && same(rest, { assets: VERSATILES_ASSETS })) {
+		if (vector === OPENFREEMAP_TILES) return 'openfreemap';
+		if (isPMTilesUrl(vector)) return 'protomaps';
+	}
+	return 'custom';
+}
+
+function same(a: unknown, b: unknown): boolean {
+	return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
+ * A source address as someone types it: the address of a TileJSON, or of a PMTiles archive, which is
+ * told by its file name and gets the `pmtiles://` scheme. Empty text is no source.
+ */
+export function sourceUrl(text: string): string | undefined {
+	const url = text.trim();
+	if (url === '') return undefined;
+	return /\.pmtiles([?#]|$)/i.test(url) ? pmtilesUrl(url) : url;
 }
 
 /**
@@ -87,9 +110,17 @@ const TILEJSON_DEFAULTS: Record<string, Partial<TileJSONSpecification>> = {
 	[MAPTERHORN_TILES]: { maxzoom: 12 },
 };
 
-/** The sources of a VersaTiles server: its tilesets `osm`, `satellite` and `elevation`, and its assets. */
+/**
+ * The sources of a VersaTiles server: its tilesets `osm`, `satellite` and `elevation`, and its assets.
+ * An origin that is no URL has no tiles.
+ */
 export function versatilesSources(origin: string): SourceConfig {
 	const tileJSON = (name: string) => new URL(`/tiles/${name}/tiles.json`, origin).href;
+	try {
+		new URL(origin);
+	} catch {
+		return { assets: origin };
+	}
 	return {
 		vector: tileJSON('osm'),
 		satellite: tileJSON('satellite'),
@@ -103,7 +134,8 @@ export function versatilesSources(origin: string): SourceConfig {
  *
  * The TileJSONs are fetched in parallel right away: they decide which styles are available, and the
  * first style can only be built once its TileJSON is in (VersaTiles servers publish relative tile URLs,
- * which MapLibre cannot resolve). A source that fails to load counts as unavailable.
+ * which MapLibre cannot resolve). A source that fails to load counts as unavailable, and so does one
+ * that holds the wrong kind of tiles: imagery where vector tiles belong, or the other way round.
  * Repeated requests for the same URL are served from `@versatiles/style`'s response cache.
  */
 export function loadSources(config: SourceConfig): LoadedSources {
@@ -111,7 +143,11 @@ export function loadSources(config: SourceConfig): LoadedSources {
 		const url = config[name];
 		if (url === undefined) return Promise.resolve(null);
 		return (isPMTilesUrl(url) ? loadArchiveTileJSON(url) : fetchTileJSON(url))
-			.then((tileJSON) => ({ ...TILEJSON_DEFAULTS[url], ...tileJSON }) as TileJSONSpecification)
+			.then((tileJSON) =>
+				'vector_layers' in tileJSON === (name === 'vector')
+					? ({ ...TILEJSON_DEFAULTS[url], ...tileJSON } as TileJSONSpecification)
+					: null
+			)
 			.catch(() => null);
 	};
 
@@ -124,4 +160,54 @@ export function loadSources(config: SourceConfig): LoadedSources {
 		elevation: load('elevation'),
 		fontFaces: () => (fontFaces ??= fetchFontFaces({ base: config.assets }).catch(() => undefined)),
 	};
+}
+
+/** What a row of the tile sources says about its source. */
+export interface SourceStatus {
+	state: 'none' | 'loading' | 'ok' | 'error';
+	text: string;
+}
+
+const SCHEMA_LABELS: Record<VectorSchema, string> = {
+	shortbread: 'Shortbread',
+	openmaptiles: 'OpenMapTiles',
+	protomaps: 'Protomaps',
+};
+
+/** The schemas as options of a select. */
+export const SCHEMA_OPTIONS = Object.entries(SCHEMA_LABELS).map(([value, label]) => ({
+	value,
+	label,
+}));
+
+/**
+ * The state of a source, from its address and what loading it gave: `undefined` while it loads, `null`
+ * when it failed. A loaded source is described by its zoom range, and vector tiles by their schema
+ * and languages as well.
+ */
+export function sourceStatus(
+	name: SourceName,
+	url: string | undefined,
+	tileJSON: LoadedTileJSON | undefined,
+	schema?: VectorSchema
+): SourceStatus {
+	if (url === undefined) return { state: 'none', text: 'None' };
+	if (tileJSON === undefined) return { state: 'loading', text: 'Loading…' };
+	if (tileJSON === null) {
+		const kind = name === 'vector' ? 'vector' : name === 'satellite' ? 'image' : 'elevation';
+		return { state: 'error', text: `No ${kind} tiles could be loaded from this address.` };
+	}
+	const parts: string[] = [];
+	if (name === 'vector') {
+		const known = schema ?? vectorSchema(tileJSON);
+		parts.push(known ? SCHEMA_LABELS[known] : 'Unknown schema');
+	}
+	if (tileJSON.maxzoom !== undefined) {
+		parts.push(`zoom ${tileJSON.minzoom ?? 0}–${tileJSON.maxzoom}`);
+	}
+	if (name === 'vector') {
+		const languages = osm.languages(tileJSON).length;
+		if (languages > 0) parts.push(`${languages} language${languages === 1 ? '' : 's'}`);
+	}
+	return { state: 'ok', text: parts.join(' · ') || 'Available' };
 }

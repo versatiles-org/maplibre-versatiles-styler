@@ -42,8 +42,6 @@
 		openFreeMapSources,
 		protomapsSources,
 		providerOf,
-		MAPTERHORN_TILES,
-		PROTOMAPS_ARCHIVE,
 		vectorSchema,
 		versatilesSources,
 		type LoadedTileJSON,
@@ -51,7 +49,7 @@
 		type SourceConfig,
 		type VectorSchema,
 	} from '../style/sources';
-	import { archiveUrl, pmtilesUrl, registerPMTiles } from '../style/pmtiles';
+	import { registerPMTiles } from '../style/pmtiles';
 	import { languageOptions } from '../options/languages';
 	import { onDestroy, untrack } from 'svelte';
 	import { HashManager } from '../transfer/hash';
@@ -64,12 +62,11 @@
 	import SatelliteStylePanel from './SatelliteStylePanel.svelte';
 	import ThemeSelect from './ThemeSelect.svelte';
 	import ExportDialog from './ExportDialog.svelte';
-	import InputSelect from './inputs/InputSelect.svelte';
+	import SourceOptions from './sections/SourceOptions.svelte';
 	import InspectPopup from './InspectPopup.svelte';
 	import ImportDialog from './ImportDialog.svelte';
 
 	let { map, config }: { map: MLGLMap; config: VersaTilesStylerConfig } = $props();
-	const uid = $props.id();
 	// The font pickers of this styler share their script filter and copied font, and read the map's labels.
 	const fontPicker = provideFontPickerState();
 	fontPicker.labelTexts = (layerIds) => labelTexts(map, layerIds);
@@ -79,12 +76,31 @@
 	let sourceConfig = $state.raw<SourceConfig>(
 		untrack(() => versatilesSources(config.origin ?? window.location.origin))
 	);
-	let provider = $derived(providerOf(sourceConfig));
-	// The server to come back to from another provider.
-	let versatilesOrigin = $state(untrack(() => sourceConfig.assets));
+	// Which provider's sources these are. It is a choice, not a reading of the config: a custom set of
+	// sources may be the same as a provider's.
+	let provider = $state<Provider>(untrack(() => providerOf(sourceConfig)));
+	/** The sources each provider was left with, to come back to. */
+	const leftSources: Partial<Record<Provider, SourceConfig>> = {};
+
+	// A PMTiles archive is read through a protocol, which only the page can register with MapLibre.
+	const pmtiles = untrack(() => config.addProtocol);
+	if (pmtiles) registerPMTiles(pmtiles);
+
+	const PROVIDERS: { value: Provider; label: string }[] = untrack(() =>
+		config.externalSources
+			? [
+					{ value: 'versatiles', label: 'VersaTiles' },
+					{ value: 'openfreemap', label: 'OpenFreeMap' },
+					...(pmtiles ? [{ value: 'protomaps' as const, label: 'Protomaps' }] : []),
+					{ value: 'custom', label: 'Custom' },
+				]
+			: [{ value: 'versatiles', label: 'VersaTiles' }]
+	);
+
 	let sourcesLabel = $derived.by(() => {
-		if (provider === 'openfreemap') return 'OpenFreeMap';
-		if (provider === 'protomaps') return 'Protomaps';
+		if (provider !== 'versatiles') {
+			return PROVIDERS.find((option) => option.value === provider)?.label ?? provider;
+		}
 		try {
 			return new URL(sourceConfig.assets).host;
 		} catch {
@@ -92,36 +108,18 @@
 		}
 	});
 
-	// A PMTiles archive is read through a protocol, which only the page can register with MapLibre.
-	const pmtiles = untrack(() => config.addProtocol);
-	if (pmtiles) registerPMTiles(pmtiles);
-	// The archive to come back to from another provider.
-	let protomapsArchive = $state(PROTOMAPS_ARCHIVE);
-
-	const PROVIDERS: { value: Provider; label: string }[] = [
-		{ value: 'versatiles', label: 'VersaTiles' },
-		{ value: 'openfreemap', label: 'OpenFreeMap' },
-		...(pmtiles ? [{ value: 'protomaps' as const, label: 'Protomaps' }] : []),
-	];
-	const ELEVATION_SOURCES = [
-		{ value: '', label: 'None' },
-		{ value: MAPTERHORN_TILES, label: 'Mapterhorn' },
-	];
+	/** The sources a provider starts with. Custom sources start as the ones in use, to be changed. */
+	function providerSources(next: Provider): SourceConfig {
+		if (next === 'openfreemap') return openFreeMapSources();
+		if (next === 'protomaps') return protomapsSources();
+		if (next === 'custom') return sourceConfig;
+		return versatilesSources(config.origin ?? window.location.origin);
+	}
 
 	function setProvider(next: Provider) {
-		if (next === 'openfreemap') setSourceConfig(openFreeMapSources());
-		else if (next === 'protomaps') setSourceConfig(protomapsSources(protomapsArchive));
-		else setSourceConfig(versatilesSources(versatilesOrigin));
-	}
-
-	function setElevation(url: string) {
-		const { elevation: _elevation, ...rest } = sourceConfig;
-		setSourceConfig(url ? { ...rest, elevation: url } : rest);
-	}
-
-	function handleArchiveChange(e: Event) {
-		protomapsArchive = archiveUrl((e.target as HTMLInputElement).value.trim());
-		setSourceConfig({ ...sourceConfig, vector: pmtilesUrl(protomapsArchive) });
+		leftSources[provider] = sourceConfig;
+		provider = next;
+		setSourceConfig(leftSources[next] ?? providerSources(next));
 	}
 	let paneOpen = $state(untrack(() => config.open ?? false));
 
@@ -152,7 +150,9 @@
 	// The schema of the vector tiles decides which builder draws them. Tiles of no schema the styler
 	// knows are taken for Shortbread, as everything a VersaTiles server calls `osm` used to be.
 	let schema = $derived<VectorSchema>(
-		(vectorTileJSON ? vectorSchema(vectorTileJSON) : undefined) ?? 'shortbread'
+		sourceConfig.schema ??
+			(vectorTileJSON ? vectorSchema(vectorTileJSON) : undefined) ??
+			'shortbread'
 	);
 	let overlayAvailable = $derived(vectorTileJSON !== null && overlaySupported(schema));
 	let hasElevation = $derived(Boolean(elevationTileJSON));
@@ -434,7 +434,7 @@
 	function applyImport(result: ImportResult, newOrigin?: string) {
 		importOpen = false;
 		if (newOrigin) {
-			versatilesOrigin = newOrigin;
+			provider = 'versatiles';
 			setSourceConfig(versatilesSources(newOrigin));
 		}
 		setBaseStyle(result.styleKey, result.config);
@@ -457,11 +457,6 @@
 		sourceConfig = next;
 		// Another server has other fonts.
 		fontPicker.clearScripts();
-	}
-
-	function handleOriginChange(e: Event) {
-		versatilesOrigin = (e.target as HTMLInputElement).value;
-		setSourceConfig(versatilesSources(versatilesOrigin));
 	}
 
 	// Initialize hash management and style
@@ -575,53 +570,24 @@
 			title={config.externalSources ? 'Tile sources' : 'Tile server'}
 			value={sourcesLabel}
 			description={provider === 'versatiles'
-				? 'The server the tiles, fonts and sprites come from.'
-				: 'Where the tiles come from. Fonts and sprites are those of tiles.versatiles.org.'}
+				? 'The server the tiles, fonts and icons come from.'
+				: provider === 'custom'
+					? 'Tiles from any server, by the address of a TileJSON or a PMTiles archive.'
+					: 'Where the tiles come from. Fonts and icons are those of tiles.versatiles.org.'}
 		>
-			{#if config.externalSources}
-				<InputSelect
-					label="Provider"
-					bind:value={() => provider, (value) => setProvider(value as Provider)}
-					defaultValue={undefined}
-					modified={false}
-					options={PROVIDERS}
-				/>
-			{/if}
-			{#if provider === 'versatiles'}
-				<div class="entry text-container">
-					<label for="{uid}-origin">Origin</label>
-					<div class="input">
-						<input
-							id="{uid}-origin"
-							type="text"
-							value={sourceConfig.assets}
-							onchange={handleOriginChange}
-						/>
-					</div>
-				</div>
-			{:else}
-				{#if provider === 'protomaps'}
-					<div class="entry text-container">
-						<label for="{uid}-archive">Archive</label>
-						<div class="input">
-							<input
-								id="{uid}-archive"
-								type="text"
-								value={archiveUrl(sourceConfig.vector ?? '')}
-								onchange={handleArchiveChange}
-							/>
-						</div>
-					</div>
-				{/if}
-				<InputSelect
-					label="Elevation"
-					hint="These tiles come without elevation data. Mapterhorn provides it for terrain and hillshade."
-					bind:value={() => sourceConfig.elevation ?? '', (value) => setElevation(value ?? '')}
-					defaultValue={undefined}
-					modified={false}
-					options={ELEVATION_SOURCES}
-				/>
-			{/if}
+			<SourceOptions
+				{provider}
+				providers={PROVIDERS}
+				config={sourceConfig}
+				tileJSONs={{
+					vector: vectorTileJSON,
+					satellite: satelliteTileJSON,
+					elevation: elevationTileJSON,
+				}}
+				pmtiles={pmtiles !== undefined}
+				onprovider={setProvider}
+				onconfig={setSourceConfig}
+			/>
 		</SidebarSection>
 		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
