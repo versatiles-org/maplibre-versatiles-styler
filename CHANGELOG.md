@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-07
+
+### Features
+
+- build the vector style with the builder of the tiles' schema ([4d6bf0b](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/4d6bf0b45eaa51c7d910287418b1315355792a1d))
+- offer OpenFreeMap tiles and Mapterhorn elevation behind `externalSources` ([034114b](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/034114bc35cfc14516e3ddb2c085973e241e59c2))
+- offer Protomaps tiles from a PMTiles archive, registered through `addProtocol` ([61811b0](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/61811b08dd7ebb827a74c2738ffc757480cc42ea))
+- show the state of every tile source, and offer custom sources ([429ae82](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/429ae826caeda1941a2ea08a430f0e30827efc1b))
+- keep the tile sources in share links, exported styles and code snippets ([fd17899](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/fd17899d2c6bcee474c14497a9b19d52482d2dd5))
+- let a page name the tilesets its server has under other names ([d2d68e2](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/d2d68e2f0a7175e1130f1646fef89cbbb0bbf2a7))
+
+### Code Refactoring
+
+- load tiles and assets from a source config instead of one origin ([0dc6647](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/0dc664766f04df1a2e92099003f4a3e60dd40995))
+
+### Chores
+
+- use the inlineSources fix of @versatiles/style, and refuse to release with a linked dependency ([e8e7712](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/e8e7712d0dcf6b65092f98c48580535f3a11fb76))
+- update @versatiles/style to version 6.3.1 ([9333742](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/9333742d62d24e2c8631cf74017cda9cff2dc768))
+- add the repository URL to package.json ([0d6f31b](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/0d6f31b09ff6c248eb2ab375f7e2ab0031990e2c))
+
 ## [2.2.0] - 2026-10-07
 
 ### Features
