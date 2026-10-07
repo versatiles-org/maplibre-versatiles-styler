@@ -35,6 +35,28 @@
 		{ value: 'mercator', label: 'Mercator' },
 		{ value: 'vertical-perspective', label: 'Vertical perspective' },
 	];
+	const BLENDS: { key: Blend; label: string; hint: string }[] = [
+		{
+			key: 'skyHorizonBlend',
+			label: 'Sky/Horizon Blend',
+			hint: 'How far the horizon color reaches up into the sky: 0% is a sharp edge at the horizon, 100% blends up to the middle of the sky.',
+		},
+		{
+			key: 'horizonFogBlend',
+			label: 'Horizon/Fog Blend',
+			hint: 'How much the fog color mixes into the horizon: 0% leaves the horizon color alone, 100% blends the two up to the middle of the sky.',
+		},
+		{
+			key: 'fogGroundBlend',
+			label: 'Fog/Ground Blend',
+			hint: 'Where the fog over the terrain begins: 0% at the center of the map, 100% only at the horizon. Shows with Terrain only.',
+		},
+		{
+			key: 'atmosphereBlend',
+			label: 'Atmosphere',
+			hint: 'The glow of the atmosphere around the globe: 0% hides it, 100% shows it in full.',
+		},
+	];
 	const ANCHORS = [
 		{ value: 'map', label: 'Map' },
 		{ value: 'viewport', label: 'Screen' },
@@ -85,14 +107,15 @@
 		/>
 		<InputColor
 			label="Fog Color"
+			hint="The haze that fades distant terrain into the horizon. Shows with Terrain only."
 			{disabled}
 			bind:value={sky.fogColor}
 			defaultValue={skyDefaults.fogColor}
 		/>
-		{#each [['skyHorizonBlend', 'Sky/Horizon Blend'], ['horizonFogBlend', 'Horizon/Fog Blend'], ['fogGroundBlend', 'Fog/Ground Blend'], ['atmosphereBlend', 'Atmosphere']] as [key, label] (key)}
-			{@const blend = key as Blend}
+		{#each BLENDS as { key: blend, label, hint } (blend)}
 			<InputNumber
 				{label}
+				{hint}
 				{disabled}
 				bind:value={
 					() => (sky ? blendOf(sky[blend], skyDefaults[blend]) : 0), (v) => sky && (sky[blend] = v)
@@ -149,6 +172,7 @@
 		<!-- MapLibre's light color has no alpha. -->
 		<InputColor
 			label="Color"
+			hint="The color of the light on 3D buildings. Hillshade has colors of its own."
 			{disabled}
 			alpha={false}
 			bind:value={sun.color}
@@ -156,6 +180,7 @@
 		/>
 		<InputNumber
 			label="Intensity"
+			hint="How strong the light on 3D buildings is: the higher, the more the lit and the shaded walls differ."
 			{disabled}
 			bind:value={sun.intensity}
 			defaultValue={sunDefaults.intensity}

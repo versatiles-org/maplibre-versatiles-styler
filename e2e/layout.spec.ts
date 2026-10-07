@@ -405,7 +405,7 @@ test('the layout check finds content that sticks out', async ({ page }) => {
 	await page.addStyleTag({
 		content: `
 			.maplibregl-pane .section-description { width: 600px; }
-			.maplibregl-pane .color-container .label { min-width: 400px !important; }
+			.maplibregl-pane .nested .entry .label { min-width: 400px !important; }
 		`,
 	});
 	const problems = await layoutProblems(page);

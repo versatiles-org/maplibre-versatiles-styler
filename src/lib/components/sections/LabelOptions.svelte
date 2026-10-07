@@ -75,7 +75,15 @@
 
 	const SHAPE: NumberEditor[] = [
 		{ key: 'letterSpacing', label: 'Letter spacing', min: -0.1, max: 0.5, step: 0.01, unit: 'em' },
-		{ key: 'lineHeight', label: 'Line height', min: 0.8, max: 2, step: 0.05, unit: 'em' },
+		{
+			key: 'lineHeight',
+			label: 'Line height',
+			hint: 'The distance between the lines of a label that wraps.',
+			min: 0.8,
+			max: 2,
+			step: 0.05,
+			unit: 'em',
+		},
 		{
 			key: 'maxWidth',
 			label: 'Max width',
@@ -94,7 +102,15 @@
 			step: 0.1,
 			unit: 'px',
 		},
-		{ key: 'haloBlur', label: 'Halo blur', min: 0, max: 5, step: 0.1, unit: 'px' },
+		{
+			key: 'haloBlur',
+			label: 'Halo blur',
+			hint: 'Fades the outer edge of the halo instead of ending it sharply.',
+			min: 0,
+			max: 5,
+			step: 0.1,
+			unit: 'px',
+		},
 	];
 
 	const TRANSFORMS: SelectOption[] = [

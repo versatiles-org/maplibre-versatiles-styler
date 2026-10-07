@@ -17,6 +17,7 @@
 
 <InputSelect
 	label="Language"
+	hint="The language of the labels. Local names shows every place in its own language, Browser language in that of the viewer's browser. A place without a name in the chosen language keeps its local name."
 	bind:value={language}
 	defaultValue="local"
 	options={languages}

@@ -1141,6 +1141,11 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 
 			.entry {
 				grid-template-columns: 104px minmax(0, 1fr);
+
+				// A color keeps its own columns: the name takes what the value leaves.
+				&.color-container {
+					grid-template-columns: minmax(0, 1fr) auto;
+				}
 			}
 		}
 
