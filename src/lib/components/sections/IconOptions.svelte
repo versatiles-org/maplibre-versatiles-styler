@@ -25,7 +25,7 @@
 />
 <InputNumber
 	label="Spacing"
-	hint="Keep icons further apart (above 100%) so fewer are shown, or closer together."
+	hint="Above 100% keeps icons further apart, so fewer are shown; below 100% lets them come closer together."
 	{disabled}
 	bind:value={icon.spacing}
 	defaultValue={defaults.spacing}

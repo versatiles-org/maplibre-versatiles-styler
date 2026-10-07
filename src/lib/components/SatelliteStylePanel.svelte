@@ -130,7 +130,7 @@
 	</SidebarSection>
 	<SidebarSection
 		title="Overlay color adjustments"
-		description="Transformations applied to every color of the overlay."
+		description="Transformations applied to every color of the overlay, from top to bottom."
 		onReset={resetOverlayRecolor}
 		changes={changes('osmOverlay.recolor')}
 	>

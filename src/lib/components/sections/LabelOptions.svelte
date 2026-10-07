@@ -65,7 +65,7 @@
 		{
 			key: 'spacing',
 			label: 'Spacing',
-			hint: 'Keep labels further apart (above 100%) so fewer are shown, or closer together.',
+			hint: 'Above 100% keeps labels further apart, so fewer are shown; below 100% lets them come closer together.',
 			min: 0.5,
 			max: 10,
 			scale: 100,
@@ -79,7 +79,7 @@
 		{
 			key: 'maxWidth',
 			label: 'Max width',
-			hint: 'Longer labels wrap onto a new line at this width.',
+			hint: 'Longer labels wrap onto a new line at this width. 1em is the size of the text.',
 			min: 1,
 			max: 30,
 			step: 0.5,

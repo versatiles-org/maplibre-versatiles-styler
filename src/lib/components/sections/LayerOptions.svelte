@@ -52,7 +52,7 @@
 	{#if style && usual}
 		<InputSegmented
 			label="Line"
-			hint="Dashed is the style's own pattern for this line, Custom one of your own."
+			hint="━━ solid, ╍╍ the style's own dash pattern for this line, ✎ a pattern of your own."
 			{disabled}
 			options={DASH_MODES}
 			bind:value={
@@ -65,7 +65,7 @@
 		{#if Array.isArray(style.dashed)}
 			<InputText
 				label="Pattern"
-				hint="Lengths of dashes and gaps in turn, in multiples of the line width"
+				hint="Lengths of dashes and gaps in turn, in multiples of the line width: 3 1 is a long dash and a short gap."
 				{disabled}
 				placeholder="e.g. 3 1"
 				bind:value={

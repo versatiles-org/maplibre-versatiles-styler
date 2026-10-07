@@ -30,7 +30,7 @@
 />
 <InputNumber
 	label="Saturate"
-	hint="Negative values fade colors toward grey; positive values intensify them."
+	hint="Negative values fade colors toward grey, down to plain grey at -100%; positive values intensify them."
 	bind:value={recolor.saturate}
 	defaultValue={defaults.saturate}
 	min={-1}
@@ -50,7 +50,7 @@
 />
 <InputNumber
 	label="Contrast"
-	hint="Push colors away from mid-grey. 100% means no change."
+	hint="Above 100% pushes colors away from mid-grey, below 100% pulls them toward it. 100% means no change."
 	bind:value={recolor.contrast}
 	defaultValue={defaults.contrast}
 	min={0.1}
@@ -61,7 +61,7 @@
 />
 <InputNumber
 	label="Brightness"
-	hint="Lighten or darken every color."
+	hint="Lighten or darken every color: -100% turns everything black, 100% white."
 	bind:value={recolor.brightness}
 	defaultValue={defaults.brightness}
 	min={-1}
@@ -71,7 +71,7 @@
 />
 <InputNumber
 	label="Tint"
-	hint="Blend every color toward the tint color."
+	hint="Shift the hue of every color toward the hue of the tint color, keeping its lightness and saturation. A grey, black or white tint color has no effect."
 	bind:value={recolor.tint.amount}
 	defaultValue={defaults.tint.amount}
 	min={0}
@@ -88,7 +88,7 @@
 />
 <InputNumber
 	label="Blend"
-	hint="Blend every color toward the blend color."
+	hint="Mix every color with the blend color. At 100% everything has the blend color."
 	bind:value={recolor.blend.amount}
 	defaultValue={defaults.blend.amount}
 	min={0}

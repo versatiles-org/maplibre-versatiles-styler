@@ -27,7 +27,7 @@
 
 <InputCheckbox
 	label="Terrain"
-	hint="Render the map surface in 3D using elevation data."
+	hint="Render the map surface in 3D using elevation data. It shows once the map is tilted. To tilt the map, drag with the right mouse button or Ctrl + drag; on a touch screen, drag up or down with two fingers."
 	{disabled}
 	bind:value={
 		() => features.terrain !== false,
@@ -52,7 +52,7 @@
 {/if}
 <InputCheckbox
 	label="Hillshade"
-	hint="Add shaded relief to emphasize terrain steepness."
+	hint="Shade the slopes so that the relief shows, also on a map that is not tilted. The light comes from the Sun of the Map section, if it is on."
 	{disabled}
 	bind:value={
 		() => features.hillshade !== false,
@@ -87,14 +87,14 @@
 		/>
 		<InputColor
 			label="Accent Color"
-			hint="The color of the steepest slopes."
+			hint="An extra shade for rugged terrain such as cliffs and gorges."
 			{disabled}
 			bind:value={features.hillshade.accentColor}
 			defaultValue={hillshadeDefaults.accentColor}
 		/>
 		<InputSegmented
 			label="Light Source"
-			hint="Map: the light comes from a fixed direction on the map and turns with it. Screen: it always comes from the top of the screen."
+			hint="Map: the light keeps its compass direction and turns with the map. Screen: it keeps its direction on the screen, however the map is turned."
 			{disabled}
 			bind:value={
 				() => (features.hillshade ? features.hillshade.anchor : undefined),

@@ -47,7 +47,7 @@
 
 <InputSelect
 	label="Projection"
-	hint="Globe shows the earth as a sphere when zoomed out and flattens as you zoom in."
+	hint="Globe: a sphere when zoomed out, turning into Mercator as you zoom in. Mercator: the usual flat web map. Vertical perspective: a sphere at every zoom."
 	{disabled}
 	bind:value={() => projection, (v) => (projection = (v ?? 'globe') as ResolvedProjection)}
 	defaultValue="globe"
@@ -56,7 +56,7 @@
 
 <InputCheckbox
 	label="Sky"
-	hint="Sky and fog above the horizon, visible on a globe or a strongly tilted map."
+	hint="Sky and fog above the horizon. They show where the horizon is in view: on the globe, or on a flat map tilted beyond 65°, which is more than MapLibre allows by default (60°)."
 	{disabled}
 	bind:value={() => sky !== false, (v) => (sky = v ? structuredClone(skyDefaults) : false)}
 	defaultValue={true}
@@ -109,7 +109,7 @@
 
 <InputCheckbox
 	label="Sun"
-	hint="A light source for 3D buildings and the shading of hillshade."
+	hint="Where the light comes from. It lights 3D buildings, and its direction and altitude also shade the hillshade."
 	{disabled}
 	bind:value={() => sun !== undefined, (v) => (sun = v ? structuredClone(sunDefaults) : undefined)}
 	defaultValue={false}
@@ -138,7 +138,7 @@
 		/>
 		<InputSegmented
 			label="Anchor"
-			hint="Map: the direction turns with the map. Screen: it is fixed to the screen."
+			hint="For 3D buildings. Map: the light keeps its compass direction and turns with the map. Screen: it keeps its direction on the screen. Hillshade has a setting of its own."
 			{disabled}
 			bind:value={
 				() => sun?.anchor, (v) => sun && (sun.anchor = (v ?? sunDefaults.anchor) as Sun['anchor'])

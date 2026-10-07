@@ -69,7 +69,7 @@
 >
 	<InputCheckbox
 		label="3D buildings"
-		hint="Extrude buildings by their height when the map is tilted."
+		hint="Draw buildings as blocks of their height. They show once the map is tilted. To tilt the map, drag with the right mouse button or Ctrl + drag; on a touch screen, drag up or down with two fingers."
 		bind:value={
 			() => options.features.buildings === 'extruded',
 			(v) => (options.features.buildings = v ? 'extruded' : 'flat')
@@ -93,7 +93,7 @@
 </SidebarSection>
 <SidebarSection
 	title="Color adjustments"
-	description="Transformations applied to every color in the style."
+	description="Transformations applied to every color in the style, from top to bottom."
 	onReset={resetColorAdjustments}
 	changes={changes('recolor')}
 >
