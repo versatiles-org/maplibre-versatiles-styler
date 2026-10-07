@@ -55,6 +55,12 @@ export default [
 		},
 	},
 	{
+		files: ['scripts/**/*.mjs'],
+		languageOptions: {
+			globals: globals.node,
+		},
+	},
+	{
 		files: ['src/**/*.test.ts'],
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off',

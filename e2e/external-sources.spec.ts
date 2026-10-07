@@ -501,7 +501,6 @@ test.describe('the tile sources travel with the style', () => {
 		await dialog.getByRole('tab', { name: 'Code' }).click();
 		await expect(dialog).toContainText("maplibregl.addProtocol('pmtiles', new Protocol().tile);");
 		await expect(dialog).toContainText(`protomaps: "pmtiles://${PROTOMAPS}"`);
-		await expect(dialog).not.toContainText('inlineSources');
 	});
 });
 

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { PROTOMAPS_SCHEMA } from '@versatiles/style/protomaps';
+import { inlineSources } from '@versatiles/style';
+import { protomaps, PROTOMAPS_SCHEMA } from '@versatiles/style/protomaps';
 import { byteRange, pmtilesArchive } from '../../../e2e/pmtiles-archive';
 import {
 	archiveUrl,
@@ -83,6 +84,19 @@ describe('loadArchiveTileJSON', () => {
 		const address = 'https://archives.example.org/not-an-archive.pmtiles';
 		mockArchives({ [address]: new TextEncoder().encode('<html>Not Found</html>') });
 		await expect(loadArchiveTileJSON(`pmtiles://${address}`)).rejects.toThrow();
+	});
+});
+
+describe('the code snippet for an archive', () => {
+	// The snippet the styler shows passes the style through `inlineSources`. That only works with a
+	// `@versatiles/style` that leaves a `pmtiles://` source alone (versatiles-style#139): an older one
+	// tries to download it, and fails.
+	it('relies on inlineSources leaving the archive for MapLibre', async () => {
+		const archive = 'pmtiles://https://archives.example.org/planet.pmtiles';
+		const fetch = vi.fn(() => Promise.reject(new TypeError('fetch failed')));
+		const style = await inlineSources(protomaps({ urls: { protomaps: archive } }), { fetch });
+		expect(style.sources.protomaps).toEqual({ type: 'vector', url: archive });
+		expect(fetch).not.toHaveBeenCalled();
 	});
 });
 

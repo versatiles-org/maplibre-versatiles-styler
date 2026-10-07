@@ -510,19 +510,17 @@ describe('styleCode for other sources', () => {
 		expect(code).toContain(`elevation: "${MAPTERHORN_TILES}"`);
 	});
 
-	it('leaves a PMTiles archive for MapLibre to read, and says what that takes', () => {
+	it('says what MapLibre needs to read a PMTiles archive', () => {
 		const code = styleCode('gray', state, satelliteDefaults(), protomapsSources(), {
 			vector: omtTileJSON,
 			schema: 'protomaps',
 		});
 		expect(code).toContain("maplibregl.addProtocol('pmtiles', new Protocol().tile);");
 		expect(code).toContain("import { protomaps } from '@versatiles/style/protomaps';");
-		expect(code).toContain('const style = protomaps({');
+		expect(code).toContain('const style = await inlineSources(protomaps({');
 		expect(code).toContain(
 			'protomaps: "pmtiles://https://data.source.coop/protomaps/openstreetmap/v4.pmtiles"'
 		);
-		expect(code).not.toContain('inlineSources');
-		expect(code.trimEnd().endsWith('});')).toBe(true);
 	});
 });
 

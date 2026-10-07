@@ -454,20 +454,15 @@ function codeUrls(
 }
 
 /**
- * A snippet as it works with a PMTiles archive: without `inlineSources`, which can only download a
- * TileJSON, and with a note on the protocol the page has to register. MapLibre then reads the archive
- * itself.
+ * A snippet for tiles from a PMTiles archive, with a note on the protocol the page has to register:
+ * `inlineSources` leaves the archive for MapLibre to read.
  */
-function withoutInlining(code: string): string {
+function withProtocolNote(code: string): string {
 	return [
 		'// The tiles come from a PMTiles archive, which MapLibre reads through a protocol:',
 		"//   import { Protocol } from 'pmtiles';",
 		"//   maplibregl.addProtocol('pmtiles', new Protocol().tile);",
-		code
-			.replace(/^import \{ inlineSources \} from '@versatiles\/style';\n/m, '')
-			.replace(/import \{ (\w+), inlineSources \} from/, 'import { $1 } from')
-			.replace(/await inlineSources\((\w+)\(/, '$1(')
-			.replace(/\}\)\);\s*$/, '});\n'),
+		code,
 	].join('\n');
 }
 
@@ -498,7 +493,7 @@ export function styleCode(
 					{ ...vectorOptions(styleKey, vectorState, config.assets, sources), urls } as never,
 					{ target }
 				);
-	return Object.values(urls).some(isPMTilesUrl) ? withoutInlining(code) : code;
+	return Object.values(urls).some(isPMTilesUrl) ? withProtocolNote(code) : code;
 }
 
 /** The key under which an exported style records the tile sources it was built for. */
