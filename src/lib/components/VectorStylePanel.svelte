@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { osm, type FontFaceInfo } from '@versatiles/style';
+	import type { FontFaceInfo, LayerGroupMap, TextGroupMap } from '@versatiles/style';
 	import { configChangeCount, type VectorState } from '../style/config';
 	import SidebarSection from './SidebarSection.svelte';
 	import ColorOptions from './sections/ColorOptions.svelte';
@@ -14,6 +14,8 @@
 	let {
 		options = $bindable(),
 		defaults,
+		layerGroups,
+		textGroups,
 		config,
 		assetsBase,
 		hasElevation,
@@ -22,6 +24,9 @@
 	}: {
 		options: VectorState;
 		defaults: VectorState;
+		/** Which layer groups and label topics the style has: those of the vector tiles' schema. */
+		layerGroups: LayerGroupMap;
+		textGroups: TextGroupMap;
 		/** The minimal config of the current options, to tell which sections have changes. */
 		config: Record<string, unknown>;
 		/** The server the font previews load their glyphs from. */
@@ -76,11 +81,7 @@
 		}
 		defaultValue={defaults.features.buildings === 'extruded'}
 	/>
-	<LayerOptions
-		bind:layers={options.layers}
-		defaults={defaults.layers}
-		layerGroups={osm.layerGroups}
-	/>
+	<LayerOptions bind:layers={options.layers} defaults={defaults.layers} {layerGroups} />
 </SidebarSection>
 <h4 class="section-group">Appearance</h4>
 <SidebarSection
@@ -108,7 +109,7 @@
 	<LabelOptions
 		bind:text={options.text}
 		defaults={defaults.text}
-		textGroups={osm.textGroups}
+		{textGroups}
 		{fontFaces}
 		{languages}
 		{assetsBase}

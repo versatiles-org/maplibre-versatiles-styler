@@ -17,6 +17,7 @@
 		inspectSources,
 		isDarkStyle,
 		minimalConfig,
+		overlaySupported,
 		overlayDefaults,
 		probeSatelliteState,
 		probeVectorState,
@@ -37,9 +38,11 @@
 	} from '../style/inspect';
 	import {
 		loadSources,
+		vectorSchema,
 		versatilesSources,
 		type LoadedTileJSON,
 		type SourceConfig,
+		type VectorSchema,
 	} from '../style/sources';
 	import { languageOptions } from '../options/languages';
 	import { onDestroy, untrack } from 'svelte';
@@ -81,15 +84,15 @@
 	// source is not available.
 
 	let sources = $derived(loadSources(sourceConfig));
-	let osmTileJSON = $state<LoadedTileJSON | undefined>();
+	let vectorTileJSON = $state<LoadedTileJSON | undefined>();
 	let satelliteTileJSON = $state<LoadedTileJSON | undefined>();
 	let elevationTileJSON = $state<LoadedTileJSON | undefined>();
 
 	$effect(() => {
 		const current = sources;
-		osmTileJSON = satelliteTileJSON = elevationTileJSON = undefined;
+		vectorTileJSON = satelliteTileJSON = elevationTileJSON = undefined;
 		let outdated = false;
-		current.vector.then((tj) => !outdated && (osmTileJSON = tj));
+		current.vector.then((tj) => !outdated && (vectorTileJSON = tj));
 		current.satellite.then((tj) => !outdated && (satelliteTileJSON = tj));
 		current.elevation.then((tj) => !outdated && (elevationTileJSON = tj));
 		return () => (outdated = true);
@@ -97,12 +100,20 @@
 
 	// Vector themes are listed until the OSM TileJSON turns out to be missing; satellite once it loaded.
 	let styleKeys: StyleKey[] = $derived([
-		...(osmTileJSON === null ? [] : PALETTES),
+		...(vectorTileJSON === null ? [] : PALETTES),
 		...(satelliteTileJSON ? (['satellite'] as const) : []),
 	]);
-	let overlayAvailable = $derived(osmTileJSON !== null);
+	// The schema of the vector tiles decides which builder draws them. Tiles of no schema the styler
+	// knows are taken for Shortbread, as everything a VersaTiles server calls `osm` used to be.
+	let schema = $derived<VectorSchema>(
+		(vectorTileJSON ? vectorSchema(vectorTileJSON) : undefined) ?? 'shortbread'
+	);
+	let overlayAvailable = $derived(vectorTileJSON !== null && overlaySupported(schema));
 	let hasElevation = $derived(Boolean(elevationTileJSON));
-	let languages = $derived(languageOptions(osmTileJSON ? osm.languages(osmTileJSON) : []));
+	let languages = $derived(languageOptions(vectorTileJSON ? osm.languages(vectorTileJSON) : []));
+
+	/** The layers and the label topics of the vector style, which are those of the schema. */
+	let vectorGroups = $derived(inspectSources(DEFAULT_STYLE_KEY, schema));
 
 	// ── Options ──────────────────────────────────────────────────────────────────
 
@@ -157,7 +168,7 @@
 		}
 		const state = $state.snapshot(vectorState) as VectorState;
 		const stateSources = styleSources(true, state.features);
-		if (!stateSources?.osm) return undefined;
+		if (!stateSources?.vector) return undefined;
 		return {
 			style: buildVectorStyle(
 				styleKey,
@@ -173,10 +184,10 @@
 		needsOsm: boolean,
 		features: VectorState['features'] | SatelliteState['features']
 	): StyleSources | undefined {
-		const result: StyleSources = {};
+		const result: StyleSources = { schema };
 		if (needsOsm) {
-			if (osmTileJSON === undefined) return undefined;
-			if (osmTileJSON) result.osm = osmTileJSON;
+			if (vectorTileJSON === undefined) return undefined;
+			if (vectorTileJSON) result.vector = vectorTileJSON;
 		}
 		if (features.terrain !== false || features.hillshade !== false) {
 			if (elevationTileJSON === undefined) return undefined;
@@ -228,7 +239,7 @@
 
 	// Switch away from a style only once its source is known to be missing, not while it loads.
 	$effect(() => {
-		const tileJSON = currentStyleKey === 'satellite' ? satelliteTileJSON : osmTileJSON;
+		const tileJSON = currentStyleKey === 'satellite' ? satelliteTileJSON : vectorTileJSON;
 		if (tileJSON === null && styleKeys.length > 0) {
 			const fallback = styleKeys[0];
 			untrack(() => setBaseStyle(fallback));
@@ -249,7 +260,7 @@
 	 */
 	let inspectIndexes = $derived.by(() => {
 		if (!inspectOn) return undefined;
-		const { layerGroups, textGroups, colorKeys } = inspectSources(currentStyleKey);
+		const { layerGroups, textGroups, colorKeys } = inspectSources(currentStyleKey, schema);
 		const colors = colorIndex((probeColors) => currentStyle(probeColors)?.style, colorKeys);
 		if (!colors) return undefined;
 		return { groups: groupIndex(layerGroups), topics: groupIndex(textGroups), colors };
@@ -260,7 +271,7 @@
 	 * the sections do, by writing to the state the style is built from.
 	 */
 	let inspectTargets = $derived.by(() => {
-		const { layerGroups } = inspectSources(currentStyleKey);
+		const { layerGroups } = inspectSources(currentStyleKey, schema);
 		if (currentStyleKey === 'satellite') {
 			const overlay = satelliteState.osmOverlay;
 			if (!overlay) return { layerGroups };
@@ -347,7 +358,8 @@
 
 	/** The TileJSONs that are in, for building code snippets. */
 	let loadedSources = $derived<StyleSources>({
-		osm: osmTileJSON ?? undefined,
+		vector: vectorTileJSON ?? undefined,
+		schema,
 		satellite: satelliteTileJSON ?? undefined,
 		elevation: elevationTileJSON ?? undefined,
 	});
@@ -358,7 +370,7 @@
 	 */
 	let exportStyle = $derived.by(() => {
 		const current = currentStyle();
-		return current ? styleForExport(current.style, currentStyleKey, minimal) : undefined;
+		return current ? styleForExport(current.style, currentStyleKey, minimal, schema) : undefined;
 	});
 
 	function exportCode(target: 'npm' | 'browser') {
@@ -375,10 +387,7 @@
 	/** Applies an imported style, optionally moving to the tile server it came from. */
 	function applyImport(result: ImportResult, newOrigin?: string) {
 		importOpen = false;
-		if (newOrigin && newOrigin !== sourceConfig.assets) {
-			sourceConfig = versatilesSources(newOrigin);
-			fontPicker.clearScripts();
-		}
+		if (newOrigin) setSourceConfig(versatilesSources(newOrigin));
 		setBaseStyle(result.styleKey, result.config);
 		// Only the warnings are counted here: the notes are true of almost every import, and counting
 		// them would make a clean one look like it went badly.
@@ -390,10 +399,19 @@
 		);
 	}
 
-	function handleOriginChange(e: Event) {
-		sourceConfig = versatilesSources((e.target as HTMLInputElement).value);
+	/**
+	 * Moves to other sources. The same sources again change nothing: an input reports its value a second
+	 * time when it loses focus, and reloading then would take the panel away under the click that did it.
+	 */
+	function setSourceConfig(next: SourceConfig) {
+		if (JSON.stringify(next) === JSON.stringify(sourceConfig)) return;
+		sourceConfig = next;
 		// Another server has other fonts.
 		fontPicker.clearScripts();
+	}
+
+	function handleOriginChange(e: Event) {
+		setSourceConfig(versatilesSources((e.target as HTMLInputElement).value));
 	}
 
 	// Initialize hash management and style
@@ -542,6 +560,8 @@
 				config={minimal}
 				assetsBase={sourceConfig.assets}
 				defaults={currentVectorDefaults}
+				layerGroups={vectorGroups.layerGroups}
+				textGroups={vectorGroups.textGroups}
 				{hasElevation}
 				fontFaces={sources.fontFaces()}
 				{languages}

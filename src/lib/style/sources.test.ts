@@ -1,7 +1,10 @@
 // @vitest-environment node
 // jsdom's `Blob` does not survive the `Response` round trip of @versatiles/style's fetch cache.
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { loadSources, versatilesSources } from './sources';
+import { OMT_SCHEMA } from '@versatiles/style/omt';
+import { PROTOMAPS_SCHEMA } from '@versatiles/style/protomaps';
+import type { TileJSONSpecification } from '@versatiles/style';
+import { loadSources, vectorSchema, versatilesSources } from './sources';
 
 const ORIGIN = 'https://sources.example.org';
 
@@ -92,6 +95,31 @@ describe('loadSources', () => {
 		mockServer({});
 		expect(
 			await loadSources(versatilesSources('https://nofonts.example.org')).fontFaces()
+		).toBeUndefined();
+	});
+});
+
+describe('vectorSchema', () => {
+	type Layers = Record<string, { fields: readonly string[] }>;
+	const tileJSON = (layers: Layers) =>
+		({
+			tilejson: '3.0.0',
+			tiles: ['https://tiles.example.org/{z}/{x}/{y}'],
+			vector_layers: Object.entries(layers).map(([id, layer]) => ({
+				id,
+				fields: Object.fromEntries(layer.fields.map((field) => [field, 'String'])),
+			})),
+		}) as TileJSONSpecification;
+
+	it('recognises the schemas the styler has a style for', () => {
+		expect(vectorSchema(tileJSON(OMT_SCHEMA))).toBe('openmaptiles');
+		expect(vectorSchema(tileJSON(PROTOMAPS_SCHEMA))).toBe('protomaps');
+	});
+
+	it('gives undefined for other vector tiles and for raster tiles', () => {
+		expect(vectorSchema(tileJSON({ parcels: { fields: ['owner'] } }))).toBeUndefined();
+		expect(
+			vectorSchema({ tilejson: '3.0.0', tiles: ['https://tiles.example.org/{z}/{x}/{y}'] })
 		).toBeUndefined();
 	});
 });

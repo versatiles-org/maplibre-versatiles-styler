@@ -1,5 +1,7 @@
 import type { StyleSpecification } from 'maplibre-gl';
 import { isDarkPalette, osm, satellite, styleMetadata } from '@versatiles/style';
+import { omt } from '@versatiles/style/omt';
+import { protomaps } from '@versatiles/style/protomaps';
 import type { CodeTarget } from '@versatiles/style';
 import type {
 	LayerGroupMap,
@@ -13,6 +15,7 @@ import type {
 	TextGroupMap,
 	TileJSONSpecification,
 } from '@versatiles/style';
+import type { VectorSchema } from './sources';
 
 export const PALETTES: readonly Palette[] = osm.palettes;
 export const DEFAULT_STYLE_KEY: StyleKey = 'colorful';
@@ -153,13 +156,50 @@ function toSatelliteState(resolved: ResolvedSatellite): SatelliteState {
 	return state;
 }
 
-/** What the inspector needs to name the layers of a style: its group maps and its colour keys. */
-export function inspectSources(styleKey: StyleKey): {
+/**
+ * What differs between the vector schemas: the function that builds the style, and with it the layers
+ * the style has. The options are the same for all of them, so the state, its defaults and the URL hash
+ * are those of `osm` whatever the schema.
+ */
+interface VectorBuilder {
+	/** The builder's name, as a style's metadata records it. It is also the key of its tiles in `urls`. */
+	readonly name: 'osm' | 'omt' | 'protomaps';
+	readonly style: {
+		(options: never): unknown;
+		readonly layerGroups: LayerGroupMap;
+		readonly textGroups: TextGroupMap;
+		readonly colorKeys: readonly string[];
+		toCode(options: never, codeOptions?: { target?: CodeTarget }): string;
+	};
+	/** `features.landcover` for a tileset, or `undefined` where the schema has no such option. */
+	landcover(tileJSON: TileJSONSpecification | undefined): boolean | undefined;
+}
+
+const VECTOR_BUILDERS: Record<VectorSchema, VectorBuilder> = {
+	shortbread: {
+		name: 'osm',
+		style: osm,
+		// An extension of the tileset, which not every server has.
+		landcover: (tileJSON) => tileJSON !== undefined && osm.supportsLandcover(tileJSON),
+	},
+	openmaptiles: { name: 'omt', style: omt, landcover: () => undefined },
+	// Part of the schema: every tileset has it.
+	protomaps: { name: 'protomaps', style: protomaps, landcover: () => true },
+};
+
+/**
+ * What the inspector and the panels need to name the layers of a style: its group maps and its colour
+ * keys. The layers are those of the vector tiles' schema.
+ */
+export function inspectSources(
+	styleKey: StyleKey,
+	schema: VectorSchema = 'shortbread'
+): {
 	layerGroups: LayerGroupMap;
 	textGroups: TextGroupMap;
 	colorKeys: readonly string[];
 } {
-	const builder = styleKey === 'satellite' ? satellite : osm;
+	const builder = styleKey === 'satellite' ? satellite : VECTOR_BUILDERS[schema].style;
 	return {
 		layerGroups: builder.layerGroups,
 		textGroups: builder.textGroups,
@@ -198,55 +238,77 @@ export function probeSatelliteState(
 
 /** The TileJSONs a style is built from. A missing source is left out of the style. */
 export interface StyleSources {
-	osm?: TileJSONSpecification;
+	vector?: TileJSONSpecification;
+	/** The schema of the vector tiles. Default: `shortbread`. */
+	schema?: VectorSchema;
 	satellite?: TileJSONSpecification;
 	elevation?: TileJSONSpecification;
 }
 
-/** The full `osm` options for a theme and state, as built with the assets of `assetsBase` and these sources. */
+/** The elevation features of a state, switched off where there is no elevation source. */
+function elevationFeatures<T extends { terrain: unknown; hillshade: unknown }>(
+	features: T,
+	sources: StyleSources
+): T {
+	if (sources.elevation !== undefined) return features;
+	return { ...features, terrain: false, hillshade: false };
+}
+
+function elevationUrl(sources: StyleSources): { elevation?: TileJSONSpecification } {
+	return sources.elevation ? { elevation: sources.elevation } : {};
+}
+
+/**
+ * The full options for a theme and state, as built with the assets of `assetsBase` and these sources:
+ * those of `osm`, `omt` or `protomaps`, whichever builds the schema of the vector tiles.
+ */
 export function vectorOptions(
 	theme: Palette,
 	state: VectorState,
 	assetsBase: string,
 	sources: StyleSources
-): OsmOptions {
-	const elevation = sources.elevation !== undefined;
+): Record<string, unknown> {
+	const builder = VECTOR_BUILDERS[sources.schema ?? 'shortbread'];
+	const { landcover: _landcover, ...features } = elevationFeatures(state.features, sources);
+	const landcover = builder.landcover(sources.vector);
 	return {
 		...state,
 		theme,
-		features: {
-			...state.features,
-			terrain: elevation ? state.features.terrain : false,
-			hillshade: elevation ? state.features.hillshade : false,
-			landcover: sources.osm !== undefined && osm.supportsLandcover(sources.osm),
+		features: landcover === undefined ? features : { ...features, landcover },
+		urls: {
+			base: assetsBase,
+			...(sources.vector ? { [builder.name]: sources.vector } : {}),
+			...elevationUrl(sources),
 		},
-		urls: { base: assetsBase, ...sourceUrls(sources, ['osm', 'elevation']) },
 	};
 }
 
-/** The full `satellite` options for a state, as built with the assets of `assetsBase` and these sources. */
+/** Whether the satellite style can draw its overlay from vector tiles of this schema. */
+export function overlaySupported(schema: VectorSchema = 'shortbread'): boolean {
+	return schema === 'shortbread';
+}
+
+/**
+ * The full `satellite` options for a state, as built with the assets of `assetsBase` and these sources.
+ * The overlay is drawn from Shortbread tiles only: `satellite` has no layers for another schema.
+ */
 export function satelliteOptions(
 	state: SatelliteState,
 	assetsBase: string,
 	sources: StyleSources
 ): SatelliteOptions {
-	const elevation = sources.elevation !== undefined;
+	const overlay = sources.vector !== undefined && overlaySupported(sources.schema);
 	return {
 		...state,
-		osmOverlay: sources.osm === undefined ? false : state.osmOverlay,
-		features: {
-			...state.features,
-			terrain: elevation ? state.features.terrain : false,
-			hillshade: elevation ? state.features.hillshade : false,
+		osmOverlay: overlay ? state.osmOverlay : false,
+		features: elevationFeatures(state.features, sources),
+		urls: {
+			base: assetsBase,
+			...(sources.satellite ? { satellite: sources.satellite } : {}),
+			...(overlay ? { osm: sources.vector } : {}),
+			...elevationUrl(sources),
 		},
-		urls: { base: assetsBase, ...sourceUrls(sources, ['satellite', 'osm', 'elevation']) },
 	};
-}
-
-function sourceUrls(sources: StyleSources, names: (keyof StyleSources)[]): StyleSources {
-	return Object.fromEntries(
-		names.filter((name) => sources[name]).map((name) => [name, sources[name]])
-	);
 }
 
 /**
@@ -259,7 +321,10 @@ export function buildVectorStyle(
 	assetsBase: string,
 	sources: StyleSources
 ): StyleSpecification {
-	return osm(vectorOptions(theme, state, assetsBase, sources)) as StyleSpecification;
+	const builder = VECTOR_BUILDERS[sources.schema ?? 'shortbread'];
+	return builder.style(
+		vectorOptions(theme, state, assetsBase, sources) as never
+	) as StyleSpecification;
 }
 
 export function buildSatelliteStyle(
@@ -372,8 +437,9 @@ export function styleCode(
 			{ target }
 		);
 	}
-	return osm.toCode(
-		{ ...vectorOptions(styleKey, vectorState, assetsBase, sources), urls },
+	const builder = VECTOR_BUILDERS[sources.schema ?? 'shortbread'];
+	return builder.style.toCode(
+		{ ...vectorOptions(styleKey, vectorState, assetsBase, sources), urls } as never,
 		{ target }
 	);
 }
@@ -389,13 +455,14 @@ export function styleCode(
 export function styleForExport(
 	style: StyleSpecification,
 	styleKey: StyleKey,
-	minimal: Record<string, unknown>
+	minimal: Record<string, unknown>,
+	schema: VectorSchema = 'shortbread'
 ): StyleSpecification {
 	const options = styleKey === 'satellite' ? minimal : { ...minimal, theme: styleKey };
 	return {
 		...style,
 		metadata: styleMetadata(
-			styleKey === 'satellite' ? 'satellite' : 'osm',
+			styleKey === 'satellite' ? 'satellite' : VECTOR_BUILDERS[schema].name,
 			options,
 			style.metadata
 		),

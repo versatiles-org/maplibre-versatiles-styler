@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { osm, satellite } from '@versatiles/style';
+import { osm, readStyleOptions, satellite } from '@versatiles/style';
+import { omt } from '@versatiles/style/omt';
+import { protomaps } from '@versatiles/style/protomaps';
 import type { TileJSONSpecification } from '@versatiles/style';
 import {
 	PALETTES,
@@ -14,11 +16,13 @@ import {
 	buildVectorStyle,
 	buildSatelliteStyle,
 	containerBackground,
+	inspectSources,
 	minimalConfig,
 	configChangeCount,
 	configChanges,
 	themeSwatch,
 	styleCode,
+	styleForExport,
 	type StyleSources,
 } from './config';
 
@@ -40,11 +44,12 @@ const osmTileJSON = tileJSON('osm', {
 const landcoverTileJSON = tileJSON('osm', {
 	vector_layers: [{ id: 'land', fields: { kind: 'String' }, minzoom: 0, maxzoom: 14 }],
 } as Partial<TileJSONSpecification>);
+const omtTileJSON = tileJSON('omt', { vector_layers: [] } as Partial<TileJSONSpecification>);
 const satelliteTileJSON = tileJSON('satellite');
 const elevationTileJSON = tileJSON('elevation');
 
 const allSources: StyleSources = {
-	osm: osmTileJSON,
+	vector: osmTileJSON,
 	satellite: satelliteTileJSON,
 	elevation: elevationTileJSON,
 };
@@ -228,8 +233,8 @@ describe('buildVectorStyle', () => {
 
 	it('sets landcover from the tileset, whatever the state says', () => {
 		const state = vectorDefaults('colorful');
-		const plain = buildVectorStyle('colorful', state, ORIGIN, { osm: osmTileJSON });
-		const landcover = buildVectorStyle('colorful', state, ORIGIN, { osm: landcoverTileJSON });
+		const plain = buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON });
+		const landcover = buildVectorStyle('colorful', state, ORIGIN, { vector: landcoverTileJSON });
 		expect(JSON.stringify(plain)).not.toEqual(JSON.stringify(landcover));
 		expect(landcover).toEqual(
 			osm({
@@ -243,11 +248,69 @@ describe('buildVectorStyle', () => {
 	it('leaves terrain and hillshade out while there is no elevation source', () => {
 		const state = vectorDefaults('colorful');
 		state.features.terrain = { exaggeration: 1 };
-		const without = buildVectorStyle('colorful', state, ORIGIN, { osm: osmTileJSON });
+		const without = buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON });
 		const withElevation = buildVectorStyle('colorful', state, ORIGIN, allSources);
 		expect(without.terrain).toBeUndefined();
 		expect(withElevation.terrain).toBeDefined();
 		expect(withElevation.sources.elevation).not.toHaveProperty('url');
+	});
+});
+
+describe('vector tiles of another schema', () => {
+	const state = vectorDefaults('colorful');
+	state.features.landcover = true;
+
+	it('builds OpenMapTiles tiles with omt, which has no landcover', () => {
+		const sources: StyleSources = { ...allSources, vector: omtTileJSON, schema: 'openmaptiles' };
+		const { landcover: _landcover, ...features } = state.features;
+		expect(buildVectorStyle('gray', state, ORIGIN, sources)).toEqual(
+			omt({
+				...state,
+				theme: 'gray',
+				features,
+				urls: { base: ORIGIN, omt: omtTileJSON, elevation: elevationTileJSON },
+			})
+		);
+	});
+
+	it('builds Protomaps tiles with protomaps, which always has landcover', () => {
+		const sources: StyleSources = { vector: omtTileJSON, schema: 'protomaps' };
+		expect(buildVectorStyle('gray', vectorDefaults('gray'), ORIGIN, sources)).toEqual(
+			protomaps({
+				...vectorDefaults('gray'),
+				theme: 'gray',
+				features: { ...vectorDefaults('gray').features, landcover: true },
+				urls: { base: ORIGIN, protomaps: omtTileJSON },
+			})
+		);
+	});
+
+	it('names the layers of the schema', () => {
+		expect(inspectSources('colorful').layerGroups).toBe(osm.layerGroups);
+		expect(inspectSources('colorful', 'openmaptiles').layerGroups).toBe(omt.layerGroups);
+		expect(inspectSources('colorful', 'protomaps').textGroups).toBe(protomaps.textGroups);
+		expect(inspectSources('satellite', 'protomaps').layerGroups).toBe(satellite.layerGroups);
+	});
+
+	it('records the builder of the schema in an exported style', () => {
+		const style = buildVectorStyle('gray', state, ORIGIN, allSources);
+		expect(readStyleOptions(styleForExport(style, 'gray', {}))?.builder).toBe('osm');
+		expect(readStyleOptions(styleForExport(style, 'gray', {}, 'openmaptiles'))?.builder).toBe(
+			'omt'
+		);
+		expect(readStyleOptions(styleForExport(style, 'satellite', {}, 'protomaps'))?.builder).toBe(
+			'satellite'
+		);
+	});
+
+	it('leaves the overlay out of the satellite style: it is drawn from Shortbread tiles only', () => {
+		const style = buildSatelliteStyle(satelliteDefaults(), ORIGIN, {
+			...allSources,
+			vector: omtTileJSON,
+			schema: 'openmaptiles',
+		});
+		expect(style.sources['versatiles-shortbread']).toBeUndefined();
+		expect(style.layers.some((layer) => layer.type === 'symbol')).toBe(false);
 	});
 });
 
@@ -374,7 +437,7 @@ describe('styleCode', () => {
 
 	it('carries the detected landcover flag', () => {
 		const code = styleCode('colorful', vectorDefaults('colorful'), satelliteDefaults(), ORIGIN, {
-			osm: landcoverTileJSON,
+			vector: landcoverTileJSON,
 		});
 		expect(code).toContain('landcover: true');
 	});

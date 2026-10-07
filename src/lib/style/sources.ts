@@ -1,4 +1,4 @@
-import { fetchFontFaces, fetchTileJSON } from '@versatiles/style';
+import { fetchFontFaces, fetchTileJSON, guessSchema } from '@versatiles/style';
 import type { FontFaceInfo, TileJSONSpecification } from '@versatiles/style';
 
 export type SourceName = 'vector' | 'satellite' | 'elevation';
@@ -13,6 +13,15 @@ export interface SourceConfig {
 	satellite?: string;
 	elevation?: string;
 	assets: string;
+}
+
+/** The vector tile schemas the styler has a style for. */
+export type VectorSchema = 'shortbread' | 'openmaptiles' | 'protomaps';
+
+/** The schema of a vector tileset, read from its layers; `undefined` when it is none the styler knows. */
+export function vectorSchema(tileJSON: TileJSONSpecification): VectorSchema | undefined {
+	const guess = guessSchema(tileJSON);
+	return guess.type === 'vector' && guess.schema !== 'mapbox' ? guess.schema : undefined;
 }
 
 /** A loaded TileJSON, or `null` when the source is not configured or its server does not provide it. */
