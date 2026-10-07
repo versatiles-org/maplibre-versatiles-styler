@@ -416,6 +416,17 @@ export function themeSwatch(theme: Palette): ThemeSwatch {
 }
 
 /**
+ * Where a snippet for a style can run. Only `osm` and `satellite` are in the bundle a plain HTML page
+ * loads, so tiles of another schema leave the npm form.
+ */
+export function codeTargets(
+	styleKey: StyleKey,
+	schema: VectorSchema = 'shortbread'
+): readonly CodeTarget[] {
+	return styleKey === 'satellite' || schema === 'shortbread' ? ['npm', 'browser'] : ['npm'];
+}
+
+/**
  * A runnable `@versatiles/style` snippet for the current style.
  *
  * `target` picks the form: an ES module for a project with a bundler, or the `<script>` tag and

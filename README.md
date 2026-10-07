@@ -116,6 +116,7 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 | Option   | Type      | Default                  | Description                                                               |
 | -------- | --------- | ------------------------ | ------------------------------------------------------------------------- |
 | `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.    |
+| `externalSources` | `boolean` | `false` | Offer tiles of other providers in the sidebar, such as OpenFreeMap |
 | `open`   | `boolean` | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise |
 | `hash`   | `boolean` | `true`                   | Keep the map view, the style and its options in the URL hash fragment     |
 

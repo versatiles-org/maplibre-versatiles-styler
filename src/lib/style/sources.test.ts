@@ -4,7 +4,16 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { OMT_SCHEMA } from '@versatiles/style/omt';
 import { PROTOMAPS_SCHEMA } from '@versatiles/style/protomaps';
 import type { TileJSONSpecification } from '@versatiles/style';
-import { loadSources, vectorSchema, versatilesSources } from './sources';
+import {
+	loadSources,
+	openFreeMapSources,
+	providerOf,
+	vectorSchema,
+	versatilesSources,
+	MAPTERHORN_TILES,
+	OPENFREEMAP_TILES,
+	VERSATILES_ASSETS,
+} from './sources';
 
 const ORIGIN = 'https://sources.example.org';
 
@@ -96,6 +105,32 @@ describe('loadSources', () => {
 		expect(
 			await loadSources(versatilesSources('https://nofonts.example.org')).fontFaces()
 		).toBeUndefined();
+	});
+});
+
+describe('OpenFreeMap', () => {
+	it('has vector tiles only, and the assets of VersaTiles', () => {
+		expect(openFreeMapSources()).toEqual({ vector: OPENFREEMAP_TILES, assets: VERSATILES_ASSETS });
+		expect(openFreeMapSources(MAPTERHORN_TILES).elevation).toBe(MAPTERHORN_TILES);
+	});
+
+	it('is told from a VersaTiles server by its vector tiles', () => {
+		expect(providerOf(openFreeMapSources(MAPTERHORN_TILES))).toBe('openfreemap');
+		expect(providerOf(versatilesSources(VERSATILES_ASSETS))).toBe('versatiles');
+	});
+
+	it('limits Mapterhorn to the zoom it covers the world at, which its TileJSON does not name', async () => {
+		const tiles = ['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'];
+		vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+			const url = String(input instanceof Request ? input.url : input);
+			const tileJSON = url === MAPTERHORN_TILES ? { tiles } : { tiles, maxzoom: 9 };
+			return new Response(JSON.stringify({ tilejson: '3.0.0', ...tileJSON }), { status: 200 });
+		});
+		const mapterhorn = loadSources(openFreeMapSources(MAPTERHORN_TILES));
+		expect((await mapterhorn.elevation)?.maxzoom).toBe(12);
+		// A `maxzoom` a TileJSON does name is kept, and so is one of any other server.
+		const other = loadSources(openFreeMapSources('https://dem.example.org/tiles.json'));
+		expect((await other.elevation)?.maxzoom).toBe(9);
 	});
 });
 

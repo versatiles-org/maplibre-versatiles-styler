@@ -492,7 +492,7 @@ test.describe('script filter', () => {
 		await dialog.getByRole('button', { name: 'Close' }).click();
 
 		const origin = page.locator(
-			'.maplibregl-versatiles-styler details:has(summary:has-text("Tile server"))'
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Tile sources"))'
 		);
 		await origin.locator('summary').click();
 		const input = origin.locator('input[type="text"]');

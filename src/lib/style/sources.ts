@@ -36,6 +36,41 @@ export interface LoadedSources {
 	fontFaces(): Promise<FontFaceInfo[] | undefined>;
 }
 
+/** The VersaTiles server other providers get their glyphs and sprites from: they have none of their own. */
+export const VERSATILES_ASSETS = 'https://tiles.versatiles.org';
+export const OPENFREEMAP_TILES = 'https://tiles.openfreemap.org/planet';
+export const MAPTERHORN_TILES = 'https://tiles.mapterhorn.com/tilejson.json';
+
+/** Whose tiles a style is built from. */
+export type Provider = 'versatiles' | 'openfreemap';
+
+/**
+ * The sources of OpenFreeMap: vector tiles in the OpenMapTiles schema and nothing else, so elevation
+ * is another server's, if any, and the assets are those of VersaTiles.
+ */
+export function openFreeMapSources(elevation?: string): SourceConfig {
+	return {
+		vector: OPENFREEMAP_TILES,
+		...(elevation ? { elevation } : {}),
+		assets: VERSATILES_ASSETS,
+	};
+}
+
+/** The provider of a source config, told by its vector tiles. */
+export function providerOf(config: SourceConfig): Provider {
+	return config.vector === OPENFREEMAP_TILES ? 'openfreemap' : 'versatiles';
+}
+
+/**
+ * What the TileJSON of a known source leaves out.
+ *
+ * Mapterhorn names no `maxzoom`, and covers the world to zoom 12 only: deeper tiles exist where it has
+ * finer data, and are a 404 everywhere else. Without a `maxzoom` MapLibre asks for them.
+ */
+const TILEJSON_DEFAULTS: Record<string, Partial<TileJSONSpecification>> = {
+	[MAPTERHORN_TILES]: { maxzoom: 12 },
+};
+
 /** The sources of a VersaTiles server: its tilesets `osm`, `satellite` and `elevation`, and its assets. */
 export function versatilesSources(origin: string): SourceConfig {
 	const tileJSON = (name: string) => new URL(`/tiles/${name}/tiles.json`, origin).href;
@@ -58,7 +93,10 @@ export function versatilesSources(origin: string): SourceConfig {
 export function loadSources(config: SourceConfig): LoadedSources {
 	const load = (name: SourceName): Promise<LoadedTileJSON> => {
 		const url = config[name];
-		return url === undefined ? Promise.resolve(null) : fetchTileJSON(url).catch(() => null);
+		if (url === undefined) return Promise.resolve(null);
+		return fetchTileJSON(url)
+			.then((tileJSON) => ({ ...TILEJSON_DEFAULTS[url], ...tileJSON }) as TileJSONSpecification)
+			.catch(() => null);
 	};
 
 	let fontFaces: Promise<FontFaceInfo[] | undefined> | undefined;

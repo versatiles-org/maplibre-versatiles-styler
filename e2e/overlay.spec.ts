@@ -44,7 +44,7 @@ test('overlay sections are there while the overlay is on', async ({ page }) => {
 		'.maplibregl-versatiles-styler .maplibregl-pane summary .section-title'
 	);
 	await expect(titles).toHaveText([
-		'Tile server',
+		'Tile sources',
 		'Base style',
 		'Satellite imagery',
 		'Overlay',

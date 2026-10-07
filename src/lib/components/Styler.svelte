@@ -12,6 +12,7 @@
 		satelliteStateFromConfig,
 		buildVectorStyle,
 		buildSatelliteStyle,
+		codeTargets,
 		configChangeCount,
 		containerBackground,
 		inspectSources,
@@ -38,9 +39,13 @@
 	} from '../style/inspect';
 	import {
 		loadSources,
+		openFreeMapSources,
+		providerOf,
+		MAPTERHORN_TILES,
 		vectorSchema,
 		versatilesSources,
 		type LoadedTileJSON,
+		type Provider,
 		type SourceConfig,
 		type VectorSchema,
 	} from '../style/sources';
@@ -56,6 +61,7 @@
 	import SatelliteStylePanel from './SatelliteStylePanel.svelte';
 	import ThemeSelect from './ThemeSelect.svelte';
 	import ExportDialog from './ExportDialog.svelte';
+	import InputSelect from './inputs/InputSelect.svelte';
 	import InspectPopup from './InspectPopup.svelte';
 	import ImportDialog from './ImportDialog.svelte';
 
@@ -70,13 +76,32 @@
 	let sourceConfig = $state.raw<SourceConfig>(
 		untrack(() => versatilesSources(config.origin ?? window.location.origin))
 	);
-	let originHost = $derived.by(() => {
+	let provider = $derived(providerOf(sourceConfig));
+	// The server to come back to from another provider.
+	let versatilesOrigin = $state(untrack(() => sourceConfig.assets));
+	let sourcesLabel = $derived.by(() => {
+		if (provider === 'openfreemap') return 'OpenFreeMap';
 		try {
 			return new URL(sourceConfig.assets).host;
 		} catch {
 			return sourceConfig.assets;
 		}
 	});
+
+	const PROVIDERS: { value: Provider; label: string }[] = [
+		{ value: 'versatiles', label: 'VersaTiles' },
+		{ value: 'openfreemap', label: 'OpenFreeMap' },
+	];
+	const ELEVATION_SOURCES = [
+		{ value: '', label: 'None' },
+		{ value: MAPTERHORN_TILES, label: 'Mapterhorn' },
+	];
+
+	function setProvider(next: Provider) {
+		setSourceConfig(
+			next === 'openfreemap' ? openFreeMapSources() : versatilesSources(versatilesOrigin)
+		);
+	}
 	let paneOpen = $state(untrack(() => config.open ?? false));
 
 	// ── Sources ──────────────────────────────────────────────────────────────────
@@ -387,7 +412,10 @@
 	/** Applies an imported style, optionally moving to the tile server it came from. */
 	function applyImport(result: ImportResult, newOrigin?: string) {
 		importOpen = false;
-		if (newOrigin) setSourceConfig(versatilesSources(newOrigin));
+		if (newOrigin) {
+			versatilesOrigin = newOrigin;
+			setSourceConfig(versatilesSources(newOrigin));
+		}
 		setBaseStyle(result.styleKey, result.config);
 		// Only the warnings are counted here: the notes are true of almost every import, and counting
 		// them would make a clean one look like it went badly.
@@ -411,7 +439,8 @@
 	}
 
 	function handleOriginChange(e: Event) {
-		setSourceConfig(versatilesSources((e.target as HTMLInputElement).value));
+		versatilesOrigin = (e.target as HTMLInputElement).value;
+		setSourceConfig(versatilesSources(versatilesOrigin));
 	}
 
 	// Initialize hash management and style
@@ -522,21 +551,46 @@
 		</div>
 		<h4 class="section-group">Setup</h4>
 		<SidebarSection
-			title="Tile server"
-			value={originHost}
-			description="The server the tiles, fonts and sprites come from."
+			title={config.externalSources ? 'Tile sources' : 'Tile server'}
+			value={sourcesLabel}
+			description={provider === 'versatiles'
+				? 'The server the tiles, fonts and sprites come from.'
+				: 'Where the tiles come from. Fonts and sprites are those of tiles.versatiles.org.'}
 		>
-			<div class="entry text-container">
-				<label for="{uid}-origin">Origin</label>
-				<div class="input">
-					<input
-						id="{uid}-origin"
-						type="text"
-						value={sourceConfig.assets}
-						onchange={handleOriginChange}
-					/>
+			{#if config.externalSources}
+				<InputSelect
+					label="Provider"
+					bind:value={() => provider, (value) => setProvider(value as Provider)}
+					defaultValue={undefined}
+					modified={false}
+					options={PROVIDERS}
+				/>
+			{/if}
+			{#if provider === 'versatiles'}
+				<div class="entry text-container">
+					<label for="{uid}-origin">Origin</label>
+					<div class="input">
+						<input
+							id="{uid}-origin"
+							type="text"
+							value={sourceConfig.assets}
+							onchange={handleOriginChange}
+						/>
+					</div>
 				</div>
-			</div>
+			{:else}
+				<InputSelect
+					label="Elevation"
+					hint="OpenFreeMap has no elevation data. Mapterhorn provides it for terrain and hillshade."
+					bind:value={
+						() => sourceConfig.elevation ?? '',
+						(value) => setSourceConfig(openFreeMapSources(value || undefined))
+					}
+					defaultValue={undefined}
+					modified={false}
+					options={ELEVATION_SOURCES}
+				/>
+			{/if}
 		</SidebarSection>
 		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
@@ -585,7 +639,12 @@
 	their position in the tree only decides which styles reach them, not where they appear.
 -->
 {#if exportOpen}
-	<ExportDialog style={exportStyle} code={exportCode} onclose={() => (exportOpen = false)} />
+	<ExportDialog
+		style={exportStyle}
+		code={exportCode}
+		targets={codeTargets(currentStyleKey, schema)}
+		onclose={() => (exportOpen = false)}
+	/>
 {/if}
 {#if importOpen}
 	<ImportDialog

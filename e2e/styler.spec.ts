@@ -64,7 +64,7 @@ test('all sidebar sections are present with correct titles', async ({ page }) =>
 	);
 
 	const expectedTitles = [
-		'Tile server',
+		'Tile sources',
 		'Base style',
 		'Layers',
 		'Individual colors',
@@ -92,7 +92,7 @@ test('sections are grouped under headings', async ({ page }) => {
 		);
 	expect(outline).toEqual([
 		'# Setup',
-		'Tile server',
+		'Tile sources',
 		'# Style',
 		'Base style',
 		'# Content',
@@ -110,7 +110,7 @@ test('sections are grouped under headings', async ({ page }) => {
 
 test('sections expand and collapse on click', async ({ page }) => {
 	const details = page.locator(
-		'.maplibregl-versatiles-styler .maplibregl-pane details:has(summary:has-text("Tile server"))'
+		'.maplibregl-versatiles-styler .maplibregl-pane details:has(summary:has-text("Tile sources"))'
 	);
 
 	await expect(details).not.toHaveAttribute('open', '');

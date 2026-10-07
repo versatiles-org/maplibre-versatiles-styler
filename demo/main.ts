@@ -21,6 +21,8 @@ window.addEventListener('DOMContentLoaded', () => {
 	map.addControl(
 		new VersaTilesStylerControl({
 			origin: 'https://tiles.versatiles.org',
+			// The demo offers the tiles of other providers; `?external=0` shows it as a VersaTiles server does.
+			externalSources: new URLSearchParams(window.location.search).get('external') !== '0',
 		}),
 		'top-left'
 	);

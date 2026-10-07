@@ -15,6 +15,7 @@ import {
 	satelliteStateFromConfig,
 	buildVectorStyle,
 	buildSatelliteStyle,
+	codeTargets,
 	containerBackground,
 	inspectSources,
 	minimalConfig,
@@ -282,6 +283,28 @@ describe('vector tiles of another schema', () => {
 				features: { ...vectorDefaults('gray').features, landcover: true },
 				urls: { base: ORIGIN, protomaps: omtTileJSON },
 			})
+		);
+	});
+
+	it('carries the zoom range of the elevation tiles into the style', () => {
+		const { hillshade } = osm.resolveOptions({ features: { hillshade: true } }).features;
+		const shaded = { ...state, features: { ...state.features, hillshade } };
+		const style = buildVectorStyle('gray', shaded, ORIGIN, {
+			vector: omtTileJSON,
+			schema: 'openmaptiles',
+			elevation: tileJSON('elevation', { maxzoom: 12 }),
+		});
+		expect(style.sources.elevation).toMatchObject({ type: 'raster-dem', maxzoom: 12 });
+	});
+
+	it('has a snippet for an npm project only: the browser bundle builds Shortbread tiles', () => {
+		expect(codeTargets('gray')).toEqual(['npm', 'browser']);
+		expect(codeTargets('gray', 'openmaptiles')).toEqual(['npm']);
+		expect(codeTargets('gray', 'protomaps')).toEqual(['npm']);
+		expect(codeTargets('satellite', 'openmaptiles')).toEqual(['npm', 'browser']);
+		const sources: StyleSources = { vector: omtTileJSON, schema: 'openmaptiles' };
+		expect(styleCode('gray', state, satelliteDefaults(), ORIGIN, sources)).toContain(
+			"import { omt } from '@versatiles/style/omt';"
 		);
 	});
 

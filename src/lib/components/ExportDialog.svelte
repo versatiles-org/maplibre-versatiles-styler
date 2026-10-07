@@ -8,12 +8,15 @@
 	let {
 		style,
 		code,
+		targets = ['npm', 'browser'],
 		onclose,
 	}: {
 		/** The style as built, or `undefined` while a TileJSON it needs is still loading. */
 		style: StyleSpecification | undefined;
 		/** The `@versatiles/style` snippet for the current options, for where it will run. */
 		code: (target: 'npm' | 'browser') => string;
+		/** Where the snippet can run: a style for tiles of another schema has no form for an HTML page. */
+		targets?: readonly ('npm' | 'browser')[];
 		onclose: () => void;
 	} = $props();
 
@@ -29,7 +32,9 @@
 
 	// Stringifying a large style is not free, so it happens for the tab actually being looked at.
 	let json = $derived(tab === 'json' && style ? styleJson(style, format) : '');
-	let snippet = $derived(tab === 'code' ? code(target) : '');
+	// The choice is the user's as long as the style has that form.
+	let usedTarget = $derived(targets.includes(target) ? target : targets[0]);
+	let snippet = $derived(tab === 'code' ? code(usedTarget) : '');
 
 	/** ←/→ move between tabs, as in a tablist. */
 	function handleTabKeydown(event: KeyboardEvent, index: number) {
@@ -139,23 +144,25 @@
 				Instead of a file, let <strong>@versatiles/style</strong> build the style in your own page.
 				The options below are exactly what you set here, so you can keep editing them in code.
 				<a
-					href={target === 'npm' ? DOCS.styleNpm : DOCS.styleBrowser}
+					href={usedTarget === 'npm' ? DOCS.styleNpm : DOCS.styleBrowser}
 					target="_blank"
 					rel="noopener noreferrer">How to use it</a
 				>
 			</p>
-			<div class="dialog-choice">
-				<span class="dialog-choice-label">For</span>
-				{@render segmented(
-					'Where the code runs',
-					target,
-					[
-						{ value: 'npm', label: 'npm project' },
-						{ value: 'browser', label: 'HTML page' },
-					],
-					(value) => (target = value as 'npm' | 'browser')
-				)}
-			</div>
+			{#if targets.length > 1}
+				<div class="dialog-choice">
+					<span class="dialog-choice-label">For</span>
+					{@render segmented(
+						'Where the code runs',
+						usedTarget,
+						[
+							{ value: 'npm', label: 'npm project' },
+							{ value: 'browser', label: 'HTML page' },
+						],
+						(value) => (target = value as 'npm' | 'browser')
+					)}
+				</div>
+			{/if}
 			<CodeBlock code={snippet} label="the code snippet" />
 		</div>
 	{/if}
