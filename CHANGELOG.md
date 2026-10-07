@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-10-07
+
+### Features
+
+- raise max label spacing to 1000%
+- fold tree rows with a rotating chevron
+- open the color picker from an edit button next to the color text
+- add tooltip hints for color and layer settings with interactive behavior
+
+### Bug Fixes
+
+- shorten the sky blend labels so they fit on one line
+- support the place label topics capitals, statecapitals and towns of @versatiles/style 6.3
+
+### Documentation
+
+- correct and extend the row hints; explain how to tilt the map
+- add hints to the sky, sun, label and satellite rows; keep nested color rows on one line
+
+### Tests
+
+- check that every option of @versatiles/style has a control or is ignored on purpose
+- expect the new place label topics in the "Apply to" picker
+- expect the new place label topics; always start a fresh dev server for e2e
+
+### Chores
+
+- update dependencies for @versatiles/style, maplibre-gl, and svelte
+
 ## [2.1.0] - 2026-10-06
 
 ### Features
