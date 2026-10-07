@@ -21,7 +21,10 @@ describe('labelNodes', () => {
 		expect(nodes.map((n) => [n.path, n.depth])).toEqual([
 			['all', 0],
 			['places', 1],
+			['places.capitals', 2],
+			['places.statecapitals', 2],
 			['places.cities', 2],
+			['places.towns', 2],
 			['places.villages', 2],
 			['places.hamlets', 2],
 			['places.districts', 2],
@@ -41,6 +44,7 @@ describe('labelNodes', () => {
 			['addresses', 1],
 		]);
 		expect(nodeAt('streets.refs').label).toBe('Route numbers');
+		expect(nodeAt('places.statecapitals').label).toBe('State capitals');
 		expect(nodeAt('addresses')).toEqual({
 			path: 'addresses',
 			label: 'House numbers',
@@ -53,7 +57,7 @@ describe('labelNodes', () => {
 		expect(nodeAt('water').topics).toEqual(['water.lakes', 'water.rivers']);
 		expect(nodeAt('water.rivers').topics).toEqual(['water.rivers']);
 		const all = nodeAt(ALL_LABELS).topics;
-		expect(all).toHaveLength(14);
+		expect(all).toHaveLength(17);
 		expect(new Set(all).size).toBe(all.length);
 		for (const topic of all) expect(topicStyle(defaults, topic).scale).toBe(1);
 	});
@@ -106,7 +110,7 @@ describe('node values', () => {
 
 	it('lists the font of every topic', () => {
 		const fonts = topicFonts(defaults, nodes);
-		expect(fonts).toHaveLength(14);
+		expect(fonts).toHaveLength(17);
 		expect(new Set(fonts)).toEqual(new Set(['noto_sans_regular', 'noto_sans_bold']));
 	});
 });

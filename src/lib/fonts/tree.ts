@@ -29,7 +29,10 @@ export function pickerFaces(
 const FONT_SAMPLES: Record<string, string> = {
 	all: 'Hamburg · Hauptstraße 12',
 	places: 'Zürich',
+	'places.capitals': 'Berlin',
+	'places.statecapitals': 'München',
 	'places.cities': 'Zürich',
+	'places.towns': 'Tübingen',
 	'places.villages': 'Grünwald',
 	'places.hamlets': 'Hinterzarten',
 	'places.districts': 'Altstadt',

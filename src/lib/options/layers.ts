@@ -37,6 +37,7 @@ const LABELS: Record<string, string> = {
 	footway: 'Footways',
 	aerialways: 'Aerial ways',
 	addresses: 'House numbers',
+	statecapitals: 'State capitals',
 	refs: 'Route numbers',
 	exits: 'Motorway exits',
 	names: 'Street names',

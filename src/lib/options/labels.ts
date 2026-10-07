@@ -22,6 +22,7 @@ const LABELS: Record<string, string> = {
 	[ALL_LABELS]: 'All labels',
 	pois: 'POIs',
 	addresses: 'House numbers',
+	statecapitals: 'State capitals',
 	names: 'Street names',
 	refs: 'Route numbers',
 	exits: 'Motorway exits',
