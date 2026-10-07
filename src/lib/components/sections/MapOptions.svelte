@@ -38,18 +38,18 @@
 	const BLENDS: { key: Blend; label: string; hint: string }[] = [
 		{
 			key: 'skyHorizonBlend',
-			label: 'Sky/Horizon Blend',
-			hint: 'How far the horizon color reaches up into the sky: 0% is a sharp edge at the horizon, 100% blends up to the middle of the sky.',
+			label: 'Sky Blend',
+			hint: 'The transition between sky and horizon. How far the horizon color reaches up into the sky: 0% is a sharp edge at the horizon, 100% blends up to the middle of the sky.',
 		},
 		{
 			key: 'horizonFogBlend',
-			label: 'Horizon/Fog Blend',
-			hint: 'How much the fog color mixes into the horizon: 0% leaves the horizon color alone, 100% blends the two up to the middle of the sky.',
+			label: 'Horizon Blend',
+			hint: 'The transition between horizon and fog. How much the fog color mixes into the horizon: 0% leaves the horizon color alone, 100% blends the two up to the middle of the sky.',
 		},
 		{
 			key: 'fogGroundBlend',
-			label: 'Fog/Ground Blend',
-			hint: 'Where the fog over the terrain begins: 0% at the center of the map, 100% only at the horizon. Shows with Terrain only.',
+			label: 'Fog Blend',
+			hint: 'The transition between fog and ground. Where the fog over the terrain begins: 0% at the center of the map, 100% only at the horizon. Shows with Terrain only.',
 		},
 		{
 			key: 'atmosphereBlend',

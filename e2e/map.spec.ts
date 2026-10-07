@@ -72,7 +72,7 @@ test('sky color follows the water color until it is set', async ({ page }) => {
 
 test('sky blends', async ({ page }) => {
 	const map = section(page, 'Map');
-	await setRange(row(map, 'Fog/Ground Blend').locator('input[type="range"]'), 20);
+	await setRange(row(map, 'Fog Blend').locator('input[type="range"]'), 20);
 	await expect.poll(async () => (await style(page)).sky?.['fog-ground-blend']).toBe(0.2);
 	await expect.poll(() => hashConfig(page)).toEqual({ sky: { fogGroundBlend: 0.2 } });
 });
