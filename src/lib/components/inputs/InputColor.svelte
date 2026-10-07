@@ -6,6 +6,7 @@
 	let {
 		label,
 		hint,
+		name,
 		disabled = false,
 		value = $bindable(),
 		defaultValue,
@@ -14,6 +15,8 @@
 	}: {
 		label: string;
 		hint?: string;
+		/** The color in the style, e.g. its option key: the tooltip of the label. */
+		name?: string;
 		disabled?: boolean;
 		value: string;
 		defaultValue: string;
@@ -84,7 +87,15 @@
 	}
 </script>
 
-<InputRow {label} {hint} {disabled} containerClass="color-container" {isModified} onReset={reset}>
+<InputRow
+	{label}
+	{hint}
+	{name}
+	{disabled}
+	containerClass="color-container"
+	{isModified}
+	onReset={reset}
+>
 	{#snippet leading()}
 		<button
 			type="button"

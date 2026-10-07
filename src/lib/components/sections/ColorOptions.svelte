@@ -17,6 +17,6 @@
 {#each groups as group (group.title)}
 	<p class="subsection-title">{group.title}</p>
 	{#each group.colors as { key, label } (key)}
-		<InputColor {label} hint={key} bind:value={colors[key]} defaultValue={defaults[key]} />
+		<InputColor {label} name={key} bind:value={colors[key]} defaultValue={defaults[key]} />
 	{/each}
 {/each}

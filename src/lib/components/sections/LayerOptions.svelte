@@ -106,7 +106,7 @@
 		{@const expandable = hasChildren || node.line}
 		<InputVisibility
 			label={node.label}
-			hint={id}
+			name={id}
 			{disabled}
 			value={layerValue(layers, node)}
 			modified={layerModified(layers, defaults, node)}

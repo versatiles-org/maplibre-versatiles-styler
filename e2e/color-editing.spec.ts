@@ -244,6 +244,111 @@ test.describe('gamma and contrast sliders', () => {
 	});
 });
 
+test.describe('row hints', () => {
+	function recolorSection(page: import('@playwright/test').Page) {
+		return page.locator(
+			'.maplibregl-versatiles-styler details:has(summary:has-text("Color adjustments"))'
+		);
+	}
+
+	test.beforeEach(async ({ page }) => {
+		await recolorSection(page).locator('summary').click();
+	});
+
+	test('a click on the ⓘ pins the tooltip next to it, within the pane', async ({ page }) => {
+		const recolor = recolorSection(page);
+		const info = recolor.getByRole('button', { name: 'About Saturate' });
+		const tip = page.getByRole('tooltip');
+		await expect(tip).toHaveCount(0);
+
+		await info.click();
+		await expect(tip).toHaveText(/Negative values fade colors toward grey/);
+		await expect(info).toHaveAttribute('aria-expanded', 'true');
+		const pane = (await page.locator('.maplibregl-pane').boundingBox())!;
+		const icon = (await info.boundingBox())!;
+		const box = (await tip.boundingBox())!;
+		// Below the ⓘ, or above it where the window ends.
+		expect(box.y > icon.y + icon.height || box.y + box.height < icon.y).toBe(true);
+		expect(box.x).toBeGreaterThanOrEqual(pane.x);
+		expect(box.x + box.width).toBeLessThanOrEqual(pane.x + pane.width);
+
+		// It stays while the setting of its row is tried, and goes with a click elsewhere.
+		await page.mouse.move(0, 0);
+		await recolor
+			.locator('.entry', { has: page.locator('label:text-is("Saturate")') })
+			.locator('input[type="range"]')
+			.click();
+		await expect(tip).toBeVisible();
+		await recolor.locator('.section-description').click();
+		await expect(tip).toHaveCount(0);
+	});
+
+	test('the second click closes it; another ⓘ replaces it; Escape closes it', async ({ page }) => {
+		const recolor = recolorSection(page);
+		const tip = page.getByRole('tooltip');
+		const saturate = recolor.getByRole('button', { name: 'About Saturate' });
+		await saturate.click();
+		await saturate.click();
+		await expect(tip).toHaveCount(0);
+
+		await saturate.click();
+		await recolor.getByRole('button', { name: 'About Gamma' }).click();
+		await expect(tip).toHaveCount(1);
+		await expect(tip).toHaveText(/brightness curve/);
+
+		await page.keyboard.press('Escape');
+		await expect(tip).toHaveCount(0);
+	});
+
+	test.describe('with a finger', () => {
+		test.use({ hasTouch: true });
+
+		test('a tap on the label opens and closes the tooltip, and leaves the setting alone', async ({
+			page,
+		}) => {
+			const recolor = recolorSection(page);
+			const row = recolor.locator('.entry', {
+				has: page.locator('label:text-is("Invert Brightness")'),
+			});
+			const tip = page.getByRole('tooltip');
+			await row.locator('label').tap();
+			await expect(tip).toHaveText(/Flip each color/);
+			await expect(row.locator('input[type="checkbox"]')).not.toBeChecked();
+
+			await row.locator('label').tap();
+			await expect(tip).toHaveCount(0);
+
+			await row.getByRole('button', { name: 'About Invert Brightness' }).tap();
+			await expect(tip).toBeVisible();
+			await recolor.locator('.section-description').tap();
+			await expect(tip).toHaveCount(0);
+		});
+	});
+
+	test('a click on the label with a mouse still reaches the setting', async ({ page }) => {
+		const row = recolorSection(page).locator('.entry', {
+			has: page.locator('label:text-is("Invert Brightness")'),
+		});
+		await row.locator('label').click();
+		await expect(row.locator('input[type="checkbox"]')).toBeChecked();
+		await expect(page.getByRole('tooltip')).toHaveCount(0);
+	});
+
+	test('hovering the ⓘ shows the tooltip, and leaving it hides it', async ({ page, isMobile }) => {
+		test.skip(isMobile, 'no hover on touch');
+		const info = recolorSection(page).getByRole('button', { name: 'About Saturate' });
+		const tip = page.getByRole('tooltip');
+		await info.hover();
+		await expect(tip).toBeVisible();
+		// The pointer may cross over to the tooltip.
+		await tip.hover();
+		await page.waitForTimeout(400);
+		await expect(tip).toBeVisible();
+		await page.mouse.move(0, 0);
+		await expect(tip).toHaveCount(0);
+	});
+});
+
 test.describe('color field', () => {
 	test.beforeEach(async ({ page }) => {
 		await colorsSection(page).locator('summary').click();

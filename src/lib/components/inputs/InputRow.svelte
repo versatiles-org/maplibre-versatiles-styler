@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import HintTip from './HintTip.svelte';
 
 	let {
 		label,
 		hint,
+		name,
 		containerClass,
 		disabled = false,
 		isModified,
@@ -15,7 +17,10 @@
 		children,
 	}: {
 		label: string;
+		/** An explanation of the setting: an ⓘ after the label shows it as a tooltip. */
 		hint?: string;
+		/** What the row stands for in the style, e.g. an option key: the tooltip of the label. */
+		name?: string;
 		containerClass: string;
 		disabled?: boolean;
 		isModified: boolean;
@@ -31,6 +36,16 @@
 	} = $props();
 
 	const uid = $props.id();
+
+	let tip = $state<HintTip>();
+	let touched = false;
+
+	/** A finger on the label of a row with a hint opens the hint: the ⓘ alone is small to hit. */
+	function tapLabel(e: MouseEvent) {
+		if (!touched) return;
+		e.preventDefault();
+		tip?.toggle();
+	}
 </script>
 
 <div class="entry {containerClass}" class:disabled class:modified={isModified}>
@@ -49,7 +64,21 @@
 			<span class="expander" aria-hidden="true"></span>
 		{/if}
 		{@render leading?.()}
-		<label for={uid} title={hint}>{label}</label>
+		{#if hint}
+			<!-- One run of text, so that the ⓘ follows the last word of a label that wraps. -->
+			<span class="hinted">
+				<!-- A larger target for a finger only: the ⓘ button is what the keyboard and a mouse use. -->
+				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+				<label
+					for={uid}
+					title={name}
+					onpointerdown={(e) => (touched = e.pointerType !== 'mouse')}
+					onclick={tapLabel}>{label}</label
+				><HintTip {label} {hint} bind:this={tip} />
+			</span>
+		{:else}
+			<label for={uid} title={name}>{label}</label>
+		{/if}
 	</div>
 	<div class="input">
 		{@render children(uid)}

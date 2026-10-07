@@ -117,7 +117,7 @@
 							{#if node && layers && layerDefaults}
 								<InputVisibility
 									label={node.label}
-									hint="layer group"
+									name="layer group"
 									value={layerValue(layers, node)}
 									modified={layerModified(layers, layerDefaults, node)}
 									onchange={(value) => setLayerValue(layers, node, value)}
@@ -128,7 +128,7 @@
 								{#each colorRows(layer) as row (row.key)}
 									<InputColor
 										label={colorLabel(row.key)}
-										hint={row.properties.join(', ')}
+										name={row.properties.join(', ')}
 										bind:value={
 											() => colors[row.key as keyof ResolvedColors],
 											(value) => (colors[row.key as keyof ResolvedColors] = value)

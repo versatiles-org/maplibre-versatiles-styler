@@ -6,7 +6,7 @@
 
 	let {
 		label,
-		hint,
+		name,
 		disabled = false,
 		value,
 		modified,
@@ -16,7 +16,8 @@
 		onToggle,
 	}: {
 		label: string;
-		hint?: string;
+		/** The group in the style, e.g. its path: the tooltip of the label. */
+		name?: string;
 		disabled?: boolean;
 		/** `undefined` when the groups below differ. */
 		value: LayerValue | undefined;
@@ -55,7 +56,7 @@
 
 <InputRow
 	{label}
-	{hint}
+	{name}
 	{disabled}
 	containerClass="visibility-container"
 	isModified={modified}
