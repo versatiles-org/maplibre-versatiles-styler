@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-09
+
+### Features
+
+- support MapLibre GL JS from 5.0.0 and declare it as a peer dependency, close #31 ([335a658](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/335a6584ad9683400c348a9a51333b804f973fa6))
+
+### Bug Fixes
+
+- keep only the altitude workaround for MapLibre below 5.5.0, after @versatiles/style 6.4.0 ([83df58f](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/83df58f30f3cc58ce2fa45ba915e58996f920950))
+
+### Chores
+
+- update dependencies to latest versions in package.json and package-lock.json ([c7759b7](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/c7759b79963a1f2e95eb92d0b3748b7879a8bdeb))
+
 ## [2.3.0] - 2026-10-07
 
 ### Features
