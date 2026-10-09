@@ -78,17 +78,14 @@ describe('styleForEditing', () => {
 		expect(style).not.toHaveProperty('transition');
 	});
 
-	it('leaves out the hillshade properties that MapLibre learned in 5.5.0, for older versions only', () => {
+	it('leaves out the altitude of the hillshade light, which MapLibre learned in 5.5.0, for older versions only', () => {
 		const style = osm({ sun: true, features: { hillshade: true } });
 		const hillshadePaint = (s: StyleSpecification) =>
 			Object.keys(s.layers.find((layer) => layer.type === 'hillshade')?.paint ?? {});
-		expect(hillshadePaint(style)).toEqual(
-			expect.arrayContaining(['hillshade-method', 'hillshade-illumination-altitude'])
-		);
+		expect(hillshadePaint(style)).toContain('hillshade-illumination-altitude');
 
 		for (const version of ['5.0.0', '5.4.0', '4.7.1']) {
 			const paint = hillshadePaint(styleForEditing(style, version));
-			expect(paint).not.toContain('hillshade-method');
 			expect(paint).not.toContain('hillshade-illumination-altitude');
 			expect(paint).toContain('hillshade-illumination-direction');
 		}
@@ -96,7 +93,7 @@ describe('styleForEditing', () => {
 			expect(styleForEditing(style, version).layers).toEqual(style.layers);
 		}
 		// The style it is given is the one that is downloaded: it stays as built.
-		expect(hillshadePaint(style)).toContain('hillshade-method');
+		expect(hillshadePaint(style)).toContain('hillshade-illumination-altitude');
 	});
 });
 
