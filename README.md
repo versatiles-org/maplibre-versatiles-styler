@@ -40,8 +40,8 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite
 
-Requires MapLibre GL JS 6 or later: the styles it builds use paint properties (such as
-`line-layer-opacity`) that earlier versions reject.
+Requires MapLibre GL JS 5.0.0 or later, and is developed and tested against version 6. Before 5.5.0 the
+sun turns the hillshade's light but cannot raise or lower it.
 
 ---
 

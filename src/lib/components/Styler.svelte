@@ -272,7 +272,7 @@
 			// has put one there; the first style is never a diff anyway.
 			const styleLoaded = rendered === undefined || map.isStyleLoaded() === true;
 			map.setStyle(
-				styleForEditing(next.style),
+				styleForEditing(next.style, map.version),
 				setStyleOptions(rendered, next.rendered, styleLoaded)
 			);
 			rendered = next.rendered;

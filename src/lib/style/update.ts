@@ -47,15 +47,56 @@ function same(a: unknown, b: unknown): boolean {
 }
 
 /**
- * The style as the styler puts it on the map, tuned for editing. Downloads and copied code use the style
- * as built.
+ * Hillshade paint properties that MapLibre GL JS knows since 5.5.0. An earlier version throws on them
+ * while it builds the layer, and the style never finishes loading.
+ */
+const HILLSHADE_PAINT_SINCE_5_5 = ['hillshade-method', 'hillshade-illumination-altitude'] as const;
+
+/** Whether `version` (`map.version`) is at least `major.minor`. An unreadable version counts as current. */
+function isAtLeast(version: string | undefined, major: number, minor: number): boolean {
+	const match = /^(\d+)\.(\d+)/.exec(version ?? '');
+	if (!match) return true;
+	const [mapMajor, mapMinor] = [Number(match[1]), Number(match[2])];
+	return mapMajor > major || (mapMajor === major && mapMinor >= minor);
+}
+
+/**
+ * The style without what the MapLibre GL JS of the page does not know yet, so that the styler works
+ * from 5.0.0 on.
+ *
+ * Before 5.5.0 the hillshade has one method and a fixed altitude of the light. `@versatiles/style`
+ * names the method although it is the default one, so leaving it out changes nothing; without the
+ * altitude, the sun turns the hillshade's light but does not raise or lower it.
+ */
+function styleForVersion(
+	style: StyleSpecification,
+	version: string | undefined
+): StyleSpecification {
+	if (isAtLeast(version, 5, 5)) return style;
+	return {
+		...style,
+		layers: style.layers.map((layer) => {
+			if (layer.type !== 'hillshade' || !layer.paint) return layer;
+			const paint: Record<string, unknown> = { ...layer.paint };
+			for (const property of HILLSHADE_PAINT_SINCE_5_5) delete paint[property];
+			return { ...layer, paint };
+		}),
+	};
+}
+
+/**
+ * The style as the styler puts it on the map, tuned for editing and for the MapLibre GL JS of the page
+ * (`mapVersion`, see `styleForVersion`). Downloads and copied code use the style as built.
  *
  * `transition: { duration: 0 }`: MapLibre animates paint changes over 300 ms by default, so every color,
  * recolor and opacity edit would take that long to settle. Without the animation, the first frame after
  * an edit is final. MapLibre reads the transition from the current style, so this also applies to diffs.
  */
-export function styleForEditing(style: StyleSpecification): StyleSpecification {
-	return { ...style, transition: { duration: 0, delay: 0 } };
+export function styleForEditing(
+	style: StyleSpecification,
+	mapVersion?: string
+): StyleSpecification {
+	return { ...styleForVersion(style, mapVersion), transition: { duration: 0, delay: 0 } };
 }
 
 /**
