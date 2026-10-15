@@ -52,11 +52,11 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/node": "^26.6.5",
     "@versatiles/release-tool": "^2.20.0",
-    "@versatiles/style": "^6.4.1",
-    "@vitest/coverage-v8": "^5.0.4",
+    "@versatiles/style": "^7.0.0",
+    "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^10.12.0",
     "eslint-plugin-svelte": "^3.23.1",
-    "jsdom": "^30.1.2",
+    "jsdom": "^30.1.3",
     "maplibre-gl": "^6.14.0",
     "pmtiles": "^4.5.0",
     "prettier": "^3.9.10",
@@ -68,7 +68,7 @@
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",
     "vite-plugin-dts": "^5.1.2",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.5"
   },
   "allowScripts": {
     "@parcel/watcher": true,
