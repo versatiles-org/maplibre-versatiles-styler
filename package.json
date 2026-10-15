@@ -52,7 +52,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/node": "^26.6.5",
     "@versatiles/release-tool": "^2.20.0",
-    "@versatiles/style": "^7.0.0",
+    "@versatiles/style": "^7.0.1",
     "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^10.12.0",
     "eslint-plugin-svelte": "^3.23.1",
