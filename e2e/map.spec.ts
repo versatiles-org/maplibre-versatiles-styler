@@ -79,11 +79,15 @@ test('sky blends', async ({ page }) => {
 
 test('light', async ({ page }) => {
 	const map = section(page, 'Map');
-	expect((await style(page)).light).toBeUndefined();
+	expect((await style(page)).light).toMatchObject({ anchor: 'viewport' });
+
+	await row(map, 'Light').locator('input[type="checkbox"]').uncheck();
+	await expect.poll(async () => (await style(page)).light).toBeUndefined();
+	await expect.poll(() => hashConfig(page)).toEqual({ light: false });
 	await expect(row(map, 'Direction')).toHaveCount(0);
 
 	await row(map, 'Light').locator('input[type="checkbox"]').check();
-	await expect.poll(() => hashConfig(page)).toEqual({ light: true });
+	await expect.poll(() => hashConfig(page)).toEqual({});
 
 	await setRange(row(map, 'Direction').locator('input[type="range"]'), 90);
 	await setRange(row(map, 'Intensity').locator('input[type="range"]'), 80);
@@ -93,7 +97,8 @@ test('light', async ({ page }) => {
 	await expect.poll(() => hashConfig(page)).toEqual({ light: { direction: 90, intensity: 0.8 } });
 
 	await row(map, 'Turn with Map').locator('input[type="checkbox"]').check();
-	await expect.poll(async () => (await style(page)).light?.anchor).toBe('map');
+	// On the globe the light turns with the map only from the zoom of the buildings on, as a `step`.
+	await expect.poll(async () => (await style(page)).light?.anchor).toContain('map');
 	await expect
 		.poll(() => hashConfig(page))
 		.toEqual({ light: { direction: 90, intensity: 0.8, rotateWithMap: true } });

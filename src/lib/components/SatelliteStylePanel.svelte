@@ -174,7 +174,11 @@
 	onReset={elevationAvailable ? resetElevation : undefined}
 	changes={changes('features.terrain', 'features.hillshade')}
 >
-	<ElevationOptions bind:features={options.features} disabled={!elevationAvailable} />
+	<ElevationOptions
+		bind:features={options.features}
+		lit={options.light !== false}
+		disabled={!elevationAvailable}
+	/>
 </SidebarSection>
 <SidebarSection
 	title="Map"

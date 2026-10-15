@@ -7,9 +7,12 @@
 
 	let {
 		features = $bindable(),
+		lit,
 		disabled = false,
 	}: {
 		features: { terrain: ResolvedTerrain; hillshade: ResolvedHillshade };
+		/** Whether the map has a light, which shades the hillshade without its accent color. */
+		lit: boolean;
 		disabled?: boolean;
 	} = $props();
 
@@ -46,7 +49,7 @@
 {/if}
 <InputCheckbox
 	label="Hillshade"
-	hint="Shade the slopes so that the relief shows, also on a map that is not tilted. The light comes from the Light of the Map section, if it is on."
+	hint="Shade the slopes so that the relief shows, also on a map that is not tilted. The light comes from the Light of the Map section."
 	{disabled}
 	bind:value={
 		() => features.hillshade !== false,
@@ -81,8 +84,10 @@
 		/>
 		<InputColor
 			label="Accent Color"
-			hint="An extra shade for rugged terrain such as cliffs and gorges."
-			{disabled}
+			hint={lit
+				? 'An extra shade for rugged terrain such as cliffs and gorges. Only without the Light of the Map section, which shades the slopes by itself.'
+				: 'An extra shade for rugged terrain such as cliffs and gorges.'}
+			disabled={disabled || lit}
 			bind:value={features.hillshade.accentColor}
 			defaultValue={hillshadeDefaults.accentColor}
 		/>

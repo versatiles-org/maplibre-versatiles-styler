@@ -78,15 +78,17 @@ describe('styleForEditing', () => {
 		expect(style).not.toHaveProperty('transition');
 	});
 
-	it('leaves out the altitude of the hillshade light, which MapLibre learned in 5.5.0, for older versions only', () => {
+	it('leaves out the hillshade method and light altitude, which MapLibre learned in 5.5.0, for older versions only', () => {
 		const style = osm({ light: true, features: { hillshade: true } });
 		const hillshadePaint = (s: StyleSpecification) =>
 			Object.keys(s.layers.find((layer) => layer.type === 'hillshade')?.paint ?? {});
 		expect(hillshadePaint(style)).toContain('hillshade-illumination-altitude');
+		expect(hillshadePaint(style)).toContain('hillshade-method');
 
 		for (const version of ['5.0.0', '5.4.0', '4.7.1']) {
 			const paint = hillshadePaint(styleForEditing(style, version));
 			expect(paint).not.toContain('hillshade-illumination-altitude');
+			expect(paint).not.toContain('hillshade-method');
 			expect(paint).toContain('hillshade-illumination-direction');
 		}
 		for (const version of ['5.5.0', '5.24.0', '6.0.0', '10.1.0', undefined]) {

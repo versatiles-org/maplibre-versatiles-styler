@@ -121,6 +121,44 @@ export function overlayDefaults(theme: Palette): ResolvedSatelliteOverlay {
 	return satellite.resolveOptions({ osmOverlay: { theme } }).osmOverlay as ResolvedSatelliteOverlay;
 }
 
+/** What the deprecated `sun` of @versatiles/style v6 left unset, and `light` sets otherwise. */
+const V6_SUN = { direction: 210, altitude: 60 };
+
+/**
+ * Options from a link shared before @versatiles/style v7, with `sun` and `features.hillshade.anchor`
+ * translated to `light`, which v7 has in their place and which throws on both. `sun`'s own defaults
+ * are written out, so that the link looks as it did. A link without either keeps the default light:
+ * nothing tells it apart from a newer link that left `light` at its default.
+ */
+export function migrateConfig(
+	config: Record<string, unknown> | null | undefined
+): Record<string, unknown> | null | undefined {
+	if (!config) return config;
+	const { sun, ...rest } = config;
+	const features = rest.features as Record<string, unknown> | undefined;
+	const hillshade = features?.hillshade as Record<string, unknown> | undefined;
+	const hillshadeAnchor = typeof hillshade === 'object' ? hillshade.anchor : undefined;
+	if (sun === undefined && hillshadeAnchor === undefined) return config;
+
+	if (hillshadeAnchor !== undefined) {
+		const { anchor: _anchor, ...hillshadeRest } = hillshade as Record<string, unknown>;
+		rest.features = { ...features, hillshade: hillshadeRest };
+	}
+	if (rest.light !== undefined) return rest;
+	if (sun !== undefined) {
+		const { anchor, ...values } = (sun === true ? {} : sun) as Record<string, unknown>;
+		rest.light = {
+			...V6_SUN,
+			...values,
+			...(anchor === undefined ? {} : { rotateWithMap: anchor === 'map' }),
+		};
+	} else {
+		// `hillshade.anchor` alone: the light turns with the map, or not, as the hillshade did.
+		rest.light = { rotateWithMap: hillshadeAnchor === 'map' };
+	}
+	return rest;
+}
+
 /**
  * The vector state for options stored in a URL hash. Options that do not resolve — v5 shapes from
  * an old link, or anything else invalid — fall back to the theme's defaults.
@@ -130,7 +168,7 @@ export function vectorStateFromConfig(
 	config: Record<string, unknown> | null | undefined
 ): VectorState {
 	try {
-		return toVectorState(osm.resolveOptions({ ...(config as OsmOptions), theme }));
+		return toVectorState(osm.resolveOptions({ ...(migrateConfig(config) as OsmOptions), theme }));
 	} catch (error) {
 		console.warn('Ignoring invalid style options:', error);
 		return vectorDefaults(theme);
@@ -141,7 +179,7 @@ export function satelliteStateFromConfig(
 	config: Record<string, unknown> | null | undefined
 ): SatelliteState {
 	try {
-		return toSatelliteState(satellite.resolveOptions(config as SatelliteOptions));
+		return toSatelliteState(satellite.resolveOptions(migrateConfig(config) as SatelliteOptions));
 	} catch (error) {
 		console.warn('Ignoring invalid style options:', error);
 		return satelliteDefaults();

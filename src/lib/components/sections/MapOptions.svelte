@@ -28,6 +28,7 @@
 
 	const skyDefaults = osm.resolveOptions({ sky: true }).sky as Sky;
 	const lightDefaults = osm.resolveOptions({ light: true }).light as Light;
+	const lightByDefault = osm.resolveOptions().light !== false;
 
 	const PROJECTIONS = [
 		{ value: 'globe', label: 'Globe' },
@@ -127,10 +128,10 @@
 
 <InputCheckbox
 	label="Light"
-	hint="One light for the whole map: it shades the hillshade, lights 3D buildings and, on the globe, decides which side of the atmosphere glows. Off, MapLibre lights hillshade and buildings from different sides."
+	hint="One light for the whole map: it shades the hillshade, lights 3D buildings and, on the globe, decides which side of the atmosphere glows. Off, MapLibre lights hillshade and buildings from different sides, and the hillshade draws its accent color."
 	{disabled}
 	bind:value={() => light !== false, (v) => (light = v ? structuredClone(lightDefaults) : false)}
-	defaultValue={false}
+	defaultValue={lightByDefault}
 />
 {#if light}
 	<div class="nested">
@@ -146,7 +147,7 @@
 		/>
 		<InputNumber
 			label="Altitude"
-			hint="How high the light stands above the horizon."
+			hint="How high the light stands above the horizon: the lower, the longer the shadows of the hillshade."
 			{disabled}
 			bind:value={light.altitude}
 			defaultValue={lightDefaults.altitude}

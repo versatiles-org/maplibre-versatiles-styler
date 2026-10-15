@@ -58,10 +58,10 @@ function isAtLeast(version: string | undefined, major: number, minor: number): b
  * The style without what the MapLibre GL JS of the page does not know yet, so that the styler works
  * from 5.0.0 on.
  *
- * Before 5.5.0 the hillshade's light has a fixed altitude: MapLibre throws on
- * `hillshade-illumination-altitude` while it builds the layer, and the style never finishes loading.
- * `@versatiles/style` writes the property when a light is set. Without it, the hillshade follows the
- * light's direction but not its altitude.
+ * Before 5.5.0 the hillshade has one method and a fixed altitude: MapLibre throws on `hillshade-method`
+ * and `hillshade-illumination-altitude` while it builds the layer, and the style never finishes loading.
+ * `@versatiles/style` writes both when a light is set. Without them, the hillshade follows the light's
+ * direction but not its altitude.
  */
 function styleForVersion(
 	style: StyleSpecification,
@@ -73,6 +73,7 @@ function styleForVersion(
 		layers: style.layers.map((layer) => {
 			if (layer.type !== 'hillshade' || !layer.paint) return layer;
 			const paint: Record<string, unknown> = { ...layer.paint };
+			delete paint['hillshade-method'];
 			delete paint['hillshade-illumination-altitude'];
 			return { ...layer, paint };
 		}),

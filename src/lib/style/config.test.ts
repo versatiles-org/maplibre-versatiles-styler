@@ -12,6 +12,7 @@ import {
 	satelliteDefaults,
 	overlayDefaults,
 	vectorStateFromConfig,
+	migrateConfig,
 	satelliteStateFromConfig,
 	buildVectorStyle,
 	buildSatelliteStyle,
@@ -222,6 +223,40 @@ describe('state from hash config', () => {
 		expect(satelliteStateFromConfig({ rasterOpacity: 0.5 })).toEqual(satelliteDefaults());
 		expect(satelliteStateFromConfig({ raster: { opacity: 0.5 } }).raster.opacity).toBe(0.5);
 		expect(satelliteStateFromConfig(null)).toEqual(satelliteDefaults());
+	});
+
+	it('reads the sun of a v6 link as a light with the values of that sun', () => {
+		expect(vectorStateFromConfig('gray', { sun: true }).light).toEqual({
+			direction: 210,
+			altitude: 60,
+			rotateWithMap: false,
+			color: '#ffffff',
+			intensity: 0.5,
+		});
+		expect(
+			satelliteStateFromConfig({ sun: { direction: 90, anchor: 'map', intensity: 0.8 } }).light
+		).toMatchObject({ direction: 90, altitude: 60, rotateWithMap: true, intensity: 0.8 });
+	});
+
+	it('reads the hillshade anchor of a v6 link as a light that turns with the map, or not', () => {
+		const state = vectorStateFromConfig('gray', {
+			features: { hillshade: { anchor: 'map', shadowColor: '#ff0000' } },
+		});
+		expect(state.light).toMatchObject({ direction: 315, rotateWithMap: true });
+		expect(state.features.hillshade).toMatchObject({ shadowColor: '#ff0000' });
+		expect(state.features.hillshade).not.toHaveProperty('anchor');
+
+		const both = vectorStateFromConfig('gray', {
+			sun: { anchor: 'viewport' },
+			features: { hillshade: { anchor: 'map' } },
+		});
+		expect(both.light).toMatchObject({ rotateWithMap: false });
+	});
+
+	it('leaves a link without sun or hillshade anchor alone', () => {
+		const config = { light: false, features: { hillshade: true } };
+		expect(migrateConfig(config)).toBe(config);
+		expect(vectorStateFromConfig('gray', config).light).toBe(false);
 	});
 });
 
