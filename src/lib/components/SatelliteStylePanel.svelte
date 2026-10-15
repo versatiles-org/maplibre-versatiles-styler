@@ -82,7 +82,7 @@
 	function resetMap() {
 		options.projection = defaults.projection;
 		options.sky = structuredClone(defaults.sky);
-		options.sun = structuredClone(defaults.sun);
+		options.light = structuredClone(defaults.light);
 	}
 </script>
 
@@ -178,14 +178,14 @@
 </SidebarSection>
 <SidebarSection
 	title="Map"
-	description="Projection, sky and sun."
+	description="Projection, sky and light."
 	onReset={resetMap}
-	changes={changes('projection', 'sky', 'sun')}
+	changes={changes('projection', 'sky', 'light')}
 >
 	<MapOptions
 		bind:projection={options.projection}
 		bind:sky={options.sky}
-		bind:sun={options.sun}
+		bind:light={options.light}
 		skyColorFallback={options.osmOverlay ? options.osmOverlay.colors.water : MAPLIBRE_SKY_COLOR}
 	/>
 </SidebarSection>

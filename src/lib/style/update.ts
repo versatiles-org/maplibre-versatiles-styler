@@ -60,8 +60,8 @@ function isAtLeast(version: string | undefined, major: number, minor: number): b
  *
  * Before 5.5.0 the hillshade's light has a fixed altitude: MapLibre throws on
  * `hillshade-illumination-altitude` while it builds the layer, and the style never finishes loading.
- * `@versatiles/style` writes the property when a sun is set. Without it, the sun turns the hillshade's
- * light but does not raise or lower it.
+ * `@versatiles/style` writes the property when a light is set. Without it, the hillshade follows the
+ * light's direction but not its altitude.
  */
 function styleForVersion(
 	style: StyleSpecification,

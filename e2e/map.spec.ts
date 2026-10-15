@@ -77,21 +77,29 @@ test('sky blends', async ({ page }) => {
 	await expect.poll(() => hashConfig(page)).toEqual({ sky: { fogGroundBlend: 0.2 } });
 });
 
-test('sun', async ({ page }) => {
+test('light', async ({ page }) => {
 	const map = section(page, 'Map');
 	expect((await style(page)).light).toBeUndefined();
 	await expect(row(map, 'Direction')).toHaveCount(0);
 
-	await row(map, 'Sun').locator('input[type="checkbox"]').check();
-	await expect.poll(() => hashConfig(page)).toEqual({ sun: true });
+	await row(map, 'Light').locator('input[type="checkbox"]').check();
+	await expect.poll(() => hashConfig(page)).toEqual({ light: true });
 
 	await setRange(row(map, 'Direction').locator('input[type="range"]'), 90);
 	await setRange(row(map, 'Intensity').locator('input[type="range"]'), 80);
 	await expect
 		.poll(async () => (await style(page)).light)
-		.toMatchObject({ position: [1.15, 90, 30], color: 'rgb(255,255,255)', intensity: 0.8 });
-	await expect.poll(() => hashConfig(page)).toEqual({ sun: { direction: 90, intensity: 0.8 } });
+		.toMatchObject({ anchor: 'viewport', color: 'rgb(255,255,255)', intensity: 0.8 });
+	await expect.poll(() => hashConfig(page)).toEqual({ light: { direction: 90, intensity: 0.8 } });
+
+	await row(map, 'Turn with Map').locator('input[type="checkbox"]').check();
+	await expect.poll(async () => (await style(page)).light?.anchor).toBe('map');
+	await expect
+		.poll(() => hashConfig(page))
+		.toEqual({ light: { direction: 90, intensity: 0.8, rotateWithMap: true } });
 
 	await row(map, 'Intensity').locator('button.reset').click();
-	await expect.poll(() => hashConfig(page)).toEqual({ sun: { direction: 90 } });
+	await expect
+		.poll(() => hashConfig(page))
+		.toEqual({ light: { direction: 90, rotateWithMap: true } });
 });

@@ -4,7 +4,6 @@
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputColor from '../inputs/InputColor.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
-	import InputSegmented from '../inputs/InputSegmented.svelte';
 
 	let {
 		features = $bindable(),
@@ -18,11 +17,6 @@
 	const enabled = osm.resolveOptions({ features: { terrain: true, hillshade: true } }).features;
 	const terrainDefaults = enabled.terrain as Exclude<ResolvedTerrain, false>;
 	const hillshadeDefaults = enabled.hillshade as Exclude<ResolvedHillshade, false>;
-
-	const ANCHORS = [
-		{ value: 'map', label: 'Map' },
-		{ value: 'viewport', label: 'Screen' },
-	];
 </script>
 
 <InputCheckbox
@@ -52,7 +46,7 @@
 {/if}
 <InputCheckbox
 	label="Hillshade"
-	hint="Shade the slopes so that the relief shows, also on a map that is not tilted. The light comes from the Sun of the Map section, if it is on."
+	hint="Shade the slopes so that the relief shows, also on a map that is not tilted. The light comes from the Light of the Map section, if it is on."
 	{disabled}
 	bind:value={
 		() => features.hillshade !== false,
@@ -91,19 +85,6 @@
 			{disabled}
 			bind:value={features.hillshade.accentColor}
 			defaultValue={hillshadeDefaults.accentColor}
-		/>
-		<InputSegmented
-			label="Light Source"
-			hint="Map: the light keeps its compass direction and turns with the map. Screen: it keeps its direction on the screen, however the map is turned."
-			{disabled}
-			bind:value={
-				() => (features.hillshade ? features.hillshade.anchor : undefined),
-				(v) =>
-					features.hillshade &&
-					(features.hillshade.anchor = (v ?? hillshadeDefaults.anchor) as 'map' | 'viewport')
-			}
-			defaultValue={hillshadeDefaults.anchor}
-			options={ANCHORS}
 		/>
 	</div>
 {/if}

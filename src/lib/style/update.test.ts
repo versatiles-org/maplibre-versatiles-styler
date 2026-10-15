@@ -79,7 +79,7 @@ describe('styleForEditing', () => {
 	});
 
 	it('leaves out the altitude of the hillshade light, which MapLibre learned in 5.5.0, for older versions only', () => {
-		const style = osm({ sun: true, features: { hillshade: true } });
+		const style = osm({ light: true, features: { hillshade: true } });
 		const hillshadePaint = (s: StyleSpecification) =>
 			Object.keys(s.layers.find((layer) => layer.type === 'hillshade')?.paint ?? {});
 		expect(hillshadePaint(style)).toContain('hillshade-illumination-altitude');

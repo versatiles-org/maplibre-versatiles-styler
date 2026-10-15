@@ -414,10 +414,10 @@ describe('minimalConfig', () => {
 		state.osmOverlay = overlay;
 		state.projection = 'mercator';
 		state.sky = { ...(state.sky as object), skyColor: '#123456' } as typeof state.sky;
-		state.sun = {
+		state.light = {
 			direction: 90,
-			altitude: 60,
-			anchor: 'viewport',
+			altitude: 45,
+			rotateWithMap: false,
 			color: '#ffffff',
 			intensity: 0.8,
 		};
@@ -434,7 +434,7 @@ describe('minimalConfig', () => {
 			},
 			projection: 'mercator',
 			sky: { skyColor: '#123456' },
-			sun: { direction: 90, intensity: 0.8 },
+			light: { direction: 90, intensity: 0.8 },
 		});
 		const restored = satelliteStateFromConfig(config);
 		expect(buildSatelliteStyle(restored, ORIGIN, allSources)).toEqual(

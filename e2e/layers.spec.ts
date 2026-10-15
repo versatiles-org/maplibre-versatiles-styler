@@ -202,16 +202,12 @@ test.describe('terrain & hillshade', () => {
 		const shadow = row(elevation, 'Shadow Color').locator('input.color-text');
 		await shadow.fill('#ff0000');
 		await shadow.press('Enter');
-		await row(elevation, 'Light Source').getByRole('radio', { name: 'Screen' }).click();
 
 		await expect
 			.poll(async () => (await layer(page, 'hillshade'))?.paint)
-			.toMatchObject({
-				'hillshade-shadow-color': 'rgb(255,0,0)',
-				'hillshade-illumination-anchor': 'viewport',
-			});
+			.toMatchObject({ 'hillshade-shadow-color': 'rgb(255,0,0)' });
 		await expect
 			.poll(() => hashConfig(page))
-			.toEqual({ features: { hillshade: { shadowColor: '#FF0000', anchor: 'viewport' } } });
+			.toEqual({ features: { hillshade: { shadowColor: '#FF0000' } } });
 	});
 });

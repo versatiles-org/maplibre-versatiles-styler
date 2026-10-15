@@ -1,34 +1,33 @@
 <script lang="ts">
-	import type { ResolvedProjection, ResolvedSky, ResolvedSun } from '@versatiles/style';
+	import type { ResolvedProjection, ResolvedLight, ResolvedSky } from '@versatiles/style';
 	import { osm } from '@versatiles/style';
 	import { sameColor } from '../inputs/color_model';
 	import InputCheckbox from '../inputs/InputCheckbox.svelte';
 	import InputColor from '../inputs/InputColor.svelte';
 	import InputNumber from '../inputs/InputNumber.svelte';
-	import InputSegmented from '../inputs/InputSegmented.svelte';
 	import InputSelect from '../inputs/InputSelect.svelte';
 
 	let {
 		projection = $bindable(),
 		sky = $bindable(),
-		sun = $bindable(),
+		light = $bindable(),
 		skyColorFallback,
 		disabled = false,
 	}: {
 		projection: ResolvedProjection;
 		sky: ResolvedSky;
-		sun: ResolvedSun;
+		light: ResolvedLight;
 		/** The sky colour while `sky.skyColor` is unset: the theme's `colors.water`, or MapLibre's. */
 		skyColorFallback: string;
 		disabled?: boolean;
 	} = $props();
 
 	type Sky = Exclude<ResolvedSky, false>;
-	type Sun = Exclude<ResolvedSun, undefined>;
+	type Light = Exclude<ResolvedLight, false>;
 	type Blend = 'atmosphereBlend' | 'fogGroundBlend' | 'horizonFogBlend' | 'skyHorizonBlend';
 
 	const skyDefaults = osm.resolveOptions({ sky: true }).sky as Sky;
-	const sunDefaults = osm.resolveOptions({ sun: true }).sun as Sun;
+	const lightDefaults = osm.resolveOptions({ light: true }).light as Light;
 
 	const PROJECTIONS = [
 		{ value: 'globe', label: 'Globe' },
@@ -54,12 +53,8 @@
 		{
 			key: 'atmosphereBlend',
 			label: 'Atmosphere',
-			hint: 'The glow of the atmosphere around the globe: 0% hides it, 100% shows it in full.',
+			hint: 'The glow of the atmosphere around the globe: 0% hides it, 100% shows it in full. With Light on, it glows on the side the light comes from.',
 		},
-	];
-	const ANCHORS = [
-		{ value: 'map', label: 'Map' },
-		{ value: 'viewport', label: 'Screen' },
 	];
 
 	function blendOf(value: Sky[Blend], fallback: Sky[Blend]): number {
@@ -131,43 +126,40 @@
 {/if}
 
 <InputCheckbox
-	label="Sun"
-	hint="Where the light comes from. It lights 3D buildings, and its direction and altitude also shade the hillshade."
+	label="Light"
+	hint="One light for the whole map: it shades the hillshade, lights 3D buildings and, on the globe, decides which side of the atmosphere glows. Off, MapLibre lights hillshade and buildings from different sides."
 	{disabled}
-	bind:value={() => sun !== undefined, (v) => (sun = v ? structuredClone(sunDefaults) : undefined)}
+	bind:value={() => light !== false, (v) => (light = v ? structuredClone(lightDefaults) : false)}
 	defaultValue={false}
 />
-{#if sun}
+{#if light}
 	<div class="nested">
 		<InputNumber
 			label="Direction"
-			hint="Where the light comes from, clockwise from north."
+			hint="Where the light comes from, clockwise: 0° is the top of the screen, or north if the light turns with the map. The default, 315°, is the top left, under which relief never looks inverted."
 			{disabled}
-			bind:value={sun.direction}
-			defaultValue={sunDefaults.direction}
+			bind:value={light.direction}
+			defaultValue={lightDefaults.direction}
 			min={0}
 			max={360}
 			unit="°"
 		/>
 		<InputNumber
 			label="Altitude"
-			hint="How high the sun stands above the horizon."
+			hint="How high the light stands above the horizon."
 			{disabled}
-			bind:value={sun.altitude}
-			defaultValue={sunDefaults.altitude}
+			bind:value={light.altitude}
+			defaultValue={lightDefaults.altitude}
 			min={0}
 			max={90}
 			unit="°"
 		/>
-		<InputSegmented
-			label="Anchor"
-			hint="For 3D buildings. Map: the light keeps its compass direction and turns with the map. Screen: it keeps its direction on the screen. Hillshade has a setting of its own."
+		<InputCheckbox
+			label="Turn with Map"
+			hint="Off, the light stays fixed to the screen however the map is turned. On, it keeps its compass direction and turns with the map — but then the atmosphere of the globe cannot follow it."
 			{disabled}
-			bind:value={
-				() => sun?.anchor, (v) => sun && (sun.anchor = (v ?? sunDefaults.anchor) as Sun['anchor'])
-			}
-			defaultValue={sunDefaults.anchor}
-			options={ANCHORS}
+			bind:value={light.rotateWithMap}
+			defaultValue={lightDefaults.rotateWithMap}
 		/>
 		<!-- MapLibre's light color has no alpha. -->
 		<InputColor
@@ -175,15 +167,15 @@
 			hint="The color of the light on 3D buildings. Hillshade has colors of its own."
 			{disabled}
 			alpha={false}
-			bind:value={sun.color}
-			defaultValue={sunDefaults.color}
+			bind:value={light.color}
+			defaultValue={lightDefaults.color}
 		/>
 		<InputNumber
 			label="Intensity"
 			hint="How strong the light on 3D buildings is: the higher, the more the lit and the shaded walls differ."
 			{disabled}
-			bind:value={sun.intensity}
-			defaultValue={sunDefaults.intensity}
+			bind:value={light.intensity}
+			defaultValue={lightDefaults.intensity}
 			min={0}
 			max={1}
 			scale={100}

@@ -27,7 +27,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Inspector: click a feature on the map to see which style layer drew it, which layer group and label
   topic it belongs to, and which color it was painted with — and change that color or hide the group
   right there
-- Terrain and hillshade, projection (globe, Mercator), sky and sun
+- Terrain and hillshade, projection (globe, Mercator), sky and light
 - Satellite: imagery adjustments and a fully configurable vector overlay (theme, colors, labels, icons, layers)
 - The whole configuration is kept in the URL hash, so a styled map can be shared as a link
 - Export dialog with a preview and syntax highlighting: `style.json` (readable or minified) and the
@@ -41,7 +41,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Written in TypeScript, bundled with Vite
 
 Requires MapLibre GL JS 5.0.0 or later, and is developed and tested against version 6. Before 5.5.0 the
-sun turns the hillshade's light but cannot raise or lower it.
+hillshade follows the light's direction but not its altitude.
 
 ---
 

@@ -32,15 +32,14 @@ const CONTROLS: Record<string, Control> = {
 	'features.hillshade.shadowColor': elevation('features.hillshade.shadowColor'),
 	'features.hillshade.highlightColor': elevation('features.hillshade.highlightColor'),
 	'features.hillshade.accentColor': elevation('features.hillshade.accentColor'),
-	'features.hillshade.anchor': elevation('features.hillshade.anchor'),
 	'features.buildings': ['VectorStylePanel.svelte', 'options.features.buildings'],
 
 	projection: map('bind:value={() => projection'),
-	'sun.direction': map('sun.direction'),
-	'sun.altitude': map('sun.altitude'),
-	'sun.anchor': map('sun.anchor'),
-	'sun.color': map('sun.color'),
-	'sun.intensity': map('sun.intensity'),
+	'light.direction': map('light.direction'),
+	'light.altitude': map('light.altitude'),
+	'light.rotateWithMap': map('light.rotateWithMap'),
+	'light.color': map('light.color'),
+	'light.intensity': map('light.intensity'),
 	'sky.skyColor': map('sky.skyColor'),
 	'sky.fogColor': map('sky.fogColor'),
 	'sky.horizonColor': map('sky.horizonColor'),
@@ -133,8 +132,8 @@ function valueAt(tree: Tree, path: string[]): unknown {
 	return path.reduce<unknown>((node, key) => (isTree(node) ? node[key] : undefined), tree);
 }
 
-// Everything switched on, so that the options of terrain, hillshade and sun are there to list.
-const everything = { sun: true as const, features: { terrain: true, hillshade: true } };
+// Everything switched on, so that the options of terrain, hillshade and light are there to list.
+const everything = { light: true as const, features: { terrain: true, hillshade: true } };
 const osmResolved = osm.resolveOptions(everything) as unknown as Tree;
 const { osmOverlay, ...satelliteResolved } = satellite.resolveOptions(everything);
 
