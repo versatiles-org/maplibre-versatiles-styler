@@ -79,32 +79,41 @@ test('sky blends', async ({ page }) => {
 
 test('light', async ({ page }) => {
 	const map = section(page, 'Map');
-	expect((await style(page)).light).toMatchObject({ anchor: 'viewport' });
+	// The root light is read only by 3D buildings and the atmosphere, so it is written only with one of them.
+	expect((await style(page)).light).toBeUndefined();
+	const layers = section(page, 'Layers');
+	await layers.locator('summary').click();
+	await row(layers, '3D buildings').locator('input[type="checkbox"]').check();
+	const buildings = { features: { buildings: 'extruded' } };
+	await expect.poll(async () => (await style(page)).light).toMatchObject({ anchor: 'viewport' });
+	await expect.poll(() => hashConfig(page)).toEqual(buildings);
 
 	await row(map, 'Light').locator('input[type="checkbox"]').uncheck();
 	await expect.poll(async () => (await style(page)).light).toBeUndefined();
-	await expect.poll(() => hashConfig(page)).toEqual({ light: false });
+	await expect.poll(() => hashConfig(page)).toEqual({ ...buildings, light: false });
 	await expect(row(map, 'Direction')).toHaveCount(0);
 
 	await row(map, 'Light').locator('input[type="checkbox"]').check();
-	await expect.poll(() => hashConfig(page)).toEqual({});
+	await expect.poll(() => hashConfig(page)).toEqual(buildings);
 
 	await setRange(row(map, 'Direction').locator('input[type="range"]'), 90);
 	await setRange(row(map, 'Intensity').locator('input[type="range"]'), 80);
 	await expect
 		.poll(async () => (await style(page)).light)
 		.toMatchObject({ anchor: 'viewport', color: 'rgb(255,255,255)', intensity: 0.8 });
-	await expect.poll(() => hashConfig(page)).toEqual({ light: { direction: 90, intensity: 0.8 } });
+	await expect
+		.poll(() => hashConfig(page))
+		.toEqual({ ...buildings, light: { direction: 90, intensity: 0.8 } });
 
 	await row(map, 'Turn with Map').locator('input[type="checkbox"]').check();
 	// On the globe the light turns with the map only from the zoom of the buildings on, as a `step`.
 	await expect.poll(async () => (await style(page)).light?.anchor).toContain('map');
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ light: { direction: 90, intensity: 0.8, rotateWithMap: true } });
+		.toEqual({ ...buildings, light: { direction: 90, intensity: 0.8, rotateWithMap: true } });
 
 	await row(map, 'Intensity').locator('button.reset').click();
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ light: { direction: 90, rotateWithMap: true } });
+		.toEqual({ ...buildings, light: { direction: 90, rotateWithMap: true } });
 });
