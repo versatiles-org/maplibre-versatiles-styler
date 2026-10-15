@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-10-15
+
+### Features
+
+- replace sun with light and drop the hillshade light-source control, for @versatiles/style's light option ([dfcd402](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/dfcd40267ab7ecbbf82a860e2212029a69c1b2e1))
+- follow @versatiles/style v7's light: on by default, accent color only without it, migrate sun and hillshade.anchor from old links ([fb75124](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/fb751242a98080ab5fc118e477a7b4ac780292f4))
+- follow @versatiles/style 7.0.1's fixedToScreen, the light turning with the map by default ([f39a441](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/f39a441e0ff48a321a4b6e371b2d5df2dafa9b5f))
+
+### Tests
+
+- update light test to handle 3D buildings and ensure correct light configuration in hash ([8bd6f56](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/8bd6f56c5f93fb233fb0adf859d9e4ebdbbd9648))
+
+### Chores
+
+- update dependencies to latest versions, including @versatiles/style v7.0.0 and jsdom v30.1.3 ([4e215d8](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/4e215d84146d755990442f4c3e4f99cb51c0c1b8))
+- update @versatiles/style to version 7.0.1 in package.json and package-lock.json ([6569909](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/6569909dee5c21042a00c8d4ace053c0bc61d449))
+
 ## [2.4.1] - 2026-10-14
 
 ### Chores
