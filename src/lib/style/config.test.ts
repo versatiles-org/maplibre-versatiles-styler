@@ -229,20 +229,23 @@ describe('state from hash config', () => {
 		expect(vectorStateFromConfig('gray', { sun: true }).light).toEqual({
 			direction: 210,
 			altitude: 60,
-			rotateWithMap: false,
+			fixedToScreen: true,
 			color: '#ffffff',
 			intensity: 0.5,
 		});
 		expect(
 			satelliteStateFromConfig({ sun: { direction: 90, anchor: 'map', intensity: 0.8 } }).light
-		).toMatchObject({ direction: 90, altitude: 60, rotateWithMap: true, intensity: 0.8 });
+		).toMatchObject({ direction: 90, altitude: 60, fixedToScreen: false, intensity: 0.8 });
 	});
 
 	it('reads the hillshade anchor of a v6 link as a light that turns with the map, or not', () => {
 		const state = vectorStateFromConfig('gray', {
 			features: { hillshade: { anchor: 'map', shadowColor: '#ff0000' } },
 		});
-		expect(state.light).toMatchObject({ direction: 315, rotateWithMap: true });
+		expect(state.light).toMatchObject({ direction: 315, fixedToScreen: false });
+		expect(
+			vectorStateFromConfig('gray', { features: { hillshade: { anchor: 'viewport' } } }).light
+		).toMatchObject({ fixedToScreen: true });
 		expect(state.features.hillshade).toMatchObject({ shadowColor: '#ff0000' });
 		expect(state.features.hillshade).not.toHaveProperty('anchor');
 
@@ -250,7 +253,7 @@ describe('state from hash config', () => {
 			sun: { anchor: 'viewport' },
 			features: { hillshade: { anchor: 'map' } },
 		});
-		expect(both.light).toMatchObject({ rotateWithMap: false });
+		expect(both.light).toMatchObject({ fixedToScreen: true });
 	});
 
 	it('leaves a link without sun or hillshade anchor alone', () => {
@@ -452,7 +455,7 @@ describe('minimalConfig', () => {
 		state.light = {
 			direction: 90,
 			altitude: 45,
-			rotateWithMap: false,
+			fixedToScreen: false,
 			color: '#ffffff',
 			intensity: 0.8,
 		};

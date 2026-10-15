@@ -137,7 +137,7 @@
 	<div class="nested">
 		<InputNumber
 			label="Direction"
-			hint="Where the light comes from, clockwise: 0° is the top of the screen, or north if the light turns with the map. The default, 315°, is the top left, under which relief never looks inverted."
+			hint="Where the light comes from, clockwise: 0° is north, or the top of the screen if the light is fixed to it. The default, 315°, is the north-west: the top left while the map points north, under which relief never looks inverted."
 			{disabled}
 			bind:value={light.direction}
 			defaultValue={lightDefaults.direction}
@@ -156,11 +156,11 @@
 			unit="°"
 		/>
 		<InputCheckbox
-			label="Turn with Map"
-			hint="Off, the light stays fixed to the screen however the map is turned. On, it keeps its compass direction and turns with the map — but then the atmosphere of the globe cannot follow it."
+			label="Fixed to Screen"
+			hint="Off, the light keeps its compass direction and turns with the map. On, it comes from the same side of the screen however the map is turned — but the hillshade is then redrawn while the map rotates, which is slow. The atmosphere of the globe is always fixed to the screen."
 			{disabled}
-			bind:value={light.rotateWithMap}
-			defaultValue={lightDefaults.rotateWithMap}
+			bind:value={light.fixedToScreen}
+			defaultValue={lightDefaults.fixedToScreen}
 		/>
 		<!-- MapLibre's light color has no alpha. -->
 		<InputColor

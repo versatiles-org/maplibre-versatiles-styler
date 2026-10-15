@@ -121,8 +121,11 @@ export function overlayDefaults(theme: Palette): ResolvedSatelliteOverlay {
 	return satellite.resolveOptions({ osmOverlay: { theme } }).osmOverlay as ResolvedSatelliteOverlay;
 }
 
-/** What the deprecated `sun` of @versatiles/style v6 left unset, and `light` sets otherwise. */
-const V6_SUN = { direction: 210, altitude: 60 };
+/**
+ * What the `sun` of @versatiles/style v6 left unset, and `light` sets otherwise: its direction and
+ * altitude, and its default anchor, 'viewport'.
+ */
+const V6_SUN = { direction: 210, altitude: 60, fixedToScreen: true };
 
 /**
  * Options from a link shared before @versatiles/style v7, with `sun` and `features.hillshade.anchor`
@@ -150,11 +153,11 @@ export function migrateConfig(
 		rest.light = {
 			...V6_SUN,
 			...values,
-			...(anchor === undefined ? {} : { rotateWithMap: anchor === 'map' }),
+			...(anchor === undefined ? {} : { fixedToScreen: anchor === 'viewport' }),
 		};
 	} else {
 		// `hillshade.anchor` alone: the light turns with the map, or not, as the hillshade did.
-		rest.light = { rotateWithMap: hillshadeAnchor === 'map' };
+		rest.light = { fixedToScreen: hillshadeAnchor === 'viewport' };
 	}
 	return rest;
 }

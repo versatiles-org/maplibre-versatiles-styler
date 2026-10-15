@@ -37,7 +37,7 @@ const CONTROLS: Record<string, Control> = {
 	projection: map('bind:value={() => projection'),
 	'light.direction': map('light.direction'),
 	'light.altitude': map('light.altitude'),
-	'light.rotateWithMap': map('light.rotateWithMap'),
+	'light.fixedToScreen': map('light.fixedToScreen'),
 	'light.color': map('light.color'),
 	'light.intensity': map('light.intensity'),
 	'sky.skyColor': map('sky.skyColor'),

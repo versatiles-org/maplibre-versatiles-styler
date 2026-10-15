@@ -85,7 +85,8 @@ test('light', async ({ page }) => {
 	await layers.locator('summary').click();
 	await row(layers, '3D buildings').locator('input[type="checkbox"]').check();
 	const buildings = { features: { buildings: 'extruded' } };
-	await expect.poll(async () => (await style(page)).light).toMatchObject({ anchor: 'viewport' });
+	// On the globe the light turns with the map only from the zoom of the buildings on, as a `step`.
+	await expect.poll(async () => (await style(page)).light?.anchor).toContain('map');
 	await expect.poll(() => hashConfig(page)).toEqual(buildings);
 
 	await row(map, 'Light').locator('input[type="checkbox"]').uncheck();
@@ -100,20 +101,19 @@ test('light', async ({ page }) => {
 	await setRange(row(map, 'Intensity').locator('input[type="range"]'), 80);
 	await expect
 		.poll(async () => (await style(page)).light)
-		.toMatchObject({ anchor: 'viewport', color: 'rgb(255,255,255)', intensity: 0.8 });
+		.toMatchObject({ color: 'rgb(255,255,255)', intensity: 0.8 });
 	await expect
 		.poll(() => hashConfig(page))
 		.toEqual({ ...buildings, light: { direction: 90, intensity: 0.8 } });
 
-	await row(map, 'Turn with Map').locator('input[type="checkbox"]').check();
-	// On the globe the light turns with the map only from the zoom of the buildings on, as a `step`.
-	await expect.poll(async () => (await style(page)).light?.anchor).toContain('map');
+	await row(map, 'Fixed to Screen').locator('input[type="checkbox"]').check();
+	await expect.poll(async () => (await style(page)).light?.anchor).toBe('viewport');
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ ...buildings, light: { direction: 90, intensity: 0.8, rotateWithMap: true } });
+		.toEqual({ ...buildings, light: { direction: 90, intensity: 0.8, fixedToScreen: true } });
 
 	await row(map, 'Intensity').locator('button.reset').click();
 	await expect
 		.poll(() => hashConfig(page))
-		.toEqual({ ...buildings, light: { direction: 90, rotateWithMap: true } });
+		.toEqual({ ...buildings, light: { direction: 90, fixedToScreen: true } });
 });
