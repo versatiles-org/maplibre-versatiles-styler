@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1] - 2026-10-30
+
+### Build System
+
+- **deps-dev:** bump markdown-it ([893f797](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/893f79786a17d9102efd1361c852f6ade27302a1))
+
+### Chores
+
+- update dependencies in package.json ([c8c2525](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/c8c2525a05de4b8d25dd244110129a30ba08e494))
+
 ## [2.5.0] - 2026-10-15
 
 ### Features
