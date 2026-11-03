@@ -45,6 +45,7 @@ describe('loadSources', () => {
 				`${ORIGIN}/tiles/osm/tiles.json`,
 				`${ORIGIN}/tiles/satellite/tiles.json`,
 				`${ORIGIN}/tiles/elevation/tiles.json`,
+				`${ORIGIN}/tiles/landcover-vectors/tiles.json`,
 			])
 		);
 		expect(urls.some((url) => url.includes('index.json'))).toBe(false);
@@ -89,6 +90,23 @@ describe('loadSources', () => {
 		expect(await sources.elevation).not.toBeNull();
 	});
 
+	it('takes only land cover for the land cover', async () => {
+		const tileJSON = (layer: string) => ({
+			tilejson: '3.0.0',
+			tiles: ['/tiles/{z}/{x}/{y}'],
+			vector_layers: [{ id: layer, fields: { kind: 'String' } }],
+		});
+		mockServer({
+			'/a/tiles.json': tileJSON('landcover'),
+			'/b/tiles.json': tileJSON('land'),
+		});
+		const origin = 'https://landcover.example.org';
+		const load = (path: string) =>
+			loadSources({ landcover: `${origin}${path}`, assets: origin }).landcover;
+		expect(await load('/a/tiles.json')).not.toBeNull();
+		expect(await load('/b/tiles.json')).toBeNull();
+	});
+
 	it('takes the tilesets a server has under other names, by address or by path', () => {
 		expect(
 			versatilesSources('https://tiles.example.org', {
@@ -99,6 +117,7 @@ describe('loadSources', () => {
 			vector: 'https://tiles.example.org/tiles/planet/tiles.json',
 			satellite: 'https://tiles.example.org/tiles/satellite/tiles.json',
 			elevation: 'https://dem.example.org/tiles.json',
+			landcover: 'https://tiles.example.org/tiles/landcover-vectors/tiles.json',
 			assets: 'https://tiles.example.org',
 		});
 		// A path follows the server; an archive is no path.

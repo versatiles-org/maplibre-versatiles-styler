@@ -138,14 +138,16 @@
 	let vectorTileJSON = $state<LoadedTileJSON | undefined>();
 	let satelliteTileJSON = $state<LoadedTileJSON | undefined>();
 	let elevationTileJSON = $state<LoadedTileJSON | undefined>();
+	let landcoverTileJSON = $state<LoadedTileJSON | undefined>();
 
 	$effect(() => {
 		const current = sources;
-		vectorTileJSON = satelliteTileJSON = elevationTileJSON = undefined;
+		vectorTileJSON = satelliteTileJSON = elevationTileJSON = landcoverTileJSON = undefined;
 		let outdated = false;
 		current.vector.then((tj) => !outdated && (vectorTileJSON = tj));
 		current.satellite.then((tj) => !outdated && (satelliteTileJSON = tj));
 		current.elevation.then((tj) => !outdated && (elevationTileJSON = tj));
+		current.landcover.then((tj) => !outdated && (landcoverTileJSON = tj));
 		return () => (outdated = true);
 	});
 
@@ -222,6 +224,11 @@
 		const state = $state.snapshot(vectorState) as VectorState;
 		const stateSources = styleSources(true, state.features);
 		if (!stateSources?.vector) return undefined;
+		// The land cover goes under Shortbread only.
+		if (schema === 'shortbread') {
+			if (landcoverTileJSON === undefined) return undefined;
+			if (landcoverTileJSON) stateSources.landcover = landcoverTileJSON;
+		}
 		return {
 			style: buildVectorStyle(
 				styleKey,
@@ -415,6 +422,7 @@
 		schema,
 		satellite: satelliteTileJSON ?? undefined,
 		elevation: elevationTileJSON ?? undefined,
+		landcover: landcoverTileJSON ?? undefined,
 	});
 
 	/**
@@ -624,6 +632,7 @@
 					vector: vectorTileJSON,
 					satellite: satelliteTileJSON,
 					elevation: elevationTileJSON,
+					landcover: landcoverTileJSON,
 				}}
 				pmtiles={pmtiles !== undefined}
 				server={ownServer}

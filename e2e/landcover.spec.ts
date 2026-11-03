@@ -1,41 +1,63 @@
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { getMapStyle } from './helpers';
 
-const tiles = ['https://example.com/tiles/osm/{z}/{x}/{y}'];
+const tiles = ['https://example.com/tiles/{z}/{x}/{y}'];
+const land = { id: 'land', fields: { kind: 'String' }, minzoom: 10, maxzoom: 14 };
+const landcover = { id: 'landcover', fields: { kind: 'String' }, minzoom: 0, maxzoom: 7 };
 
-/** Stand-in TileJSON whose `land` layer starts at the given zoom. */
-function tileJSON(landMinzoom: number) {
-	return {
-		tilejson: '3.0.0',
-		tiles,
-		vector_layers: [
-			{ id: 'land', fields: { kind: 'String' }, minzoom: landMinzoom, maxzoom: 14 },
-			{ id: 'water_polygons', fields: { kind: 'String' }, minzoom: landMinzoom, maxzoom: 14 },
-		],
-	};
+/** Stand-in Shortbread TileJSON, with the land cover merged in or not. */
+function osmTileJSON(merged: boolean) {
+	return { tilejson: '3.0.0', tiles, vector_layers: merged ? [land, landcover] : [land] };
 }
 
-async function landForestOpacity(page: import('@playwright/test').Page) {
+/** Stand-in TileJSON of the land cover on its own, as `landcover-vectors` has it. */
+const landcoverTileJSON = { tilejson: '3.0.0', tiles, maxzoom: 10, vector_layers: [landcover] };
+
+/** Serves the stand-ins: the vector tiles, and the land cover tileset or a 404 in its place. */
+async function serve(page: Page, osm: object, ownLandcover: boolean) {
+	await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: osm }));
+	await page.route('**/tiles/landcover-vectors/tiles.json', (route) =>
+		ownLandcover ? route.fulfill({ json: landcoverTileJSON }) : route.fulfill({ status: 404 })
+	);
+	await page.goto('/#panel=open');
+	await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
+}
+
+/** The source of the land cover's forest, or `undefined` while the style has none. */
+async function landcoverSource(page: Page): Promise<unknown> {
 	const style = await getMapStyle(page);
-	return style.layers.find((layer) => layer.id === 'land-forest')?.paint?.['fill-opacity'];
+	const layer = style.layers.find((layer) => layer.id === 'landcover-land-forest');
+	return (layer as { source?: unknown } | undefined)?.source;
 }
 
-test.describe('landcover detection', () => {
-	test('shows the fills from zoom 0 when the tiles carry landcover', async ({ page }) => {
-		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(0) }));
-		await page.goto('/#panel=open');
-		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
-
-		// No zoom ramp: the fill is there from the lowest zoom on.
-		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
+test.describe('land cover', () => {
+	test('draws the land cover tileset of the server under the vector tiles', async ({ page }) => {
+		await serve(page, osmTileJSON(false), true);
+		await expect.poll(() => landcoverSource(page)).toBe('versatiles-landcover');
+		await expect(page.locator('.source-found', { hasText: 'Land cover' })).toContainText(
+			'zoom 0–10'
+		);
 	});
 
-	test('carries the detected flag into the exported style code', async ({ context, page }) => {
+	test('draws the land cover that the vector tiles carry themselves', async ({ page }) => {
+		await serve(page, osmTileJSON(true), false);
+		await expect.poll(() => landcoverSource(page)).toBe('versatiles-shortbread');
+	});
+
+	test('draws no land cover where there is none', async ({ page }) => {
+		await serve(page, osmTileJSON(false), false);
+		await expect.poll(async () => (await getMapStyle(page)).layers.length).toBeGreaterThan(0);
+		expect(await landcoverSource(page)).toBeUndefined();
+		await expect(page.locator('.source-found', { hasText: 'Land cover' })).toContainText(
+			'Not on this server'
+		);
+	});
+
+	test('carries the land cover into the exported style code', async ({ context, page }) => {
 		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(0) }));
-		await page.goto('/#panel=open');
-		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
-		await expect.poll(() => landForestOpacity(page)).toEqual(expect.any(Number));
+		await serve(page, osmTileJSON(false), true);
+		await expect.poll(() => landcoverSource(page)).toBe('versatiles-landcover');
 
 		await page.getByRole('button', { name: 'Export' }).click();
 		const panel = page.getByRole('dialog', { name: 'Export style' });
@@ -44,15 +66,5 @@ test.describe('landcover detection', () => {
 
 		const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
 		expect(clipboardText).toContain('landcover: true');
-	});
-
-	test('keeps the plain Shortbread zoom ramps when the tiles do not', async ({ page }) => {
-		await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: tileJSON(10) }));
-		await page.goto('/#panel=open');
-		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
-
-		await expect
-			.poll(() => landForestOpacity(page))
-			.toEqual(expect.arrayContaining(['interpolate', ['zoom']]));
 	});
 });

@@ -60,6 +60,16 @@
 			(tileJSONs.vector != null && vectorSchema(tileJSONs.vector) === undefined)
 	);
 
+	/**
+	 * Whether the vector tiles are Shortbread, the only tiles the land cover goes under. Tiles of no schema
+	 * the styler knows are taken for Shortbread, as the styler builds them.
+	 */
+	let shortbread = $derived(
+		(config.schema ??
+			(tileJSONs.vector ? vectorSchema(tileJSONs.vector) : undefined) ??
+			'shortbread') === 'shortbread'
+	);
+
 	/** The config with one of its addresses replaced, or removed by empty text. */
 	function withUrl(name: SourceName, text: string): SourceConfig {
 		const { [name]: _previous, ...rest } = config;
@@ -129,6 +139,9 @@
 	{@render found('vector', 'Vector tiles', 'Not on this server')}
 	{@render found('satellite', 'Satellite', 'Not on this server')}
 	{@render found('elevation', 'Elevation', 'Not on this server')}
+	{#if shortbread}
+		{@render found('landcover', 'Land cover', 'Not on this server')}
+	{/if}
 {:else if provider === 'custom'}
 	{@render address('vector', 'Vector tiles', 'TileJSON or PMTiles address')}
 	{#if schemaUnknown}
@@ -146,6 +159,9 @@
 	{/if}
 	{@render address('satellite', 'Satellite', 'TileJSON or PMTiles address')}
 	{@render address('elevation', 'Elevation', 'TileJSON address')}
+	{#if shortbread}
+		{@render address('landcover', 'Land cover', 'TileJSON address')}
+	{/if}
 	<div class="entry text-container">
 		<label for="{uid}-assets">Fonts & icons</label>
 		<div class="input">

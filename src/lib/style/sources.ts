@@ -2,7 +2,7 @@ import { fetchFontFaces, fetchTileJSON, guessSchema, osm } from '@versatiles/sty
 import type { FontFaceInfo, TileJSONSpecification } from '@versatiles/style';
 import { isPMTilesUrl, loadArchiveTileJSON, pmtilesUrl } from './pmtiles';
 
-export type SourceName = 'vector' | 'satellite' | 'elevation';
+export type SourceName = 'vector' | 'satellite' | 'elevation' | 'landcover';
 
 /**
  * Where a style gets its tiles and assets from. The tile sources are TileJSON URLs, or the `pmtiles://`
@@ -15,6 +15,11 @@ export interface SourceConfig {
 	schema?: VectorSchema;
 	satellite?: string;
 	elevation?: string;
+	/**
+	 * The land cover drawn under Shortbread tiles at the zooms where they have little land. Shortbread
+	 * tiles that carry it themselves need none.
+	 */
+	landcover?: string;
 	assets: string;
 }
 
@@ -44,6 +49,7 @@ export interface LoadedSources {
 	readonly vector: Promise<LoadedTileJSON>;
 	readonly satellite: Promise<LoadedTileJSON>;
 	readonly elevation: Promise<LoadedTileJSON>;
+	readonly landcover: Promise<LoadedTileJSON>;
 	/** The font faces the assets server publishes; fetched on the first call only. */
 	fontFaces(): Promise<FontFaceInfo[] | undefined>;
 }
@@ -123,7 +129,8 @@ const TILEJSON_DEFAULTS: Record<string, Partial<TileJSONSpecification>> = {
 export type SourceUrls = Partial<Record<SourceName, string>>;
 
 /**
- * The sources of a VersaTiles server: its tilesets `osm`, `satellite` and `elevation`, and its assets.
+ * The sources of a VersaTiles server: its tilesets `osm`, `satellite`, `elevation` and
+ * `landcover-vectors`, and its assets.
  * A server that has a tileset under another name says so in `tilesets`, by the address of its TileJSON,
  * which may be relative to the origin. An origin that is no URL has no tiles.
  */
@@ -141,6 +148,7 @@ export function versatilesSources(origin: string, tilesets: SourceUrls = {}): So
 		vector: tileJSON('vector', 'osm'),
 		satellite: tileJSON('satellite', 'satellite'),
 		elevation: tileJSON('elevation', 'elevation'),
+		landcover: tileJSON('landcover', 'landcover-vectors'),
 		assets: origin,
 	};
 }
@@ -151,16 +159,21 @@ export function versatilesSources(origin: string, tilesets: SourceUrls = {}): So
  * The TileJSONs are fetched in parallel right away: they decide which styles are available, and the
  * first style can only be built once its TileJSON is in (VersaTiles servers publish relative tile URLs,
  * which MapLibre cannot resolve). A source that fails to load counts as unavailable, and so does one
- * that holds the wrong kind of tiles: imagery where vector tiles belong, or the other way round.
+ * that holds the wrong kind of tiles: imagery where vector tiles belong, or the other way round, or
+ * anything but land cover where the land cover belongs.
  * Repeated requests for the same URL are served from `@versatiles/style`'s response cache.
  */
 export function loadSources(config: SourceConfig): LoadedSources {
+	const fits = (name: SourceName, tileJSON: TileJSONSpecification): boolean =>
+		name === 'landcover'
+			? osm.supportsLandcover(tileJSON)
+			: 'vector_layers' in tileJSON === (name === 'vector');
 	const load = (name: SourceName): Promise<LoadedTileJSON> => {
 		const url = config[name];
 		if (url === undefined) return Promise.resolve(null);
 		return (isPMTilesUrl(url) ? loadArchiveTileJSON(url) : fetchTileJSON(url))
 			.then((tileJSON) =>
-				'vector_layers' in tileJSON === (name === 'vector')
+				fits(name, tileJSON)
 					? ({ ...TILEJSON_DEFAULTS[url], ...tileJSON } as TileJSONSpecification)
 					: null
 			)
@@ -174,6 +187,7 @@ export function loadSources(config: SourceConfig): LoadedSources {
 		vector: load('vector'),
 		satellite: load('satellite'),
 		elevation: load('elevation'),
+		landcover: load('landcover'),
 		fontFaces: () => (fontFaces ??= fetchFontFaces({ base: config.assets }).catch(() => undefined)),
 	};
 }
@@ -210,7 +224,12 @@ export function sourceStatus(
 	if (url === undefined) return { state: 'none', text: 'None' };
 	if (tileJSON === undefined) return { state: 'loading', text: 'Loading…' };
 	if (tileJSON === null) {
-		const kind = name === 'vector' ? 'vector' : name === 'satellite' ? 'image' : 'elevation';
+		const kind = {
+			vector: 'vector',
+			satellite: 'image',
+			elevation: 'elevation',
+			landcover: 'land cover',
+		}[name];
 		return { state: 'error', text: `No ${kind} tiles could be loaded from this address.` };
 	}
 	const parts: string[] = [];
@@ -262,7 +281,7 @@ export function parseSources(value: unknown): ChosenSources | undefined {
 	const assets = text('assets');
 	if (!assets) return undefined;
 	const config: SourceConfig = { assets };
-	for (const name of ['vector', 'satellite', 'elevation'] as const) {
+	for (const name of ['vector', 'satellite', 'elevation', 'landcover'] as const) {
 		const url = text(name);
 		if (url) config[name] = url;
 	}

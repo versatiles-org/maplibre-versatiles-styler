@@ -66,6 +66,7 @@ test.describe('startup', () => {
 		await setStyleCallsUntilIdle(page);
 		expect(requested.sort()).toEqual([
 			'/tiles/elevation/tiles.json',
+			'/tiles/landcover-vectors/tiles.json',
 			'/tiles/osm/tiles.json',
 			'/tiles/satellite/tiles.json',
 		]);

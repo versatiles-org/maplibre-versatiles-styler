@@ -51,8 +51,17 @@ function tileJSON(name: string, extra: Partial<TileJSONSpecification> = {}): Til
 const osmTileJSON = tileJSON('osm', {
 	vector_layers: [{ id: 'land', fields: { kind: 'String' }, minzoom: 10, maxzoom: 14 }],
 } as Partial<TileJSONSpecification>);
-const landcoverTileJSON = tileJSON('osm', {
-	vector_layers: [{ id: 'land', fields: { kind: 'String' }, minzoom: 0, maxzoom: 14 }],
+/** The land cover on its own, as a VersaTiles server has it in `landcover-vectors`. */
+const landcoverTileJSON = tileJSON('landcover-vectors', {
+	maxzoom: 10,
+	vector_layers: [{ id: 'landcover', fields: { kind: 'String' }, minzoom: 0, maxzoom: 10 }],
+} as Partial<TileJSONSpecification>);
+/** Shortbread tiles that carry the land cover themselves. */
+const mergedTileJSON = tileJSON('osm', {
+	vector_layers: [
+		{ id: 'land', fields: { kind: 'String' }, minzoom: 10, maxzoom: 14 },
+		{ id: 'landcover', fields: { kind: 'String' }, minzoom: 0, maxzoom: 7 },
+	],
 } as Partial<TileJSONSpecification>);
 const omtTileJSON = tileJSON('omt', { vector_layers: [] } as Partial<TileJSONSpecification>);
 const satelliteTileJSON = tileJSON('satellite');
@@ -278,18 +287,49 @@ describe('buildVectorStyle', () => {
 		expect(JSON.stringify(style.sprite)).toContain(ORIGIN);
 	});
 
-	it('sets landcover from the tileset, whatever the state says', () => {
+	it('draws the land cover from a tileset of its own', () => {
 		const state = vectorDefaults('colorful');
-		const plain = buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON });
-		const landcover = buildVectorStyle('colorful', state, ORIGIN, { vector: landcoverTileJSON });
-		expect(JSON.stringify(plain)).not.toEqual(JSON.stringify(landcover));
-		expect(landcover).toEqual(
+		const style = buildVectorStyle('colorful', state, ORIGIN, {
+			vector: osmTileJSON,
+			landcover: landcoverTileJSON,
+		});
+		expect(style).toEqual(
 			osm({
 				...state,
 				features: { ...state.features, landcover: true },
-				urls: { base: ORIGIN, osm: landcoverTileJSON },
+				urls: { base: ORIGIN, osm: osmTileJSON, landcover: landcoverTileJSON },
 			})
 		);
+		expect(style.sources['versatiles-landcover']).toBeDefined();
+		expect(style.layers.some((layer) => layer.id.startsWith('landcover-'))).toBe(true);
+	});
+
+	it('draws the land cover that the vector tiles carry themselves', () => {
+		const state = vectorDefaults('colorful');
+		const style = buildVectorStyle('colorful', state, ORIGIN, {
+			vector: mergedTileJSON,
+			landcover: landcoverTileJSON,
+		});
+		expect(style).toEqual(
+			osm({
+				...state,
+				features: { ...state.features, landcover: true },
+				urls: { base: ORIGIN, osm: mergedTileJSON, landcover: mergedTileJSON },
+			})
+		);
+		expect(style.sources['versatiles-landcover']).toBeUndefined();
+	});
+
+	it('sets landcover from the tilesets, whatever the state says', () => {
+		const state = vectorDefaults('colorful');
+		state.features.landcover = true;
+		const plain = { ...state, features: { ...state.features, landcover: false } };
+		const expected = osm({ ...plain, urls: { base: ORIGIN, osm: osmTileJSON } });
+		expect(buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON })).toEqual(expected);
+		// A tileset in place of the land cover that is none.
+		expect(
+			buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON, landcover: osmTileJSON })
+		).toEqual(expected);
 	});
 
 	it('leaves terrain and hillshade out while there is no elevation source', () => {
@@ -308,7 +348,12 @@ describe('vector tiles of another schema', () => {
 	state.features.landcover = true;
 
 	it('builds OpenMapTiles tiles with omt, which has no landcover', () => {
-		const sources: StyleSources = { ...allSources, vector: omtTileJSON, schema: 'openmaptiles' };
+		const sources: StyleSources = {
+			...allSources,
+			vector: omtTileJSON,
+			schema: 'openmaptiles',
+			landcover: landcoverTileJSON,
+		};
 		const { landcover: _landcover, ...features } = state.features;
 		expect(buildVectorStyle('gray', state, ORIGIN, sources)).toEqual(
 			omt({
@@ -321,7 +366,11 @@ describe('vector tiles of another schema', () => {
 	});
 
 	it('builds Protomaps tiles with protomaps, which always has landcover', () => {
-		const sources: StyleSources = { vector: omtTileJSON, schema: 'protomaps' };
+		const sources: StyleSources = {
+			vector: omtTileJSON,
+			schema: 'protomaps',
+			landcover: landcoverTileJSON,
+		};
 		expect(buildVectorStyle('gray', vectorDefaults('gray'), ORIGIN, sources)).toEqual(
 			protomaps({
 				...vectorDefaults('gray'),
@@ -506,9 +555,32 @@ describe('styleCode', () => {
 
 	it('carries the detected landcover flag', () => {
 		const code = styleCode('colorful', vectorDefaults('colorful'), satelliteDefaults(), CONFIG, {
-			vector: landcoverTileJSON,
+			vector: osmTileJSON,
+			landcover: landcoverTileJSON,
 		});
 		expect(code).toContain('landcover: true');
+		// The server's own land cover is the one `osm` reads by default.
+		expect(code).not.toContain('landcover: "');
+	});
+
+	it('names land cover from elsewhere', () => {
+		const landcover = 'https://landcover.example.org/tiles.json';
+		const code = styleCode(
+			'colorful',
+			vectorDefaults('colorful'),
+			satelliteDefaults(),
+			{ ...CONFIG, landcover },
+			{ vector: osmTileJSON, landcover: landcoverTileJSON }
+		);
+		expect(code).toContain(`landcover: "${landcover}"`);
+	});
+
+	it('names the vector tiles as the land cover they carry', () => {
+		const code = styleCode('colorful', vectorDefaults('colorful'), satelliteDefaults(), CONFIG, {
+			vector: mergedTileJSON,
+		});
+		expect(code).toContain('landcover: true');
+		expect(code).toContain(`landcover: "${CONFIG.vector}"`);
 	});
 
 	it('emits a satellite snippet', () => {

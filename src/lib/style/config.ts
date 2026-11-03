@@ -27,7 +27,7 @@ export type StyleKey = Palette | 'satellite';
 /**
  * The options the vector panel edits: `osm`'s resolved options without `theme` (the style key) and
  * `urls` (derived from the sources when building). `features.landcover` is never edited — it is set
- * from the tileset when building.
+ * from the tilesets when building.
  */
 export type VectorState = Omit<ResolvedOsm, 'theme' | 'urls'>;
 
@@ -214,16 +214,25 @@ interface VectorBuilder {
 		readonly colorKeys: readonly string[];
 		toCode(options: never, codeOptions?: { target?: CodeTarget }): string;
 	};
-	/** `features.landcover` for a tileset, or `undefined` where the schema has no such option. */
-	landcover(tileJSON: TileJSONSpecification | undefined): boolean | undefined;
+	/**
+	 * The land cover these sources give, which sets `features.landcover`: `undefined` where the schema
+	 * has no such option, a boolean where it has or lacks it by itself, and the TileJSON it comes from
+	 * where that goes into `urls.landcover`.
+	 */
+	landcover(sources: StyleSources): boolean | TileJSONSpecification | undefined;
 }
 
 const VECTOR_BUILDERS: Record<VectorSchema, VectorBuilder> = {
 	shortbread: {
 		name: 'osm',
 		style: osm,
-		// An extension of the tileset, which not every server has.
-		landcover: (tileJSON) => tileJSON !== undefined && osm.supportsLandcover(tileJSON),
+		// A tileset of its own, which not every server has, or merged into the vector tiles.
+		landcover: ({ vector, landcover }) =>
+			vector !== undefined && osm.supportsLandcover(vector)
+				? vector
+				: landcover !== undefined && osm.supportsLandcover(landcover)
+					? landcover
+					: false,
 	},
 	openmaptiles: { name: 'omt', style: omt, landcover: () => undefined },
 	// Part of the schema: every tileset has it.
@@ -286,6 +295,8 @@ export interface StyleSources {
 	schema?: VectorSchema;
 	satellite?: TileJSONSpecification;
 	elevation?: TileJSONSpecification;
+	/** The land cover drawn under Shortbread tiles, which may also carry it themselves. */
+	landcover?: TileJSONSpecification;
 }
 
 /** The elevation features of a state, switched off where there is no elevation source. */
@@ -313,14 +324,15 @@ export function vectorOptions(
 ): Record<string, unknown> {
 	const builder = VECTOR_BUILDERS[sources.schema ?? 'shortbread'];
 	const { landcover: _landcover, ...features } = elevationFeatures(state.features, sources);
-	const landcover = builder.landcover(sources.vector);
+	const landcover = builder.landcover(sources);
 	return {
 		...state,
 		theme,
-		features: landcover === undefined ? features : { ...features, landcover },
+		features: landcover === undefined ? features : { ...features, landcover: landcover !== false },
 		urls: {
 			base: assetsBase,
 			...(sources.vector ? { [builder.name]: sources.vector } : {}),
+			...(typeof landcover === 'object' ? { landcover } : {}),
 			...elevationUrl(sources),
 		},
 	};
@@ -472,15 +484,19 @@ export function codeTargets(
 /**
  * The `urls` a snippet names for these sources: the assets server as `base`, and every tile source that
  * is not the one a VersaTiles server at `base` would have.
+ *
+ * Vector tiles that carry the land cover themselves are named as the land cover too: a URL does not
+ * say so, as their TileJSON does.
  */
 function codeUrls(
 	styleKey: StyleKey,
 	config: SourceConfig,
-	schema: VectorSchema
+	sources: StyleSources
 ): Record<string, string> {
+	const schema = sources.schema ?? 'shortbread';
 	const defaults = versatilesSources(config.assets);
 	const urls: Record<string, string> = { base: config.assets };
-	const add = (key: string, name: 'vector' | 'satellite' | 'elevation') => {
+	const add = (key: string, name: 'vector' | 'satellite' | 'elevation' | 'landcover') => {
 		const url = config[name];
 		if (url !== undefined && url !== defaults[name]) urls[key] = url;
 	};
@@ -488,7 +504,13 @@ function codeUrls(
 		add('satellite', 'satellite');
 		if (overlaySupported(schema)) add('osm', 'vector');
 	} else {
-		add(VECTOR_BUILDERS[schema].name, 'vector');
+		const builder = VECTOR_BUILDERS[schema];
+		add(builder.name, 'vector');
+		const landcover = builder.landcover(sources);
+		if (typeof landcover === 'object') {
+			if (landcover !== sources.vector) add('landcover', 'landcover');
+			else if (config.vector !== undefined) urls.landcover = config.vector;
+		}
 	}
 	add('elevation', 'elevation');
 	return urls;
@@ -523,7 +545,7 @@ export function styleCode(
 ): string {
 	const schema = sources.schema ?? 'shortbread';
 	// `toCode` must see URLs only, never the loaded TileJSONs: the snippet loads its own.
-	const urls = codeUrls(styleKey, config, schema);
+	const urls = codeUrls(styleKey, config, sources);
 	const code =
 		styleKey === 'satellite'
 			? satellite.toCode(
