@@ -17,6 +17,7 @@
 		containerBackground,
 		inspectSources,
 		isDarkStyle,
+		landcoverAvailable,
 		minimalConfig,
 		overlaySupported,
 		overlayDefaults,
@@ -665,6 +666,7 @@
 				layerGroups={vectorGroups.layerGroups}
 				textGroups={vectorGroups.textGroups}
 				{hasElevation}
+				hasLandcover={landcoverAvailable(loadedSources)}
 				fontFaces={sources.fontFaces()}
 				{languages}
 			/>

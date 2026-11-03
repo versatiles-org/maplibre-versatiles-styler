@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { getMapStyle } from './helpers';
 
 const tiles = ['https://example.com/tiles/{z}/{x}/{y}'];
@@ -31,6 +31,23 @@ async function landcoverSource(page: Page): Promise<unknown> {
 	return (layer as { source?: unknown } | undefined)?.source;
 }
 
+/** The Land cover switch, in the Layers section, opened. */
+async function landcoverSwitch(page: Page): Promise<Locator> {
+	const layers = page.locator(
+		'.maplibregl-versatiles-styler details:has(summary:has-text("Layers"))'
+	);
+	await layers.locator('summary').click();
+	return layers
+		.locator('.entry', { has: page.locator('label:text-is("Land cover")') })
+		.locator('input[type="checkbox"]');
+}
+
+async function hashConfig(page: Page): Promise<unknown> {
+	const match = page.url().match(/config=([^&]+)/);
+	if (!match) return {};
+	return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
+}
+
 test.describe('land cover', () => {
 	test('draws the land cover tileset of the server under the vector tiles', async ({ page }) => {
 		await serve(page, osmTileJSON(false), true);
@@ -52,6 +69,31 @@ test.describe('land cover', () => {
 		await expect(page.locator('.source-found', { hasText: 'Land cover' })).toContainText(
 			'Not on this server'
 		);
+	});
+
+	test('switches the land cover off, and keeps it off in the link', async ({ page }) => {
+		await serve(page, osmTileJSON(false), true);
+		await expect.poll(() => landcoverSource(page)).toBe('versatiles-landcover');
+		const toggle = await landcoverSwitch(page);
+		await expect(toggle).toBeChecked();
+
+		await toggle.uncheck();
+		await expect.poll(() => landcoverSource(page)).toBeUndefined();
+		await expect.poll(() => hashConfig(page)).toEqual({ features: { landcover: false } });
+
+		await page.reload();
+		await page.waitForSelector('.maplibregl-versatiles-styler', { state: 'attached' });
+		await expect(await landcoverSwitch(page)).not.toBeChecked();
+		await expect.poll(async () => (await getMapStyle(page)).layers.length).toBeGreaterThan(0);
+		expect(await landcoverSource(page)).toBeUndefined();
+	});
+
+	test('disables the switch where there is no land cover', async ({ page }) => {
+		await serve(page, osmTileJSON(false), false);
+		await expect(page.locator('.source-found', { hasText: 'Land cover' })).toContainText(
+			'Not on this server'
+		);
+		await expect(await landcoverSwitch(page)).toBeDisabled();
 	});
 
 	test('carries the land cover into the exported style code', async ({ context, page }) => {

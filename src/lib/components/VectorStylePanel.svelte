@@ -19,6 +19,7 @@
 		config,
 		assetsBase,
 		hasElevation,
+		hasLandcover,
 		fontFaces,
 		languages,
 	}: {
@@ -32,6 +33,8 @@
 		/** The server the font previews load their glyphs from. */
 		assetsBase: string;
 		hasElevation: boolean;
+		/** Whether the tiles give the style land cover to draw. */
+		hasLandcover: boolean;
 		fontFaces: Promise<FontFaceInfo[] | undefined>;
 		languages: Record<string, string>;
 	} = $props();
@@ -53,6 +56,7 @@
 	function resetLayers() {
 		options.layers = structuredClone(defaults.layers);
 		options.features.buildings = defaults.features.buildings;
+		options.features.landcover = defaults.features.landcover;
 	}
 	function resetElevation() {
 		options.features.terrain = defaults.features.terrain;
@@ -70,7 +74,7 @@
 	title="Layers"
 	description="Show, hide or fade groups of map features."
 	onReset={resetLayers}
-	changes={changes('layers', 'features.buildings')}
+	changes={changes('layers', 'features.buildings', 'features.landcover')}
 >
 	<InputCheckbox
 		label="3D buildings"
@@ -80,6 +84,15 @@
 			(v) => (options.features.buildings = v ? 'extruded' : 'flat')
 		}
 		defaultValue={defaults.features.buildings === 'extruded'}
+	/>
+	<InputCheckbox
+		label="Land cover"
+		hint={hasLandcover
+			? 'Forest, fields, ice and other land at the zooms where the map data has little of its own. It follows the land groups below: hiding forest hides its land cover too.'
+			: 'Unavailable — these tiles come with no land cover.'}
+		disabled={!hasLandcover}
+		bind:value={options.features.landcover}
+		defaultValue={defaults.features.landcover}
 	/>
 	<LayerOptions bind:layers={options.layers} defaults={defaults.layers} {layerGroups} />
 </SidebarSection>

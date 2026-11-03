@@ -26,8 +26,9 @@ export type StyleKey = Palette | 'satellite';
 
 /**
  * The options the vector panel edits: `osm`'s resolved options without `theme` (the style key) and
- * `urls` (derived from the sources when building). `features.landcover` is never edited — it is set
- * from the tilesets when building.
+ * `urls` (derived from the sources when building). `features.landcover` is a choice rather than the
+ * option: whether to draw the land cover where the tiles have one. It is on unless switched off, and
+ * the style has it only where the tiles do (see `landcoverAvailable`).
  */
 export type VectorState = Omit<ResolvedOsm, 'theme' | 'urls'>;
 
@@ -171,7 +172,11 @@ export function vectorStateFromConfig(
 	config: Record<string, unknown> | null | undefined
 ): VectorState {
 	try {
-		return toVectorState(osm.resolveOptions({ ...(migrateConfig(config) as OsmOptions), theme }));
+		const options = migrateConfig(config) as OsmOptions | null | undefined;
+		return toVectorState(
+			osm.resolveOptions({ ...options, theme }),
+			options?.features?.landcover !== false
+		);
 	} catch (error) {
 		console.warn('Ignoring invalid style options:', error);
 		return vectorDefaults(theme);
@@ -189,9 +194,10 @@ export function satelliteStateFromConfig(
 	}
 }
 
-function toVectorState(resolved: ResolvedOsm): VectorState {
+/** The state for resolved options, with the land cover switched on unless `landcover` says not. */
+function toVectorState(resolved: ResolvedOsm, landcover = true): VectorState {
 	const { theme: _theme, urls: _urls, ...state } = resolved;
-	return { ...state, features: { ...state.features, landcover: false } };
+	return { ...state, features: { ...state.features, landcover } };
 }
 
 function toSatelliteState(resolved: ResolvedSatellite): SatelliteState {
@@ -238,6 +244,22 @@ const VECTOR_BUILDERS: Record<VectorSchema, VectorBuilder> = {
 	// Part of the schema: every tileset has it.
 	protomaps: { name: 'protomaps', style: protomaps, landcover: () => true },
 };
+
+/** The land cover a style draws: what the sources give, unless the state switches it off. */
+function chosenLandcover(
+	builder: VectorBuilder,
+	state: VectorState,
+	sources: StyleSources
+): ReturnType<VectorBuilder['landcover']> {
+	const found = builder.landcover(sources);
+	return found === undefined || state.features.landcover ? found : false;
+}
+
+/** Whether a vector style can draw land cover from these sources: what its switch depends on. */
+export function landcoverAvailable(sources: StyleSources): boolean {
+	const found = VECTOR_BUILDERS[sources.schema ?? 'shortbread'].landcover(sources);
+	return found !== undefined && found !== false;
+}
 
 /**
  * What the inspector and the panels need to name the layers of a style: its group maps and its colour
@@ -324,7 +346,7 @@ export function vectorOptions(
 ): Record<string, unknown> {
 	const builder = VECTOR_BUILDERS[sources.schema ?? 'shortbread'];
 	const { landcover: _landcover, ...features } = elevationFeatures(state.features, sources);
-	const landcover = builder.landcover(sources);
+	const landcover = chosenLandcover(builder, state, sources);
 	return {
 		...state,
 		theme,
@@ -391,8 +413,9 @@ export function buildSatelliteStyle(
 }
 
 /**
- * The smallest options for the URL hash. Leaves out `theme` (the hash stores the style key),
- * `features.landcover` (detected from the tileset) and `urls` (the sources are not part of the hash).
+ * The smallest options for the URL hash. Leaves out `theme` (the hash stores the style key) and `urls`
+ * (the sources are not part of the hash). `features.landcover` is there only when it is switched off:
+ * it is on by default in the state, and off in `osm`.
  */
 export function minimalConfig(
 	styleKey: StyleKey,
@@ -404,7 +427,8 @@ export function minimalConfig(
 	}
 	const state = { ...vectorState, features: { ...vectorState.features, landcover: false } };
 	const { theme: _theme, ...config } = osm.minimizeOptions({ ...state, theme: styleKey });
-	return config as Record<string, unknown>;
+	if (vectorState.features.landcover) return config as Record<string, unknown>;
+	return { ...config, features: { ...config.features, landcover: false } };
 }
 
 /**
@@ -490,6 +514,7 @@ export function codeTargets(
  */
 function codeUrls(
 	styleKey: StyleKey,
+	vectorState: VectorState,
 	config: SourceConfig,
 	sources: StyleSources
 ): Record<string, string> {
@@ -506,7 +531,7 @@ function codeUrls(
 	} else {
 		const builder = VECTOR_BUILDERS[schema];
 		add(builder.name, 'vector');
-		const landcover = builder.landcover(sources);
+		const landcover = chosenLandcover(builder, vectorState, sources);
 		if (typeof landcover === 'object') {
 			if (landcover !== sources.vector) add('landcover', 'landcover');
 			else if (config.vector !== undefined) urls.landcover = config.vector;
@@ -545,7 +570,7 @@ export function styleCode(
 ): string {
 	const schema = sources.schema ?? 'shortbread';
 	// `toCode` must see URLs only, never the loaded TileJSONs: the snippet loads its own.
-	const urls = codeUrls(styleKey, config, sources);
+	const urls = codeUrls(styleKey, vectorState, config, sources);
 	const code =
 		styleKey === 'satellite'
 			? satellite.toCode(

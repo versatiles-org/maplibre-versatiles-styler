@@ -11,7 +11,6 @@ import { osm, satellite } from '@versatiles/style';
 
 /** Options without a control, and why. */
 const IGNORED: Record<string, string> = {
-	'features.landcover': 'detected from the tileset',
 	theme: 'the base style, chosen in the theme picker',
 	'osmOverlay.layerOpacity': 'only for MapLibre GL JS 6, MapLibre Native drops the layers',
 };
@@ -33,6 +32,7 @@ const CONTROLS: Record<string, Control> = {
 	'features.hillshade.highlightColor': elevation('features.hillshade.highlightColor'),
 	'features.hillshade.accentColor': elevation('features.hillshade.accentColor'),
 	'features.buildings': ['VectorStylePanel.svelte', 'options.features.buildings'],
+	'features.landcover': ['VectorStylePanel.svelte', 'options.features.landcover'],
 
 	projection: map('bind:value={() => projection'),
 	'light.direction': map('light.direction'),

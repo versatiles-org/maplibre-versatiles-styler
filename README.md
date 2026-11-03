@@ -18,7 +18,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Interactive styling UI directly inside MapLibre
 - Ten vector themes — `colorful`, `natural`, `muted`, `gray`, `toner`, each with a `-dark` variant — fourteen lookalike themes whose colors resemble other well-known maps, and satellite imagery, all in a theme picker that shows each one as a small map in its own colors
 - Sections grouped the way a style is made: style, content, appearance, scene, setup
-- Show, hide or fade every layer group; 3D buildings
+- Show, hide or fade every layer group; 3D buildings; land cover
 - Borders and paths as lines: solid, dashed in the style's own pattern or in one of your own, and wider or narrower
 - Colors: global adjustments (hue, saturation, brightness, contrast, gamma, tint, blend) and every individual color, grouped by feature — with a color picker (RGB, HSL, hex, transparency) that updates the map while you drag
 - Labels in any language of the tileset, or in the browser's language; tilt of line labels

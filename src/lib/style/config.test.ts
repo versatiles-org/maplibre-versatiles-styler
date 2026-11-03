@@ -19,6 +19,7 @@ import {
 	codeTargets,
 	containerBackground,
 	inspectSources,
+	landcoverAvailable,
 	minimalConfig,
 	configChangeCount,
 	configChanges,
@@ -164,7 +165,8 @@ describe('defaults', () => {
 	it('vector defaults are the resolved options of the theme, without theme and urls', () => {
 		const defaults = vectorDefaults('gray-dark');
 		const { theme: _theme, urls: _urls, ...resolved } = osm.resolveOptions({ theme: 'gray-dark' });
-		expect(defaults).toEqual(resolved);
+		// The land cover is on wherever the tiles have one, which `osm` can't know.
+		expect(defaults).toEqual({ ...resolved, features: { ...resolved.features, landcover: true } });
 		expect(defaults).not.toHaveProperty('theme');
 		expect(defaults).not.toHaveProperty('urls');
 	});
@@ -216,15 +218,22 @@ describe('state from hash config', () => {
 		expect(vectorStateFromConfig('gray', { layout: { scale: 2 } })).toEqual(vectorDefaults('gray'));
 	});
 
-	it('never takes theme, urls or landcover from the config', () => {
+	it('never takes theme or urls from the config', () => {
 		const state = vectorStateFromConfig('gray', {
 			theme: 'toner',
 			urls: { base: 'https://evil.example' },
-			features: { landcover: true },
 		});
 		expect(state.colors).toEqual(vectorDefaults('gray').colors);
 		expect(state).not.toHaveProperty('urls');
-		expect(state.features.landcover).toBe(false);
+	});
+
+	it('takes the land cover from the config only when it switches it off', () => {
+		const landcover = (config: Record<string, unknown> | null) =>
+			vectorStateFromConfig('gray', config).features.landcover;
+		expect(landcover(null)).toBe(true);
+		expect(landcover({})).toBe(true);
+		expect(landcover({ features: { landcover: true } })).toBe(true);
+		expect(landcover({ features: { landcover: false } })).toBe(false);
 	});
 
 	it('falls back to satellite defaults for v5 options', () => {
@@ -320,9 +329,8 @@ describe('buildVectorStyle', () => {
 		expect(style.sources['versatiles-landcover']).toBeUndefined();
 	});
 
-	it('sets landcover from the tilesets, whatever the state says', () => {
+	it('draws no land cover where the tiles have none, though the state switches it on', () => {
 		const state = vectorDefaults('colorful');
-		state.features.landcover = true;
 		const plain = { ...state, features: { ...state.features, landcover: false } };
 		const expected = osm({ ...plain, urls: { base: ORIGIN, osm: osmTileJSON } });
 		expect(buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON })).toEqual(expected);
@@ -330,6 +338,24 @@ describe('buildVectorStyle', () => {
 		expect(
 			buildVectorStyle('colorful', state, ORIGIN, { vector: osmTileJSON, landcover: osmTileJSON })
 		).toEqual(expected);
+	});
+
+	it('draws no land cover where the state switches it off', () => {
+		const state = vectorDefaults('colorful');
+		state.features.landcover = false;
+		const expected = osm({ ...state, urls: { base: ORIGIN, osm: osmTileJSON } });
+		const sources = { vector: osmTileJSON, landcover: landcoverTileJSON };
+		expect(buildVectorStyle('colorful', state, ORIGIN, sources)).toEqual(expected);
+		const merged = buildVectorStyle('colorful', state, ORIGIN, { vector: mergedTileJSON });
+		expect(merged.layers.some((layer) => layer.id.startsWith('landcover-'))).toBe(false);
+	});
+
+	it('tells whether there is land cover to switch', () => {
+		expect(landcoverAvailable({ vector: osmTileJSON })).toBe(false);
+		expect(landcoverAvailable({ vector: osmTileJSON, landcover: landcoverTileJSON })).toBe(true);
+		expect(landcoverAvailable({ vector: mergedTileJSON })).toBe(true);
+		expect(landcoverAvailable({ vector: omtTileJSON, schema: 'openmaptiles' })).toBe(false);
+		expect(landcoverAvailable({ vector: omtTileJSON, schema: 'protomaps' })).toBe(true);
 	});
 
 	it('leaves terrain and hillshade out while there is no elevation source', () => {
@@ -362,6 +388,15 @@ describe('vector tiles of another schema', () => {
 				features,
 				urls: { base: ORIGIN, omt: omtTileJSON, elevation: elevationTileJSON },
 			})
+		);
+	});
+
+	it('builds Protomaps tiles without their land cover where the state switches it off', () => {
+		const off = vectorDefaults('gray');
+		off.features.landcover = false;
+		const sources: StyleSources = { vector: omtTileJSON, schema: 'protomaps' };
+		expect(buildVectorStyle('gray', off, ORIGIN, sources)).toEqual(
+			protomaps({ ...off, theme: 'gray', urls: { base: ORIGIN, protomaps: omtTileJSON } })
 		);
 	});
 
@@ -479,7 +514,9 @@ describe('minimalConfig', () => {
 		state.layers.labels.water.rivers = false;
 		state.layers.boundaries.state = { opacity: 0.5, dashed: [4, 2], width: 2 };
 		state.layers.roads.footway.dashed = false;
+		state.features.landcover = false;
 		const config = minimalConfig('natural-dark', state, satelliteDefaults());
+		expect(config.features).toMatchObject({ landcover: false });
 		expect(config.layers).toEqual({
 			labels: { water: { rivers: false } },
 			boundaries: { state: { opacity: 0.5, dashed: [4, 2], width: 2 } },
@@ -561,6 +598,15 @@ describe('styleCode', () => {
 		expect(code).toContain('landcover: true');
 		// The server's own land cover is the one `osm` reads by default.
 		expect(code).not.toContain('landcover: "');
+	});
+
+	it('leaves the land cover out where the state switches it off', () => {
+		const state = vectorDefaults('colorful');
+		state.features.landcover = false;
+		const code = styleCode('colorful', state, satelliteDefaults(), CONFIG, {
+			vector: mergedTileJSON,
+		});
+		expect(code).not.toContain('landcover');
 	});
 
 	it('names land cover from elsewhere', () => {
