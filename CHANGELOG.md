@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-11-03
+
+### Features
+
+- add a Land cover switch to the Layers section ([474e49f](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/474e49f263e21876fe69a5e40ac53ae143541b69))
+
+### Bug Fixes
+
+- treat a land cover tileset as one of unknown schema, which @versatiles/style 8 names and the styler crashed on ([dd447fe](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/dd447feac9f2cc02aa16089a47fde42a6786ed25))
+- draw the land cover from the server's landcover-vectors tileset, which @versatiles/style 8 no longer finds in osm ([c677dd8](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/c677dd8cb479fbf707ceeab9aca0dba28bcf7139))
+- **inspect:** put a land cover fill in the group of the fill it copies ([32e9bef](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/32e9befe001cd8fb787bf6ed979dc6a50e685fa7))
+
+### Documentation
+
+- list the landcover-vectors tileset among the server requirements ([7e13ad4](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/7e13ad46ac80c94d87e9f9e38a5a9e41931c8137))
+
+### Chores
+
+- update devDependencies to latest versions ([3564aea](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/3564aea105ddc627702301ba76e1f736d479c7e2))
+- update dependencies to latest versions ([5a51477](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/5a51477d8d063a7b2f059aba8c553b3d580ef3be))
+
 ## [2.5.1] - 2026-10-30
 
 ### Build System
