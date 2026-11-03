@@ -143,6 +143,21 @@ export interface InspectResult {
 	lngLat: { lng: number; lat: number };
 }
 
+/**
+ * The land cover's fills are named after the fill they copy: `landcover-land-forest` copies
+ * `land-forest`. The group maps don't list them, as most styles have none, but they are shown and
+ * hidden with the fill they copy.
+ */
+const LANDCOVER_PREFIX = 'landcover-';
+
+/** The group path of a layer, or of the fill a land cover fill copies. */
+function groupOf(groups: GroupIndex, id: string): string[] | undefined {
+	return (
+		groups.get(id) ??
+		(id.startsWith(LANDCOVER_PREFIX) ? groups.get(id.slice(LANDCOVER_PREFIX.length)) : undefined)
+	);
+}
+
 /** The feature shape this reads, which is what `map.queryRenderedFeatures()` returns. */
 export interface RenderedFeature {
 	layer: { id: string; type: string; paint?: Record<string, unknown> };
@@ -179,7 +194,7 @@ export function describeFeatures(
 			id,
 			type,
 			sourceLayer: feature.sourceLayer,
-			group: indexes.groups.get(id),
+			group: groupOf(indexes.groups, id),
 			topic: indexes.topics.get(id),
 			// A property with no key still belongs in the list: it says the color is the layer's own.
 			colors: properties.map((property) => ({ property, key: keys[property] })),

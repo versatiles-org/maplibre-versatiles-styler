@@ -161,6 +161,14 @@ describe('describeFeatures', () => {
 		expect(described.colors).toEqual([{ property: 'fill-color', key: 'water' }]);
 	});
 
+	it('puts a land cover fill in the group of the fill it copies', () => {
+		const [described] = describeFeatures(
+			[feature('landcover-land-forest', { sourceLayer: 'landcover' })],
+			indexes
+		);
+		expect(described.group).toEqual(['land', 'forest']);
+	});
+
 	it('names the label topic of a text layer', () => {
 		const [described] = describeFeatures(
 			[feature('label-street-primary', { layer: { id: 'label-street-primary', type: 'symbol' } })],
