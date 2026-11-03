@@ -328,6 +328,8 @@ describe('vectorSchema', () => {
 
 	it('gives undefined for other vector tiles and for raster tiles', () => {
 		expect(vectorSchema(tileJSON({ parcels: { fields: ['owner'] } }))).toBeUndefined();
+		// The land cover on its own has a schema of its own, but no style: it goes under Shortbread.
+		expect(vectorSchema(tileJSON({ landcover: { fields: ['kind'] } }))).toBeUndefined();
 		expect(
 			vectorSchema({ tilejson: '3.0.0', tiles: ['https://tiles.example.org/{z}/{x}/{y}'] })
 		).toBeUndefined();

@@ -21,10 +21,19 @@ export interface SourceConfig {
 /** The vector tile schemas the styler has a style for. */
 export type VectorSchema = 'shortbread' | 'openmaptiles' | 'protomaps';
 
-/** The schema of a vector tileset, read from its layers; `undefined` when it is none the styler knows. */
+/**
+ * The schema of a vector tileset, read from its layers; `undefined` when it is none the styler builds a
+ * style for. Mapbox tiles are such a tileset, and so is the land cover on its own, which only goes under
+ * Shortbread.
+ */
 export function vectorSchema(tileJSON: TileJSONSpecification): VectorSchema | undefined {
 	const guess = guessSchema(tileJSON);
-	return guess.type === 'vector' && guess.schema !== 'mapbox' ? guess.schema : undefined;
+	return guess.type === 'vector' && isVectorSchema(guess.schema) ? guess.schema : undefined;
+}
+
+/** Whether a name is one of the schemas the styler has a style for. */
+function isVectorSchema(name: string | undefined): name is VectorSchema {
+	return name !== undefined && Object.prototype.hasOwnProperty.call(SCHEMA_LABELS, name);
 }
 
 /** A loaded TileJSON, or `null` when the source is not configured or its server does not provide it. */
@@ -258,7 +267,7 @@ export function parseSources(value: unknown): ChosenSources | undefined {
 		if (url) config[name] = url;
 	}
 	const schema = text('schema');
-	if (schema && schema in SCHEMA_LABELS) config.schema = schema as VectorSchema;
+	if (schema && isVectorSchema(schema)) config.schema = schema;
 	const provider = PROVIDER_NAMES.find((name) => name === data.provider);
 	return { provider: provider ?? providerOf(config), config };
 }
