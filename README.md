@@ -135,16 +135,17 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 
 By default the styler reads everything from the `origin`. Each of these is optional — what is missing is left out of the sidebar:
 
-| Path                                     | Used for                                                          |
-| ---------------------------------------- | ----------------------------------------------------------------- |
-| `/tiles/osm/tiles.json`                  | The vector themes and the satellite overlay; languages; landcover |
-| `/tiles/satellite/tiles.json`            | The satellite style                                               |
-| `/tiles/elevation/tiles.json`            | Terrain and hillshade                                             |
-| `/assets/glyphs/{fontstack}/{range}.pbf` | Label fonts                                                       |
-| `/assets/glyphs/font_families.json`      | The font lists; without it, fonts are entered as glyph names      |
-| `/assets/sprites/base`                   | Icons                                                             |
+| Path                                     | Used for                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `/tiles/osm/tiles.json`                  | The vector themes and the satellite overlay; languages                   |
+| `/tiles/landcover-vectors/tiles.json`    | Land cover under the Shortbread themes, unless the vector tiles carry it |
+| `/tiles/satellite/tiles.json`            | The satellite style                                                      |
+| `/tiles/elevation/tiles.json`            | Terrain and hillshade                                                    |
+| `/assets/glyphs/{fontstack}/{range}.pbf` | Label fonts                                                              |
+| `/assets/glyphs/font_families.json`      | The font lists; without it, fonts are entered as glyph names             |
+| `/assets/sprites/base`                   | Icons                                                                    |
 
-The three TileJSON files are loaded in parallel when the control is added, and the style is set once they are in.
+The four TileJSON files are loaded in parallel when the control is added, and the style is set once they are in.
 
 ### Tile schemas
 
