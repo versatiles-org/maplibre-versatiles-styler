@@ -53,7 +53,7 @@ test.describe('startup', () => {
 		expect(await setStyleCallsUntilIdle(page)).toEqual(['versatiles-colorful']);
 	});
 
-	test('loads the TileJSONs in parallel and nothing else before the first style', async ({
+	test('loads the TileJSONs and the list of tilesets in parallel and nothing else before the first style', async ({
 		page,
 	}) => {
 		const requested: string[] = [];
@@ -66,6 +66,7 @@ test.describe('startup', () => {
 		await setStyleCallsUntilIdle(page);
 		expect(requested.sort()).toEqual([
 			'/tiles/elevation-raster/tiles.json',
+			'/tiles/index.json',
 			'/tiles/landcover-vector/tiles.json',
 			'/tiles/osm-vector/tiles.json',
 			'/tiles/satellite-raster/tiles.json',

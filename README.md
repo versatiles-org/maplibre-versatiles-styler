@@ -134,11 +134,14 @@ By default the styler reads everything from the `origin`. Each of these is optio
 | `/tiles/landcover-vector/tiles.json`     | Land cover under the Shortbread themes, unless the vector tiles carry it |
 | `/tiles/satellite-raster/tiles.json`     | The satellite style                                                      |
 | `/tiles/elevation-raster/tiles.json`     | Terrain and hillshade                                                    |
+| `/tiles/index.json`                      | The names of the tilesets, for a server that has them under other names  |
 | `/assets/glyphs/{fontstack}/{range}.pbf` | Label fonts                                                              |
 | `/assets/glyphs/font_families.json`      | The font lists; without it, fonts are entered as glyph names             |
 | `/assets/sprites/base`                   | Icons                                                                    |
 
-The four TileJSON files are loaded in parallel when the control is added, and the style is set once they are in.
+The four TileJSON files and the list of tilesets are loaded in parallel when the control is added, and the style is set once they are in.
+
+A name in the list counts as a tileset with or without its format, in the plural or not, and with a version after a dot: `osm`, `osm-vector`, `osm-vectors` and `osm-vector.20251201` are all the vector tiles. Of several, the default name above is taken, else the last in sort order, which is the newest version. Tilesets named in `sources` are taken as they are.
 
 ### Tile schemas
 
@@ -231,7 +234,8 @@ link shows the sidebar as it was left.
 
 The styler asks for the tilesets under the names VersaTiles servers now use: `osm-vector`, `satellite-raster`,
 `elevation-raster` and `landcover-vector` (before: `osm`, `satellite`, `elevation`, `landcover-vectors`).
-A server that still has the old names needs them in `sources`:
+A server that still has the old names and lists them in `/tiles/index.json` keeps working. One without that list
+needs them in `sources`:
 
 ```js
 new VersaTilesStylerControl({
@@ -254,7 +258,6 @@ Version 2 is built on `@versatiles/style` v6:
   Pasting such options into **Import** explains each renamed key instead of ignoring it.
 - The copied code uses the v6 API: `await inlineSources(osm({ theme, … }))`.
 - Export moved from a dropdown in the header into a dialog, and gained an import counterpart.
-- `/tiles/index.json` is no longer read; sources are detected from their TileJSON files (see above).
 
 ## Development
 

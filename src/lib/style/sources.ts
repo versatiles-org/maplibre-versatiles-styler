@@ -128,6 +128,14 @@ const TILEJSON_DEFAULTS: Record<string, Partial<TileJSONSpecification>> = {
 /** The addresses of tile sources, by what they are used for. */
 export type SourceUrls = Partial<Record<SourceName, string>>;
 
+/** The tilesets of a VersaTiles server: what each name starts with, and the name it has by default. */
+const TILESETS: Record<SourceName, { base: string; name: string }> = {
+	vector: { base: 'osm', name: 'osm-vector' },
+	satellite: { base: 'satellite', name: 'satellite-raster' },
+	elevation: { base: 'elevation', name: 'elevation-raster' },
+	landcover: { base: 'landcover', name: 'landcover-vector' },
+};
+
 /**
  * The sources of a VersaTiles server: its tilesets `osm-vector`, `satellite-raster`,
  * `elevation-raster` and `landcover-vector`, and its assets.
@@ -135,22 +143,57 @@ export type SourceUrls = Partial<Record<SourceName, string>>;
  * which may be relative to the origin. An origin that is no URL has no tiles.
  */
 export function versatilesSources(origin: string, tilesets: SourceUrls = {}): SourceConfig {
-	const tileJSON = (name: SourceName, tileset: string) => {
-		const url = tilesets[name] ?? `/tiles/${tileset}/tiles.json`;
-		return isPMTilesUrl(url) ? url : new URL(url, origin).href;
-	};
 	try {
 		new URL(origin);
 	} catch {
 		return { assets: origin };
 	}
+	const tileJSON = (name: SourceName) => {
+		const url = tilesets[name] ?? `/tiles/${TILESETS[name].name}/tiles.json`;
+		return isPMTilesUrl(url) ? url : new URL(url, origin).href;
+	};
 	return {
-		vector: tileJSON('vector', 'osm-vector'),
-		satellite: tileJSON('satellite', 'satellite-raster'),
-		elevation: tileJSON('elevation', 'elevation-raster'),
-		landcover: tileJSON('landcover', 'landcover-vector'),
+		vector: tileJSON('vector'),
+		satellite: tileJSON('satellite'),
+		elevation: tileJSON('elevation'),
+		landcover: tileJSON('landcover'),
 		assets: origin,
 	};
+}
+
+/**
+ * The tilesets in a VersaTiles server's list of names, by what they are used for, as paths of their
+ * TileJSON. A name may carry the format or not, in the plural or not, and a version after a dot:
+ * `osm`, `osm-vector`, `osm-vectors` and `osm-vector.20251201` are all vector tiles. Of several, the
+ * default name is taken, else the last in sort order, which is the newest version. A tileset the list
+ * has no name for is left out.
+ */
+export function tilesetsFromIndex(names: readonly string[]): SourceUrls {
+	const urls: SourceUrls = {};
+	for (const source of Object.keys(TILESETS) as SourceName[]) {
+		const { base, name } = TILESETS[source];
+		const pattern = new RegExp(`^${base}(-(vector|raster)s?)?(\\..+)?$`);
+		const matches = names.filter((candidate) => pattern.test(candidate)).sort();
+		const picked = matches.includes(name) ? name : matches[matches.length - 1];
+		if (picked !== undefined) urls[source] = `/tiles/${encodeURIComponent(picked)}/tiles.json`;
+	}
+	return urls;
+}
+
+/**
+ * The tilesets the VersaTiles server at an origin lists in `/tiles/index.json`, as `tilesetsFromIndex`
+ * picks them. A server that has no such list, or not one of names, lists none.
+ */
+export async function fetchTilesetIndex(origin: string): Promise<SourceUrls> {
+	try {
+		const response = await fetch(new URL('/tiles/index.json', origin));
+		if (!response.ok) return {};
+		const names: unknown = await response.json();
+		if (!Array.isArray(names)) return {};
+		return tilesetsFromIndex(names.filter((name): name is string => typeof name === 'string'));
+	} catch {
+		return {};
+	}
 }
 
 /**
@@ -162,8 +205,13 @@ export function versatilesSources(origin: string, tilesets: SourceUrls = {}): So
  * that holds the wrong kind of tiles: imagery where vector tiles belong, or the other way round, or
  * anything but land cover where the land cover belongs.
  * Repeated requests for the same URL are served from `@versatiles/style`'s response cache.
+ *
+ * `settled` is the config these sources end up as while that is still being found out: a VersaTiles
+ * server's list of tilesets may give a source another address. A source that fails waits for it, and
+ * counts as unavailable only if it keeps its address; otherwise it stays loading, as the sources at the
+ * other address replace these.
  */
-export function loadSources(config: SourceConfig): LoadedSources {
+export function loadSources(config: SourceConfig, settled?: Promise<SourceConfig>): LoadedSources {
 	const fits = (name: SourceName, tileJSON: TileJSONSpecification): boolean =>
 		name === 'landcover'
 			? osm.supportsLandcover(tileJSON)
@@ -177,7 +225,17 @@ export function loadSources(config: SourceConfig): LoadedSources {
 					? ({ ...TILEJSON_DEFAULTS[url], ...tileJSON } as TileJSONSpecification)
 					: null
 			)
-			.catch(() => null);
+			.catch(() => null)
+			.then((tileJSON) => (tileJSON === null && settled ? missing(name, url, settled) : tileJSON));
+	};
+	/** A failed source, once it is known to stay at its address; one that moves never settles here. */
+	const missing = async (
+		name: SourceName,
+		url: string,
+		final: Promise<SourceConfig>
+	): Promise<LoadedTileJSON> => {
+		const settledConfig = await final.catch(() => config);
+		return settledConfig[name] === url ? null : new Promise<never>(() => {});
 	};
 
 	let fontFaces: Promise<FontFaceInfo[] | undefined> | undefined;

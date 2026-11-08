@@ -39,6 +39,7 @@
 		type RenderedFeature,
 	} from '../style/inspect';
 	import {
+		fetchTilesetIndex,
 		loadSources,
 		openFreeMapSources,
 		parseSources,
@@ -50,6 +51,7 @@
 		type LoadedTileJSON,
 		type Provider,
 		type SourceConfig,
+		type SourceUrls,
 		type VectorSchema,
 	} from '../style/sources';
 	import { registerPMTiles } from '../style/pmtiles';
@@ -75,9 +77,22 @@
 	fontPicker.labelTexts = (layerIds) => labelTexts(map, layerIds);
 	// The color pickers share their channel tab.
 	provideColorPickerState();
-	/** The sources of a VersaTiles server, with the tilesets the page says it has under other names. */
+	/** The tilesets each VersaTiles server lists, by origin, once its list is in. */
+	const listed: Record<string, SourceUrls> = {};
+	/** The lists of tilesets asked for, by origin: each server is asked once. */
+	const lists: Record<string, Promise<SourceUrls>> = {};
+	function tilesetList(origin: string): Promise<SourceUrls> {
+		return (lists[origin] ??= fetchTilesetIndex(origin).then((urls) => (listed[origin] = urls)));
+	}
+
+	/**
+	 * The sources of a VersaTiles server, with the tilesets it lists under other names, once that list is
+	 * in, and those the page says it has, which win.
+	 */
 	function ownServer(origin: string): SourceConfig {
-		return versatilesSources(origin, config.sources);
+		// A tileset the page names as `undefined` is one it does not name.
+		const named = Object.entries(config.sources ?? {}).filter(([, url]) => url !== undefined);
+		return versatilesSources(origin, { ...listed[origin], ...Object.fromEntries(named) });
 	}
 
 	// Where the tiles and the assets come from: a VersaTiles server, which provides all of them.
@@ -135,7 +150,29 @@
 	// All TileJSONs load in parallel. `undefined` while loading, `null` when the
 	// source is not available.
 
-	let sources = $derived(loadSources(sourceConfig));
+	// A VersaTiles server's sources settle once its list of tilesets is in.
+	let sources = $derived.by(() => {
+		if (provider !== 'versatiles') return loadSources(sourceConfig);
+		const origin = sourceConfig.assets;
+		return loadSources(
+			sourceConfig,
+			tilesetList(origin).then(() => ownServer(origin))
+		);
+	});
+
+	// A VersaTiles server may list its tilesets under other names. The default names load meanwhile, so
+	// a server that has them waits for nothing; one that has others moves to those once its list is in.
+	// Its fonts stay the same.
+	$effect(() => {
+		if (provider !== 'versatiles') return;
+		const origin = sourceConfig.assets;
+		let outdated = false;
+		void tilesetList(origin).then(() => {
+			const next = ownServer(origin);
+			if (!outdated && JSON.stringify(next) !== JSON.stringify(sourceConfig)) sourceConfig = next;
+		});
+		return () => (outdated = true);
+	});
 	let vectorTileJSON = $state<LoadedTileJSON | undefined>();
 	let satelliteTileJSON = $state<LoadedTileJSON | undefined>();
 	let elevationTileJSON = $state<LoadedTileJSON | undefined>();
@@ -483,11 +520,16 @@
 		fontPicker.clearScripts();
 	}
 
-	/** The sources of the page itself: the VersaTiles server it names, or the one it is on. */
-	const ownSources: ChosenSources = untrack(() => ({
-		provider: 'versatiles',
-		config: ownServer(config.origin ?? window.location.origin),
-	}));
+	/**
+	 * The sources of the page itself: the VersaTiles server it names, or the one it is on, with the
+	 * tilesets it lists once that list is in.
+	 */
+	function ownSources(): ChosenSources {
+		return untrack(() => ({
+			provider: 'versatiles',
+			config: ownServer(config.origin ?? window.location.origin),
+		}));
+	}
 
 	function sourcesFromHash(encoded: string | null | undefined): ChosenSources | undefined {
 		return encoded ? parseSources(decodeConfig(encoded)) : undefined;
@@ -506,7 +548,7 @@
 				},
 				// A page that offers no other sources has none to keep in a link.
 				config.externalSources
-					? { onChange: (encoded) => applySources(sourcesFromHash(encoded) ?? ownSources) }
+					? { onChange: (encoded) => applySources(sourcesFromHash(encoded) ?? ownSources()) }
 					: undefined
 			);
 			const { styleKey, config: hashConfig, panelOpen, sources } = hashManager.initialize();
@@ -524,7 +566,7 @@
 	// And so are the tile sources, unless they are the page's own.
 	$effect(() => {
 		const chosen = { provider, config: sourceConfig };
-		const own = JSON.stringify(chosen) === JSON.stringify(ownSources);
+		const own = JSON.stringify(chosen) === JSON.stringify(ownSources());
 		hashManager?.setSources(own ? null : encodeConfig(serializeSources(chosen)));
 	});
 

@@ -56,12 +56,27 @@ test.describe('tile source discovery', () => {
 		await expect.poll(() => styleValues(page)).toEqual(THEMES);
 	});
 
-	test('does not ask for /tiles/index.json', async ({ page }) => {
+	test('finds vector tiles under another name in the list of tilesets', async ({ page }) => {
+		const listed = 'osm-vector.20251201';
+		await page.route('**/tiles/index.json', (route) =>
+			route.fulfill({ json: [listed, 'satellite-raster', 'elevation-raster', 'landcover-vector'] })
+		);
+		await withoutSources(page, 'osm-vector');
+		await page.route(`**/tiles/${listed}/tiles.json`, async (route) =>
+			route.fulfill({
+				response: await route.fetch({
+					url: 'https://tiles.versatiles.org/tiles/osm-vector/tiles.json',
+				}),
+			})
+		);
 		const requested: string[] = [];
 		page.on('request', (request) => requested.push(request.url()));
 		await open(page);
-		await expect.poll(() => styleValues(page)).toContain('satellite');
-		expect(requested.filter((url) => url.includes('/tiles/index.json'))).toEqual([]);
+		await expect.poll(() => styleValues(page)).toEqual([...THEMES, 'satellite']);
+		expect(requested.some((url) => url.includes(`/tiles/${listed}/tiles.json`))).toBe(true);
+		// They are still the page's own sources, which a link leaves out. The hash is written throttled.
+		await page.waitForTimeout(400);
+		expect(new URL(page.url()).hash).not.toContain('sources=');
 	});
 
 	test('shows overlay disabled when osm is missing', async ({ page }) => {

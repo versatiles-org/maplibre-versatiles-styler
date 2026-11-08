@@ -5,7 +5,11 @@ import { OMT_SCHEMA } from '@versatiles/style/omt';
 import { PROTOMAPS_SCHEMA } from '@versatiles/style/protomaps';
 import type { TileJSONSpecification } from '@versatiles/style';
 import {
+	fetchTilesetIndex,
 	loadSources,
+	tilesetsFromIndex,
+	type SourceConfig,
+	type SourceName,
 	parseSources,
 	serializeSources,
 	openFreeMapSources,
@@ -25,6 +29,9 @@ const ORIGIN = 'https://sources.example.org';
 afterEach(() => {
 	vi.restoreAllMocks();
 });
+
+/** Lets every request and promise that is ready settle. */
+const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
 
 function mockServer(files: Record<string, unknown>) {
 	return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
@@ -141,6 +148,38 @@ describe('loadSources', () => {
 		expect(await sources.vector).toBeNull();
 	});
 
+	it('gives a source that loads at once, without waiting for the settled config', async () => {
+		mockServer({
+			'/tiles/osm-vector/tiles.json': { tilejson: '3.0.0', tiles: [], vector_layers: [] },
+		});
+		const sources = loadSources(
+			versatilesSources('https://early.example.org'),
+			new Promise<SourceConfig>(() => {})
+		);
+		expect(await sources.vector).not.toBeNull();
+	});
+
+	it('holds a failed source until the settled config shows whether it keeps its address', async () => {
+		mockServer({});
+		const origin = 'https://settling.example.org';
+		let settle: (config: SourceConfig) => void = () => {};
+		const sources = loadSources(
+			versatilesSources(origin),
+			new Promise<SourceConfig>((resolve) => (settle = resolve))
+		);
+		const given: Partial<Record<SourceName, unknown>> = {};
+		for (const name of ['vector', 'satellite'] as const) {
+			void sources[name].then((tileJSON) => (given[name] = tileJSON));
+		}
+		await tick();
+		expect(given).toEqual({});
+
+		// The vector tiles move to another name; the satellite imagery stays missing where it was.
+		settle(versatilesSources(origin, { vector: '/tiles/osm/tiles.json' }));
+		await tick();
+		expect(given).toEqual({ satellite: null });
+	});
+
 	it('loads font faces only on request, once', async () => {
 		const fetchSpy = mockServer({
 			'/assets/glyphs/font_families.json': [
@@ -173,6 +212,79 @@ describe('loadSources', () => {
 		expect(
 			await loadSources(versatilesSources('https://nofonts.example.org')).fontFaces()
 		).toBeUndefined();
+	});
+});
+
+describe('tilesetsFromIndex', () => {
+	const path = (name: string) => `/tiles/${name}/tiles.json`;
+
+	it('takes the default names', () => {
+		expect(
+			tilesetsFromIndex([
+				'bathymetry-vector',
+				'elevation-raster',
+				'hillshade-vector',
+				'landcover-vector',
+				'osm-vector',
+				'satellite-raster',
+			])
+		).toEqual({
+			vector: path('osm-vector'),
+			satellite: path('satellite-raster'),
+			elevation: path('elevation-raster'),
+			landcover: path('landcover-vector'),
+		});
+	});
+
+	it('takes a name with or without the format, in the plural or not, and with a version', () => {
+		expect(tilesetsFromIndex(['osm', 'satellite', 'elevation', 'landcover-vectors'])).toEqual({
+			vector: path('osm'),
+			satellite: path('satellite'),
+			elevation: path('elevation'),
+			landcover: path('landcover-vectors'),
+		});
+		expect(tilesetsFromIndex(['osm-vectors']).vector).toBe(path('osm-vectors'));
+		expect(tilesetsFromIndex(['osm-vector.20251201']).vector).toBe(path('osm-vector.20251201'));
+	});
+
+	it('prefers the default name, else the newest version', () => {
+		expect(tilesetsFromIndex(['osm-vector.20260101', 'osm-vector', 'osm']).vector).toBe(
+			path('osm-vector')
+		);
+		expect(tilesetsFromIndex(['osm-vector.20260101', 'osm-vector.20251201']).vector).toBe(
+			path('osm-vector.20260101')
+		);
+	});
+
+	it('leaves out what has no name in the list, and names that only start alike', () => {
+		expect(tilesetsFromIndex([])).toEqual({});
+		expect(
+			tilesetsFromIndex(['osmand', 'osm-vector-extra', 'satellites', 'hillshade-vector'])
+		).toEqual({});
+	});
+});
+
+describe('fetchTilesetIndex', () => {
+	it('reads the list of a VersaTiles server', async () => {
+		mockServer({ '/tiles/index.json': ['osm', 'satellite-raster', 42] });
+		expect(await fetchTilesetIndex('https://index.example.org')).toEqual({
+			vector: '/tiles/osm/tiles.json',
+			satellite: '/tiles/satellite-raster/tiles.json',
+		});
+	});
+
+	it('lists nothing for a server without a list, or with one that is no list of names', async () => {
+		mockServer({ '/tiles/index.json': { osm: true } });
+		expect(await fetchTilesetIndex('https://object.example.org')).toEqual({});
+		vi.restoreAllMocks();
+		mockServer({});
+		expect(await fetchTilesetIndex('https://nolist.example.org')).toEqual({});
+		expect(await fetchTilesetIndex('not a url')).toEqual({});
+	});
+
+	it('lists nothing when the server cannot be reached', async () => {
+		vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+		expect(await fetchTilesetIndex('https://offline.example.org')).toEqual({});
 	});
 });
 
