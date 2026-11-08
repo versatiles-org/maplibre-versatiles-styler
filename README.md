@@ -116,18 +116,11 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 | Option            | Type       | Default                  | Description                                                                                                |
 | ----------------- | ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
 | `origin`          | `string`   | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.                                     |
-| `sources`         | `object`   | –                        | TileJSON addresses of tilesets the server has under other names: `{ vector, satellite, elevation }`        |
+| `sources`         | `object`   | –                        | TileJSON addresses of tilesets under other names: `{ vector, satellite, elevation, landcover }`            |
 | `externalSources` | `boolean`  | `false`                  | Offer tiles of other providers in the sidebar: OpenFreeMap, Protomaps and custom addresses                 |
 | `addProtocol`     | `function` | –                        | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives               |
 | `open`            | `boolean`  | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise                                  |
 | `hash`            | `boolean`  | `true`                   | Keep the map view, the style, its options and other tile sources in the URL hash fragment                  |
-
--------- | --------- | ------------------------ | ------------------------------------------------------------------------- |
-| `origin` | `string`  | `window.location.origin` | Base URL of the VersaTiles server. Can also be changed in the sidebar.    |
-| `externalSources` | `boolean` | `false` | Offer tiles of other providers in the sidebar, such as OpenFreeMap |
-| `addProtocol` | `function` | – | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives, such as Protomaps |
-| `open`   | `boolean` | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise |
-| `hash`   | `boolean` | `true`                   | Keep the map view, the style and its options in the URL hash fragment     |
 
 ---
 
