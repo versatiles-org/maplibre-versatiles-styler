@@ -11,13 +11,13 @@ function osmTileJSON(merged: boolean) {
 	return { tilejson: '3.0.0', tiles, vector_layers: merged ? [land, landcover] : [land] };
 }
 
-/** Stand-in TileJSON of the land cover on its own, as `landcover-vectors` has it. */
+/** Stand-in TileJSON of the land cover on its own, as `landcover-vector` has it. */
 const landcoverTileJSON = { tilejson: '3.0.0', tiles, maxzoom: 10, vector_layers: [landcover] };
 
 /** Serves the stand-ins: the vector tiles, and the land cover tileset or a 404 in its place. */
 async function serve(page: Page, osm: object, ownLandcover: boolean) {
-	await page.route('**/tiles/osm/tiles.json', (route) => route.fulfill({ json: osm }));
-	await page.route('**/tiles/landcover-vectors/tiles.json', (route) =>
+	await page.route('**/tiles/osm-vector/tiles.json', (route) => route.fulfill({ json: osm }));
+	await page.route('**/tiles/landcover-vector/tiles.json', (route) =>
 		ownLandcover ? route.fulfill({ json: landcoverTileJSON }) : route.fulfill({ status: 404 })
 	);
 	await page.goto('/#panel=open');

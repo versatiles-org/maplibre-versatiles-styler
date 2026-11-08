@@ -129,8 +129,8 @@ const TILEJSON_DEFAULTS: Record<string, Partial<TileJSONSpecification>> = {
 export type SourceUrls = Partial<Record<SourceName, string>>;
 
 /**
- * The sources of a VersaTiles server: its tilesets `osm`, `satellite`, `elevation` and
- * `landcover-vectors`, and its assets.
+ * The sources of a VersaTiles server: its tilesets `osm-vector`, `satellite-raster`,
+ * `elevation-raster` and `landcover-vector`, and its assets.
  * A server that has a tileset under another name says so in `tilesets`, by the address of its TileJSON,
  * which may be relative to the origin. An origin that is no URL has no tiles.
  */
@@ -145,10 +145,10 @@ export function versatilesSources(origin: string, tilesets: SourceUrls = {}): So
 		return { assets: origin };
 	}
 	return {
-		vector: tileJSON('vector', 'osm'),
-		satellite: tileJSON('satellite', 'satellite'),
-		elevation: tileJSON('elevation', 'elevation'),
-		landcover: tileJSON('landcover', 'landcover-vectors'),
+		vector: tileJSON('vector', 'osm-vector'),
+		satellite: tileJSON('satellite', 'satellite-raster'),
+		elevation: tileJSON('elevation', 'elevation-raster'),
+		landcover: tileJSON('landcover', 'landcover-vector'),
 		assets: origin,
 	};
 }

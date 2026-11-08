@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { osm } from '@versatiles/style';
 import { openThemePicker, selectStyle } from './helpers';
 
-type SourceName = 'osm' | 'satellite' | 'elevation';
+type SourceName = 'osm-vector' | 'satellite-raster' | 'elevation-raster';
 
 /** Makes the given sources unavailable: their TileJSON answers 404. */
 async function withoutSources(page: Page, ...names: SourceName[]) {
@@ -36,13 +36,13 @@ test.describe('tile source discovery', () => {
 	});
 
 	test('shows only the themes when satellite is missing', async ({ page }) => {
-		await withoutSources(page, 'satellite');
+		await withoutSources(page, 'satellite-raster');
 		await open(page);
 		await expect.poll(() => styleValues(page)).toEqual(THEMES);
 	});
 
 	test('shows only satellite when osm is missing', async ({ page }) => {
-		await withoutSources(page, 'osm');
+		await withoutSources(page, 'osm-vector');
 		await open(page);
 		await expect.poll(() => styleValues(page)).toEqual(['satellite']);
 		await expect(
@@ -51,7 +51,7 @@ test.describe('tile source discovery', () => {
 	});
 
 	test('treats a network failure like a missing source', async ({ page }) => {
-		await page.route('**/tiles/satellite/tiles.json', (route) => route.abort('failed'));
+		await page.route('**/tiles/satellite-raster/tiles.json', (route) => route.abort('failed'));
 		await open(page);
 		await expect.poll(() => styleValues(page)).toEqual(THEMES);
 	});
@@ -65,7 +65,7 @@ test.describe('tile source discovery', () => {
 	});
 
 	test('shows overlay disabled when osm is missing', async ({ page }) => {
-		await withoutSources(page, 'osm');
+		await withoutSources(page, 'osm-vector');
 		await open(page);
 
 		const overlayDetails = page.locator(
@@ -90,7 +90,7 @@ test.describe('tile source discovery', () => {
 	});
 
 	test('disables terrain and hillshade when elevation is missing', async ({ page }) => {
-		await withoutSources(page, 'elevation');
+		await withoutSources(page, 'elevation-raster');
 		await open(page);
 
 		const elevationDetails = page.locator(

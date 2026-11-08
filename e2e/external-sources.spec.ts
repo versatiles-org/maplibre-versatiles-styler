@@ -244,7 +244,9 @@ test.describe('tiles of other providers', () => {
 
 test.describe('the state of the tile sources', () => {
 	test('a VersaTiles server shows what it provides', async ({ page }) => {
-		await page.route('**/tiles/satellite/tiles.json', (route) => route.fulfill({ status: 404 }));
+		await page.route('**/tiles/satellite-raster/tiles.json', (route) =>
+			route.fulfill({ status: 404 })
+		);
 		await open(page);
 		const sources = section(page, 'Tile sources');
 		await sources.locator('summary').click();
@@ -320,7 +322,7 @@ test.describe('custom tile sources', () => {
 		const sources = await chooseProvider(page, 'custom');
 		await expect(sources.locator('summary')).toContainText('Custom');
 		await expect(row(sources, 'Vector tiles').locator('input')).toHaveValue(
-			'https://tiles.versatiles.org/tiles/osm/tiles.json'
+			'https://tiles.versatiles.org/tiles/osm-vector/tiles.json'
 		);
 		await expect(row(sources, 'Vector tiles')).toContainText('Shortbread');
 

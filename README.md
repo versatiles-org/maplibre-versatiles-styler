@@ -137,10 +137,10 @@ By default the styler reads everything from the `origin`. Each of these is optio
 
 | Path                                     | Used for                                                                 |
 | ---------------------------------------- | ------------------------------------------------------------------------ |
-| `/tiles/osm/tiles.json`                  | The vector themes and the satellite overlay; languages                   |
-| `/tiles/landcover-vectors/tiles.json`    | Land cover under the Shortbread themes, unless the vector tiles carry it |
-| `/tiles/satellite/tiles.json`            | The satellite style                                                      |
-| `/tiles/elevation/tiles.json`            | Terrain and hillshade                                                    |
+| `/tiles/osm-vector/tiles.json`           | The vector themes and the satellite overlay; languages                   |
+| `/tiles/landcover-vector/tiles.json`     | Land cover under the Shortbread themes, unless the vector tiles carry it |
+| `/tiles/satellite-raster/tiles.json`     | The satellite style                                                      |
+| `/tiles/elevation-raster/tiles.json`     | Terrain and hillshade                                                    |
 | `/assets/glyphs/{fontstack}/{range}.pbf` | Label fonts                                                              |
 | `/assets/glyphs/font_families.json`      | The font lists; without it, fonts are entered as glyph names             |
 | `/assets/sprites/base`                   | Icons                                                                    |
@@ -233,6 +233,23 @@ options `@versatiles/style` takes, e.g. `{"layers":{"labels":false}}`.
 link shows the sidebar as it was left.
 
 ---
+
+## Upgrading from 2.x
+
+The styler asks for the tilesets under the names VersaTiles servers now use: `osm-vector`, `satellite-raster`,
+`elevation-raster` and `landcover-vector` (before: `osm`, `satellite`, `elevation`, `landcover-vectors`).
+A server that still has the old names needs them in `sources`:
+
+```js
+new VersaTilesStylerControl({
+	sources: {
+		vector: '/tiles/osm/tiles.json',
+		satellite: '/tiles/satellite/tiles.json',
+		elevation: '/tiles/elevation/tiles.json',
+		landcover: '/tiles/landcover-vectors/tiles.json',
+	},
+});
+```
 
 ## Upgrading from 1.x
 

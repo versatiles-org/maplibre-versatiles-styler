@@ -49,24 +49,24 @@ function tileJSON(name: string, extra: Partial<TileJSONSpecification> = {}): Til
 	} as TileJSONSpecification;
 }
 
-const osmTileJSON = tileJSON('osm', {
+const osmTileJSON = tileJSON('osm-vector', {
 	vector_layers: [{ id: 'land', fields: { kind: 'String' }, minzoom: 10, maxzoom: 14 }],
 } as Partial<TileJSONSpecification>);
-/** The land cover on its own, as a VersaTiles server has it in `landcover-vectors`. */
-const landcoverTileJSON = tileJSON('landcover-vectors', {
+/** The land cover on its own, as a VersaTiles server has it in `landcover-vector`. */
+const landcoverTileJSON = tileJSON('landcover-vector', {
 	maxzoom: 10,
 	vector_layers: [{ id: 'landcover', fields: { kind: 'String' }, minzoom: 0, maxzoom: 10 }],
 } as Partial<TileJSONSpecification>);
 /** Shortbread tiles that carry the land cover themselves. */
-const mergedTileJSON = tileJSON('osm', {
+const mergedTileJSON = tileJSON('osm-vector', {
 	vector_layers: [
 		{ id: 'land', fields: { kind: 'String' }, minzoom: 10, maxzoom: 14 },
 		{ id: 'landcover', fields: { kind: 'String' }, minzoom: 0, maxzoom: 7 },
 	],
 } as Partial<TileJSONSpecification>);
 const omtTileJSON = tileJSON('omt', { vector_layers: [] } as Partial<TileJSONSpecification>);
-const satelliteTileJSON = tileJSON('satellite');
-const elevationTileJSON = tileJSON('elevation');
+const satelliteTileJSON = tileJSON('satellite-raster');
+const elevationTileJSON = tileJSON('elevation-raster');
 
 const allSources: StyleSources = {
 	vector: osmTileJSON,
@@ -422,7 +422,7 @@ describe('vector tiles of another schema', () => {
 		const style = buildVectorStyle('gray', shaded, ORIGIN, {
 			vector: omtTileJSON,
 			schema: 'openmaptiles',
-			elevation: tileJSON('elevation', { maxzoom: 12 }),
+			elevation: tileJSON('elevation-raster', { maxzoom: 12 }),
 		});
 		expect(style.sources.elevation).toMatchObject({ type: 'raster-dem', maxzoom: 12 });
 	});

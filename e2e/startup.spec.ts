@@ -65,10 +65,10 @@ test.describe('startup', () => {
 		await page.goto('/#panel=open');
 		await setStyleCallsUntilIdle(page);
 		expect(requested.sort()).toEqual([
-			'/tiles/elevation/tiles.json',
-			'/tiles/landcover-vectors/tiles.json',
-			'/tiles/osm/tiles.json',
-			'/tiles/satellite/tiles.json',
+			'/tiles/elevation-raster/tiles.json',
+			'/tiles/landcover-vector/tiles.json',
+			'/tiles/osm-vector/tiles.json',
+			'/tiles/satellite-raster/tiles.json',
 		]);
 	});
 

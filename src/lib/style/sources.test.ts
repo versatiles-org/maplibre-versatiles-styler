@@ -42,10 +42,10 @@ describe('loadSources', () => {
 		const urls = fetchSpy.mock.calls.map(([input]) => String(input));
 		expect(urls).toEqual(
 			expect.arrayContaining([
-				`${ORIGIN}/tiles/osm/tiles.json`,
-				`${ORIGIN}/tiles/satellite/tiles.json`,
-				`${ORIGIN}/tiles/elevation/tiles.json`,
-				`${ORIGIN}/tiles/landcover-vectors/tiles.json`,
+				`${ORIGIN}/tiles/osm-vector/tiles.json`,
+				`${ORIGIN}/tiles/satellite-raster/tiles.json`,
+				`${ORIGIN}/tiles/elevation-raster/tiles.json`,
+				`${ORIGIN}/tiles/landcover-vector/tiles.json`,
 			])
 		);
 		expect(urls.some((url) => url.includes('index.json'))).toBe(false);
@@ -54,15 +54,15 @@ describe('loadSources', () => {
 
 	it('resolves relative tile URLs and reports missing sources as null', async () => {
 		mockServer({
-			'/tiles/osm/tiles.json': {
+			'/tiles/osm-vector/tiles.json': {
 				tilejson: '3.0.0',
-				tiles: ['/tiles/osm/{z}/{x}/{y}'],
+				tiles: ['/tiles/osm-vector/{z}/{x}/{y}'],
 				vector_layers: [],
 			},
 		});
 		const sources = loadSources(versatilesSources('https://missing.example.org'));
 		expect((await sources.vector)?.tiles).toEqual([
-			'https://missing.example.org/tiles/osm/{z}/{x}/{y}',
+			'https://missing.example.org/tiles/osm-vector/{z}/{x}/{y}',
 		]);
 		expect(await sources.satellite).toBeNull();
 		expect(await sources.elevation).toBeNull();
@@ -80,9 +80,9 @@ describe('loadSources', () => {
 	it('counts tiles of the wrong kind as a missing source', async () => {
 		const raster = { tilejson: '3.0.0', tiles: ['/tiles/{z}/{x}/{y}'] };
 		mockServer({
-			'/tiles/osm/tiles.json': raster,
-			'/tiles/satellite/tiles.json': { ...raster, vector_layers: [] },
-			'/tiles/elevation/tiles.json': raster,
+			'/tiles/osm-vector/tiles.json': raster,
+			'/tiles/satellite-raster/tiles.json': { ...raster, vector_layers: [] },
+			'/tiles/elevation-raster/tiles.json': raster,
 		});
 		const sources = loadSources(versatilesSources('https://kinds.example.org'));
 		expect(await sources.vector).toBeNull();
@@ -115,9 +115,9 @@ describe('loadSources', () => {
 			})
 		).toEqual({
 			vector: 'https://tiles.example.org/tiles/planet/tiles.json',
-			satellite: 'https://tiles.example.org/tiles/satellite/tiles.json',
+			satellite: 'https://tiles.example.org/tiles/satellite-raster/tiles.json',
 			elevation: 'https://dem.example.org/tiles.json',
-			landcover: 'https://tiles.example.org/tiles/landcover-vectors/tiles.json',
+			landcover: 'https://tiles.example.org/tiles/landcover-vector/tiles.json',
 			assets: 'https://tiles.example.org',
 		});
 		// A path follows the server; an archive is no path.
