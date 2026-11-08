@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-11-08
+
+### Breaking Changes
+
+- use the renamed tilesets (closes #35) ([fda290c](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/fda290cea959a3827018c390c1e735f753486a6f))
+
+### Features
+
+- find tilesets by name in /tiles/index.json (closes #36) ([10bb25b](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/10bb25bb5bb3643ee85b9ad80fd5f19e2ac8e3d6))
+
+### Documentation
+
+- remove a stray table copy and list landcover among the sources options ([327320e](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/327320e26b71d64171657b12dd8dd126697d0c14))
+
+### Chores
+
+- update dependencies in package.json ([28f2153](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/28f215375eeb94b5d9bbb4a898e194e128d2baee))
+
 ## [2.6.0] - 2026-11-03
 
 ### Features
