@@ -20,6 +20,10 @@
     "type": "git",
     "url": "git+https://github.com/versatiles-org/maplibre-versatiles-styler.git"
   },
+  "funding": [
+    { "type": "github", "url": "https://github.com/sponsors/versatiles-org" },
+    { "type": "opencollective", "url": "https://opencollective.com/versatiles" }
+  ],
   "scripts": {
     "build": "rm -rf dist && vite build",
     "check:deps": "node scripts/check-release-deps.mjs",
