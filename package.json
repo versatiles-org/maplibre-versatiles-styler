@@ -1,6 +1,6 @@
 {
   "name": "maplibre-versatiles-styler",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "type": "module",
   "main": "dist/maplibre-versatiles-styler.umd.cjs",
   "module": "dist/maplibre-versatiles-styler.js",
@@ -21,8 +21,14 @@
     "url": "git+https://github.com/versatiles-org/maplibre-versatiles-styler.git"
   },
   "funding": [
-    { "type": "github", "url": "https://github.com/sponsors/versatiles-org" },
-    { "type": "opencollective", "url": "https://opencollective.com/versatiles" }
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/versatiles-org"
+    },
+    {
+      "type": "opencollective",
+      "url": "https://opencollective.com/versatiles"
+    }
   ],
   "scripts": {
     "build": "rm -rf dist && vite build",
