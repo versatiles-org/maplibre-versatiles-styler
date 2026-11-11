@@ -1,8 +1,8 @@
 name: Release
 
 # Started by the tag that `npm run release` (`vrt release`) pushes. Nothing is published from the
-# maintainer's machine: this workflow tests the tagged commit, then publishes the tarball it packed to
-# npm with trusted publishing and provenance, and creates the GitHub release.
+# maintainer's machine: this workflow checks and packs the tagged commit, then publishes that tarball
+# to npm with trusted publishing and provenance, and creates the GitHub release.
 # Setup: https://github.com/versatiles-org/node-release-tool#release-workflow
 #
 # `vrt release` watches this workflow by its name, so keep it "Release". `pages.yml` also runs after it.
@@ -21,8 +21,11 @@ concurrency:
 jobs:
   # Checks that the tag matches package.json and has notes in CHANGELOG.md, that the tagged commit is
   # on main, runs `check:release`, and packs the npm tarball (`prepack`: `check:deps` and the build).
-  # `check:release` and not `check`: `check` formats in place and runs the e2e tests in all three
-  # browsers, and this job installs none. They run in the two jobs below instead.
+  #
+  # No e2e tests here: `vrt release` tags only after CI, e2e included, has passed on the commit, and
+  # the release commit on top of it changes nothing but the version and CHANGELOG.md. Running the
+  # browsers again would test the same code, against live tiles, after the tag is already pushed.
+  # `check:release` is the same gate CI runs, so a commit that passed CI passes it too.
   build:
     name: Verify, test and pack
     uses: versatiles-org/node-release-tool/.github/workflows/release.yml@v2.23.0
@@ -31,85 +34,12 @@ jobs:
     with:
       check-script: check:release
 
-  # A tag doesn't trigger CI, so the release has to run the browser tests itself. They mirror ci.yml.
-  e2e-chromium:
-    name: E2E Tests (Chromium)
-    runs-on: ubuntu-latest
-    # Nothing to learn from twenty minutes of browsers if the unit tests already failed.
-    needs: build
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E tests
-        run: npm run test:e2e -- --project=chromium
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-chromium
-          path: playwright-report/
-          retention-days: 30
-
-  # The layout and stability checks in the other engines, on macOS because a Linux runner has no GPU
-  # and gives Firefox no WebGL at all — MapLibre needs WebGL2, so every test there fails before the
-  # map exists. macOS also runs the real Safari engine. Runners are free for a public repository.
-  e2e-cross-browser:
-    name: E2E Tests (Firefox, WebKit)
-    runs-on: macos-latest
-    needs: build
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps firefox webkit
-
-      - name: Run E2E tests
-        run: npm run test:e2e -- --project=firefox --project=webkit
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-cross-browser
-          path: playwright-report/
-          retention-days: 30
-
   # The one job with the right to publish. npm only accepts trusted publishing from the workflow file
   # and environment configured on npmjs.com, so it lives here and not in the reusable workflow. It has
   # no checkout and no cache: it publishes exactly the tarball that `build` packed.
   publish:
     name: Publish
-    needs: [build, e2e-chromium, e2e-cross-browser]
+    needs: build
     runs-on: ubuntu-latest
     environment: npm
     permissions:

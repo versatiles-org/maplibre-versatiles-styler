@@ -32,14 +32,13 @@ jobs:
       - name: Check vulnerabilities
         run: npm audit --omit=dev
 
-      - name: Lint
-        run: npm run lint
+      # The same gate as the release workflow, so a commit that passes here can't fail there after
+      # its tag is pushed: format:check, typecheck, lint and the unit tests.
+      - name: Check formatting, typecheck, lint and run unit tests
+        run: npm run check:release
 
       - name: Build
         run: npm run build
-
-      - name: Run tests
-        run: npm run test:unit
 
       - name: Generate test coverage
         run: npm run test:coverage
