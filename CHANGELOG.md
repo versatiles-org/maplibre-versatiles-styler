@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2] - 2026-11-11
+
+### CI/CD
+
+- **release:** publish to npm from the release workflow with trusted publishing, closes #37 ([d8f94c9](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/d8f94c902f44bbe7b7682b4706e49dbbee0efdc8))
+
+### Chores
+
+- update @versatiles/release-tool to version 2.22.0 in package.json and package-lock.json ([68cc6e0](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/68cc6e02d25582f7387a51478a43e6802461db75))
+- update @versatiles/release-tool to version 2.23.0 in package.json and package-lock.json ([9a64e00](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/9a64e00b6b42dcd76074a4d56598a5ad26513386))
+
 ## [3.0.1] - 2026-11-09
 
 ### Documentation
