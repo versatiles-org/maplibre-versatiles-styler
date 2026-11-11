@@ -33,6 +33,7 @@
   "scripts": {
     "build": "rm -rf dist && vite build",
     "check:deps": "node scripts/check-release-deps.mjs",
+    "check:release": "npm run format:check && npm run typecheck && npm run lint && npm run test:unit",
     "check": "npm run format && npm run typecheck && npm run lint && npm run build && npm run test",
     "dev": "vite",
     "format:check": "prettier --check .",
@@ -40,7 +41,7 @@
     "lint": "eslint --color .",
     "prepack": "npm run check:deps && npm run build",
     "preview": "vite preview",
-    "release": "npm run check:deps && vrt release-npm",
+    "release": "npm run check:deps && vrt release",
     "screenshots": "playwright test --config=playwright.screenshots.config.ts",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",

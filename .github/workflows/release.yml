@@ -1,51 +1,45 @@
 name: Release
 
+# Started by the tag that `npm run release` (`vrt release`) pushes. Nothing is published from the
+# maintainer's machine: this workflow tests the tagged commit, then publishes the tarball it packed to
+# npm with trusted publishing and provenance, and creates the GitHub release.
+# Setup: https://github.com/versatiles-org/node-release-tool#release-workflow
+#
+# `vrt release` watches this workflow by its name, so keep it "Release". `pages.yml` also runs after it.
+
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  # A tag doesn't trigger CI, so the release has to run the same checks itself. The jobs mirror
-  # ci.yml: a fast gate, then the two browser jobs in parallel, then the release.
-  check:
-    name: Typecheck, Lint and Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+  # Checks that the tag matches package.json and has notes in CHANGELOG.md, that the tagged commit is
+  # on main, runs `check:release`, and packs the npm tarball (`prepack`: `check:deps` and the build).
+  # `check:release` and not `check`: `check` formats in place and runs the e2e tests in all three
+  # browsers, and this job installs none. They run in the two jobs below instead.
+  build:
+    name: Verify, test and pack
+    uses: versatiles-org/node-release-tool/.github/workflows/release.yml@v2.23.0
+    permissions:
+      contents: read
+    with:
+      check-script: check:release
 
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run unit tests
-        run: npm run test:unit
-
+  # A tag doesn't trigger CI, so the release has to run the browser tests itself. They mirror ci.yml.
   e2e-chromium:
     name: E2E Tests (Chromium)
     runs-on: ubuntu-latest
     # Nothing to learn from twenty minutes of browsers if the unit tests already failed.
-    needs: check
+    needs: build
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -79,8 +73,10 @@ jobs:
   e2e-cross-browser:
     name: E2E Tests (Firefox, WebKit)
     runs-on: macos-latest
-    needs: check
+    needs: build
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -108,41 +104,46 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-  release:
-    name: Build and release
+  # The one job with the right to publish. npm only accepts trusted publishing from the workflow file
+  # and environment configured on npmjs.com, so it lives here and not in the reusable workflow. It has
+  # no checkout and no cache: it publishes exactly the tarball that `build` packed.
+  publish:
+    name: Publish
+    needs: [build, e2e-chromium, e2e-cross-browser]
     runs-on: ubuntu-latest
-    needs: [e2e-chromium, e2e-cross-browser]
+    environment: npm
     permissions:
-      contents: write
+      contents: write # GitHub release
+      id-token: write # npm trusted publishing
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
       - name: Setup node
         uses: actions/setup-node@v7
         with:
-          node-version: 22
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+          # npm 11.5.1 or newer is needed for trusted publishing
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Download release files
+        uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: release
 
-      - name: Get version
-        run: 'echo "RELEASE_TAG=v$(jq -r ''.version'' package.json)" >> $GITHUB_ENV'
+      # Skips a version that npm already has, so a re-run is safe, and publishes a prerelease with
+      # the dist-tag "next". Creates the GitHub release with the notes from CHANGELOG.md.
+      - name: Publish to npm and create the GitHub release
+        run: npx --yes "@versatiles/release-tool@${{ needs.build.outputs.tool-version }}" release-publish release --tag "$GITHUB_REF_NAME"
 
-      - name: Build code
-        run: npm run build
-
-      - name: Tar and compress
-        run: tar -cf - maplibre-versatiles-styler.* | gzip -9 > maplibre-versatiles-styler.tar.gz
-        working-directory: dist
-
-      - name: Upload file to release
-        run: gh release upload $RELEASE_TAG *.gz --clobber
-        working-directory: dist
-
-      - name: Update release
-        run: gh release edit $RELEASE_TAG --draft=false --latest --prerelease=false
+      # The bundles for downloading from the release page, taken from the npm tarball, so they are
+      # the files that were tested and published.
+      - name: Upload the bundles to the GitHub release
+        working-directory: release
+        run: |
+          tar -xzf maplibre-versatiles-styler-*.tgz package/dist
+          cd package/dist
+          tar -cf - maplibre-versatiles-styler.* | gzip -9 > ../../maplibre-versatiles-styler.tar.gz
+          cd ../..
+          gh release upload "$GITHUB_REF_NAME" maplibre-versatiles-styler.tar.gz --clobber
