@@ -37,7 +37,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Panel header with Reset all (undoable)
 - Switching the base style keeps your changes: labels, layers, terrain and the like follow to the next style, and each style's colors come back with it
 - Optional quick-style bar (`quickStyles`): the closed styler as one-click buttons for light, dark and satellite, or styles of your choice
-- Dark panel and pickers on dark themes and satellite
+- Dark controls on dark themes and satellite: the panel, the pickers and the map's other controls (`darkControls: false` keeps them light)
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite
@@ -123,6 +123,7 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 | `addProtocol`     | `function` | –                        | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives               |
 | `open`            | `boolean`  | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise                                  |
 | `quickStyles`     | `boolean \| string[]` | `false`      | Show the closed styler as a bar of base styles and a button for the sidebar. `true` offers `colorful`, `colorful-dark` and `satellite`; a list names the styles |
+| `darkControls`    | `boolean`  | `true`                   | Give the styler's panel and the map's other controls dark colors while the map has a dark style or satellite |
 | `hash`            | `boolean`  | `true`                   | Keep the map view, the style, its options and other tile sources in the URL hash fragment                  |
 
 ---

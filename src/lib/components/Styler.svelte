@@ -355,10 +355,16 @@
 	// comes back when the styler is removed.
 	const container = untrack(() => map.getContainer());
 	const hostBackground = container.style.backgroundColor;
+	/** Whether a dark map gets dark controls, unless the page keeps their look its own. */
+	const darkControls = untrack(() => config.darkControls !== false);
 	$effect(() => {
 		container.style.backgroundColor = containerBackground(currentStyleKey);
-		// A dark map gets a dark panel; the pickers are inside the container too.
-		container.classList.toggle('versatiles-styler-dark', isDarkStyle(currentStyleKey));
+		// A dark map gets a dark panel and dark controls: the map's own, and the styler's pickers and
+		// dialogs, which are inside the container too.
+		container.classList.toggle(
+			'versatiles-styler-dark',
+			darkControls && isDarkStyle(currentStyleKey)
+		);
 	});
 
 	// Switch away from a style only once its source is known to be missing, not while it loads.

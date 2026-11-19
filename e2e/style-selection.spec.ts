@@ -263,3 +263,22 @@ test("a dark style gives the map's other controls dark colors too", async ({ pag
 	await selectStyle(page, 'colorful');
 	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });
+
+test('with `darkControls: false`, a dark style leaves every control light', async ({ page }) => {
+	await page.goto('/?dark=0#panel=open');
+	await page.locator('.maplibregl-versatiles-styler .maplibregl-pane').waitFor();
+	await selectStyle(page, 'colorful-dark');
+	await expect.poll(async () => (await getMapStyle(page)).name).toBe('versatiles-colorful-dark');
+
+	await expect(page.locator('.maplibregl-map.versatiles-styler-dark')).toHaveCount(0);
+	await expect(page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-group').first()).toHaveCSS(
+		'background-color',
+		'rgb(255, 255, 255)'
+	);
+	await expect(page.locator('.maplibregl-versatiles-styler .maplibregl-pane')).toHaveCSS(
+		'background-color',
+		'rgb(255, 255, 255)'
+	);
+	// the map still shows black around the globe, as dark styles do
+	await expect(page.locator('.maplibregl-map')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+});

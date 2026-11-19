@@ -29,6 +29,8 @@ window.addEventListener('DOMContentLoaded', () => {
 			externalSources: query.get('external') !== '0',
 			// `?quick` shows the closed styler as a bar of base styles; `?quick=gray,gray-dark` names them.
 			quickStyles: query.get('quick') ? query.get('quick')!.split(',') : query.has('quick'),
+			// `?dark=0` leaves the controls light on dark styles.
+			darkControls: query.get('dark') !== '0',
 		}),
 		'top-left'
 	);
