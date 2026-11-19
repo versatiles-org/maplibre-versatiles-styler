@@ -200,3 +200,51 @@ test('individual colors are grouped', async ({ page }) => {
 	const groups = await colorsDetails.locator('.subsection-title').allTextContents();
 	expect(groups).toEqual(expect.arrayContaining(['Base', 'Nature', 'Road', 'Label']));
 });
+
+test('another style keeps the changes every style shares, and each palette its colours', async ({
+	page,
+}) => {
+	const hashConfig = (): unknown => {
+		const match = page.url().match(/config=([^&]+)/);
+		if (!match) return {};
+		return JSON.parse(atob(match[1].replace(/-/g, '+').replace(/_/g, '/')));
+	};
+	const section = (title: string) =>
+		page.locator(
+			`.maplibregl-versatiles-styler details:has(summary .section-title:text-is("${title}"))`
+		);
+
+	await section('Labels').locator('summary').click();
+	const language = section('Labels').locator('.entry:has(label:text-is("Language")) select');
+	await expect(language.locator('option[value="de"]')).toBeAttached({ timeout: 10_000 });
+	await language.selectOption('de');
+
+	await page
+		.locator('.maplibregl-versatiles-styler details:has(summary:has-text("Individual colors"))')
+		.locator('summary')
+		.click();
+	const water = page
+		.locator('.maplibregl-versatiles-styler .color-container', {
+			has: page.locator('label[title="water"]'),
+		})
+		.locator('input.color-text');
+	await water.fill('#ff0000');
+	await water.press('Enter');
+	const changes = { text: { language: 'de' }, colors: { water: '#FF0000' } };
+	await expect.poll(hashConfig).toEqual(changes);
+
+	// The language follows to the dark palette; the water colour is the light palette's.
+	await selectStyle(page, 'colorful-dark');
+	await expect.poll(hashConfig).toEqual({ text: { language: 'de' } });
+	await expect
+		.poll(async () =>
+			JSON.stringify(
+				(await getMapStyle(page)).layers.find((l) => l.id === 'label-place-city')?.layout
+			)
+		)
+		.toContain('name_de');
+
+	// And comes back with it.
+	await selectStyle(page, 'colorful');
+	await expect.poll(hashConfig).toEqual(changes);
+});

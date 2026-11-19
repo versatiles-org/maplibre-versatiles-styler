@@ -62,6 +62,7 @@
 	import { provideColorPickerState } from './state/color_picker.svelte';
 	import { labelTexts } from '../browser/map_labels';
 	import { setStyleOptions, styleForEditing, type RenderedStyle } from '../style/update';
+	import { enterStyle, leaveStyle, noCarriedChanges, type CarriedChanges } from '../style/carry';
 	import SidebarSection from './SidebarSection.svelte';
 	import VectorStylePanel from './VectorStylePanel.svelte';
 	import SatelliteStylePanel from './SatelliteStylePanel.svelte';
@@ -218,15 +219,38 @@
 		isSatellite ? null : vectorDefaults(currentStyleKey as Palette)
 	);
 
-	function setBaseStyle(key: StyleKey, hashConfig?: Record<string, unknown> | null) {
+	/**
+	 * The changes kept while the base style is switched: those every style shares follow to the next
+	 * one, and each style's colours come back with it. Not reactive: only a switch reads it.
+	 */
+	let carried: CarriedChanges = noCarriedChanges();
+
+	/** Another base style, chosen in the styler: it keeps the changes, as far as they apply to it. */
+	function switchBaseStyle(key: StyleKey) {
+		if (key === currentStyleKey) return;
+		carried = leaveStyle(carried, currentStyleKey, minimal);
+		setBaseStyle(key, enterStyle(carried, key));
+	}
+
+	/**
+	 * A base style with the options of a link or an import, which say all there is to it: what was
+	 * kept of the styles before is not theirs to bring back.
+	 */
+	function loadBaseStyle(key: StyleKey, config?: Record<string, unknown> | null) {
+		carried = noCarriedChanges();
+		setBaseStyle(key, config);
+	}
+
+	/** Puts the base style `key` on the map, with the options that differ from its defaults. */
+	function setBaseStyle(key: StyleKey, config?: Record<string, unknown> | null) {
 		if (currentStyleKey !== key) {
 			currentStyleKey = key;
 			hashManager?.setStyleKey(key);
 		}
 		if (key === 'satellite') {
-			satelliteState = satelliteStateFromConfig(hashConfig);
+			satelliteState = satelliteStateFromConfig(config);
 		} else {
-			vectorState = vectorStateFromConfig(key, hashConfig);
+			vectorState = vectorStateFromConfig(key, config);
 		}
 	}
 
@@ -340,7 +364,7 @@
 		const tileJSON = currentStyleKey === 'satellite' ? satelliteTileJSON : vectorTileJSON;
 		if (tileJSON === null && styleKeys.length > 0) {
 			const fallback = styleKeys[0];
-			untrack(() => setBaseStyle(fallback));
+			untrack(() => switchBaseStyle(fallback));
 		}
 	});
 
@@ -425,7 +449,9 @@
 	let status = $state<string | undefined>();
 	let statusTimer: ReturnType<typeof setTimeout> | undefined;
 	/** The options before "Reset all", while the reset can still be undone. */
-	let undoState = $state<{ vector: VectorState; satellite: SatelliteState } | undefined>();
+	let undoState = $state<
+		{ vector: VectorState; satellite: SatelliteState; carried: CarriedChanges } | undefined
+	>();
 	let undoTimer: ReturnType<typeof setTimeout> | undefined;
 
 	function showStatus(text: string) {
@@ -434,12 +460,17 @@
 		statusTimer = setTimeout(() => (status = undefined), 4000);
 	}
 
-	/** Back to the defaults of the current style; the header offers to undo it for a while. */
+	/**
+	 * Back to the defaults of the current style, and nothing kept for the next one; the header offers to
+	 * undo it for a while.
+	 */
 	function resetAll() {
 		undoState = {
 			vector: $state.snapshot(vectorState) as VectorState,
 			satellite: $state.snapshot(satelliteState) as SatelliteState,
+			carried,
 		};
+		carried = noCarriedChanges();
 		if (isSatellite) satelliteState = satelliteDefaults();
 		else vectorState = vectorDefaults(currentStyleKey as Palette);
 		clearTimeout(undoTimer);
@@ -450,6 +481,7 @@
 		if (!undoState) return;
 		vectorState = undoState.vector;
 		satelliteState = undoState.satellite;
+		carried = undoState.carried;
 		undoState = undefined;
 		clearTimeout(undoTimer);
 	}
@@ -492,7 +524,7 @@
 	function applyImport(result: ImportResult, newSources?: ChosenSources) {
 		importOpen = false;
 		if (newSources) applySources(newSources);
-		setBaseStyle(result.styleKey, result.config);
+		loadBaseStyle(result.styleKey, result.config);
 		// Only the warnings are counted here: the notes are true of almost every import, and counting
 		// them would make a clean one look like it went badly.
 		const worth = result.diagnostics.filter((d) => d.severity === 'warning').length;
@@ -541,7 +573,7 @@
 		if (config.hash !== false) {
 			hashManager = new HashManager(
 				map,
-				(key, cfg) => setBaseStyle(key, cfg),
+				(key, cfg) => loadBaseStyle(key, cfg),
 				{
 					defaultOpen: config.open ?? false,
 					onChange: (open) => (paneOpen = open),
@@ -555,9 +587,9 @@
 			if (panelOpen !== undefined) paneOpen = panelOpen;
 			const hashSources = sourcesFromHash(sources);
 			if (hashSources) applySources(hashSources);
-			setBaseStyle(styleKey, hashConfig);
+			loadBaseStyle(styleKey, hashConfig);
 		} else {
-			setBaseStyle(DEFAULT_STYLE_KEY);
+			loadBaseStyle(DEFAULT_STYLE_KEY);
 		}
 	});
 
@@ -686,7 +718,7 @@
 		<h4 class="section-group">Style</h4>
 		<SidebarSection title="Base style" value={currentStyleKey} open listClass="style-list">
 			{#if styleKeys.length > 0}
-				<ThemeSelect {styleKeys} value={currentStyleKey} onselect={(key) => setBaseStyle(key)} />
+				<ThemeSelect {styleKeys} value={currentStyleKey} onselect={switchBaseStyle} />
 			{/if}
 		</SidebarSection>
 		{#if isSatellite}
