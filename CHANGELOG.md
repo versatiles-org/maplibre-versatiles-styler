@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-11-19
+
+### Features
+
+- keep the option changes when switching the base style ([98f7d31](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/98f7d31b15f957c67e23a0557ddbf50d806b7ac9))
+- add the opt-in quick-style bar that stands for the closed styler ([dd34408](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/dd34408a5adf3c7b53694736e45322694e55d905))
+- give the map's controls dark colors on dark styles ([544e9ba](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/544e9ba2bbab8510d16d9529dfd2b0ad80371a1a))
+- add the darkControls option to keep every control light on dark styles ([4fd8c61](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/4fd8c616da75db0509c04cc7cec2bcd71db62285))
+- set the map container's color-scheme by its style and darken only MapLibre's own controls ([0f2fa0c](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/0f2fa0cf0fdeecfc501c27089a52d5a8fab4d354))
+- signal the map's colour scheme with data-color-scheme and let only controls that opt in follow it ([0a989e5](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/0a989e5023f5d0f9d7489ea9efc893974202f01c))
+
+### Bug Fixes
+
+- leave the control icons uninverted in forced colors mode ([4e14403](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/4e14403b6a71c2d05aeb2630bab9aed33707122c))
+- leave the controls of a map without data-color-scheme light, even on a dark page ([fcb4592](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/fcb4592adcd0bff7d7a2c5bc583ad0d0f07bfece))
+
+### Documentation
+
+- say in the README that switching the base style keeps the changes ([d08406b](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/d08406bf759ee25618a344450a4a0bab2fc71934))
+- **demo:** show the quick-style bar in the GitHub Pages demo ([19dcf5c](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/19dcf5cf28177129d30958597588f3560bbf648a))
+
+### CI/CD
+
+- run the release gate in CI and drop the duplicate e2e jobs from the release workflow (#37) ([eccb915](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/eccb91557c7374a844a677ba72ea3c7f1da16d1b))
+
+### Chores
+
+- update dependencies in package.json ([7ea0625](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/7ea0625f66c71b9e3537d8963ae325f9f4aa8fc1))
+
+### Styles
+
+- add missing comma ([09c9f60](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/09c9f60f3cd160967eb4725dc577771042ece358))
+- format Svelte components with prettier-plugin-svelte 4.2 ([67f30f8](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/67f30f8609f8dc414c00a50dfd5baa28fb31ff0d))
+
 ## [3.0.2] - 2026-11-11
 
 ### CI/CD
