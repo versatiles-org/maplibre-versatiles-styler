@@ -148,7 +148,7 @@ A dark style or satellite needs dark controls on top of it: white buttons glare 
    }
    ```
 
-   A control without the class stays exactly as it is drawn.
+   A control without the class stays exactly as it is drawn, and so does every control on a map without the attribute, even on a dark page.
 3. **The colors are variables**, which a page may set anywhere, e.g. on `:root`, to give all controls that follow the scheme its own colors. Each one is a `light-dark()` pair:
 
    | Variable                  | Default                                              |

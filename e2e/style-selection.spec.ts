@@ -319,6 +319,8 @@ test('a page sets the colors of the controls that follow the scheme', async ({ p
 
 test('with `darkControls: false`, a dark style leaves every control light', async ({ page }) => {
 	await page.goto('/?dark=0#panel=open');
+	// even on a dark page: without a scheme on the map, the page's scheme does not reach the controls
+	await page.addStyleTag({ content: ':root { color-scheme: dark; }' });
 	await page.locator('.maplibregl-versatiles-styler .maplibregl-pane').waitFor();
 	await selectStyle(page, 'colorful-dark');
 	await expect.poll(async () => (await getMapStyle(page)).name).toBe('versatiles-colorful-dark');

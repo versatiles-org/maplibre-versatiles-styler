@@ -2719,7 +2719,10 @@ $scheme-aware: '.maplibregl-ctrl-scheme-aware, .maplibregl-ctrl-group:has(> :is(
 	}
 
 	// The variables are read, never defined here: a page may set them anywhere, e.g. on `:root`.
-	:is(#{$scheme-aware}) {
+	// Only on a map with a scheme: without one, `light-dark()` would follow the page's scheme, and a
+	// dark page would turn the controls of a light map dark. `:where()` keeps the specificity as low
+	// as the selector of the control alone.
+	:where(.maplibregl-map[data-color-scheme]) :is(#{$scheme-aware}) {
 		background: var(--maplibregl-ctrl-bg, light-dark(#fff, #{$dark-bg}));
 		color: var(--maplibregl-ctrl-fg, light-dark(#333, #{$dark-ink}));
 
