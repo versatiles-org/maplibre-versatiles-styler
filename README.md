@@ -35,6 +35,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Import dialog: paste or drop a styler link, a `style.json`, its address, or an options object —
   warnings are shown before anything is applied
 - Panel header with Reset all (undoable)
+- Switching the base style keeps your changes: labels, layers, terrain and the like follow to the next style, and each style's colors come back with it
 - Dark panel and pickers on dark themes and satellite
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
