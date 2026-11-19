@@ -6,6 +6,8 @@ import type { TileJSONSpecification } from '@versatiles/style';
 import {
 	PALETTES,
 	toStyleKey,
+	styleName,
+	quickStyleKeys,
 	themeRows,
 	themeGroups,
 	vectorDefaults,
@@ -96,6 +98,44 @@ describe('toStyleKey', () => {
 		expect(toStyleKey('toString')).toBeUndefined();
 		expect(toStyleKey(null)).toBeUndefined();
 		expect(toStyleKey(undefined)).toBeUndefined();
+	});
+});
+
+describe('styleName', () => {
+	it('reads the dark themes as two words', () => {
+		expect(styleName('colorful')).toBe('colorful');
+		expect(styleName('gray-dark')).toBe('gray dark');
+		expect(styleName('satellite')).toBe('satellite');
+	});
+});
+
+describe('quickStyleKeys', () => {
+	afterEach(() => vi.restoreAllMocks());
+
+	it('is no bar unless the page asks for one', () => {
+		expect(quickStyleKeys(undefined)).toBeUndefined();
+		expect(quickStyleKeys(false)).toBeUndefined();
+	});
+
+	it('offers light, dark and satellite for `true`', () => {
+		expect(quickStyleKeys(true)).toEqual(['colorful', 'colorful-dark', 'satellite']);
+	});
+
+	it('keeps the order of a list, each style once, with the v5 names mapped', () => {
+		expect(quickStyleKeys(['satellite', 'gray', 'shadow', 'gray'])).toEqual([
+			'satellite',
+			'gray',
+			'gray-dark',
+		]);
+	});
+
+	it('leaves out the names it does not know, with a warning', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		expect(quickStyleKeys(['gray', 'nonexistent'])).toEqual(['gray']);
+		expect(warn).toHaveBeenCalledWith('quickStyles: there is no style "nonexistent"');
+		// a list with nothing to offer is no bar
+		expect(quickStyleKeys(['nonexistent'])).toBeUndefined();
+		expect(quickStyleKeys([])).toBeUndefined();
 	});
 });
 

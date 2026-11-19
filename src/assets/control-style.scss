@@ -76,6 +76,8 @@ $export-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%
 $inspect-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2.2v2.4M8 11.4v2.4M2.2 8h2.4M11.4 8h2.4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='8' r='3.1' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E";
 $edit-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10.6 2.9l2.5 2.5-7.3 7.3-3.1.6.6-3.1zM9.1 4.4l2.5 2.5' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 $info-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5.8' fill='none' stroke='black' stroke-width='1.3'/%3E%3Cpath d='M8 7.4v3.4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='5.1' r='.9'/%3E%3C/svg%3E";
+// A cog: eight teeth around a ring with a hole.
+$settings-icon: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' stroke='black'%3E%3Ccircle cx='8' cy='8' r='5.6' stroke-width='2.2' stroke-dasharray='2.2 2.2'/%3E%3Ccircle cx='8' cy='8' r='3.6' stroke-width='2.4'/%3E%3C/g%3E%3C/svg%3E";
 $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 
 .maplibregl-versatiles-styler {
@@ -148,6 +150,89 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 		&[aria-pressed='true'] {
 			background-color: var(--accent-soft);
 			color: var(--accent);
+		}
+	}
+
+	// The closed styler as a bar of base styles, and a button that opens the editor. It has the frame
+	// of a MapLibre control, in the panel's colours: dark on a dark map.
+	.maplibregl-ctrl.styler-quickbar {
+		display: flex;
+		width: max-content;
+		padding: 2px;
+		border-radius: 8px;
+		background: var(--bg);
+		box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+
+		.quickbar-styles {
+			display: flex;
+		}
+
+		label {
+			display: block;
+			position: relative;
+			// room for the selection ring
+			padding: 5px;
+			cursor: pointer;
+
+			.theme-card {
+				width: 56px;
+				border-radius: 5px;
+			}
+
+			input {
+				position: absolute;
+				left: -9999px;
+
+				&:checked + .theme-card {
+					box-shadow:
+						0 0 0 2px var(--bg),
+						0 0 0 4px var(--accent);
+				}
+
+				&:focus-visible + .theme-card {
+					outline: 2px solid var(--accent);
+					outline-offset: 3px;
+				}
+
+				&:disabled + .theme-card {
+					opacity: 0.4;
+				}
+			}
+
+			&:has(input:disabled) {
+				cursor: default;
+			}
+
+			&:hover input:not(:checked, :disabled) + .theme-card {
+				box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.35);
+			}
+		}
+
+		button.quickbar-settings {
+			display: grid;
+			place-items: center;
+			width: 40px;
+			margin: 3px;
+			padding: 0;
+			border: none;
+			border-radius: 6px;
+			background: none;
+			color: var(--muted);
+			cursor: pointer;
+
+			&::after {
+				@include icon($settings-icon, 20px);
+			}
+
+			&:hover {
+				background: var(--sunken);
+				color: var(--ink);
+			}
+
+			&:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: -2px;
+			}
 		}
 	}
 

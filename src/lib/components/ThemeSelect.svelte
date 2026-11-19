@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Palette } from '@versatiles/style';
-	import { themeSwatch, type StyleKey } from '../style/config';
+	import type { StyleKey } from '../style/config';
+	import ThemeCard from './ThemeCard.svelte';
 	import ThemePicker from './ThemePicker.svelte';
 
 	let {
@@ -16,7 +16,6 @@
 
 	let open = $state(false);
 	let trigger = $state<HTMLButtonElement>();
-	let swatch = $derived(value === 'satellite' ? undefined : themeSwatch(value as Palette));
 
 	function close() {
 		open = false;
@@ -35,15 +34,7 @@
 	bind:this={trigger}
 	onclick={() => (open = !open)}
 >
-	<span
-		class="theme-card"
-		class:satellite-card={!swatch}
-		style:--land={swatch?.land}
-		style:--water={swatch?.water}
-		style:--park={swatch?.park}
-		style:--street={swatch?.street}
-		style:--motorway={swatch?.motorway}
-	></span>
+	<ThemeCard key={value} />
 	<span class="theme-button-name">{value}</span>
 	<span class="theme-button-caret" aria-hidden="true">▾</span>
 </button>

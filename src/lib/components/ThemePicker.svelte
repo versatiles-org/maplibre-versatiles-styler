@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Palette } from '@versatiles/style';
-	import { themeGroups, themeSwatch, type StyleKey } from '../style/config';
+	import { styleName, themeGroups, type StyleKey } from '../style/config';
 	import { placeBesidePane, portalToMap, type PopoverPosition } from './inputs/popover';
+	import ThemeCard from './ThemeCard.svelte';
 
 	let {
 		styleKeys,
@@ -63,25 +63,16 @@
 </script>
 
 {#snippet card(key: StyleKey, caption?: string)}
-	{@const swatch = key === 'satellite' ? undefined : themeSwatch(key as Palette)}
 	<label title={key}>
 		<input
 			type="radio"
 			name="{uid}-style"
 			value={key}
 			checked={value === key}
-			aria-label={key.replace(/-dark$/, ' dark')}
+			aria-label={styleName(key)}
 			onclick={() => handleClick(key)}
 		/>
-		<span
-			class="theme-card"
-			class:satellite-card={!swatch}
-			style:--land={swatch?.land}
-			style:--water={swatch?.water}
-			style:--park={swatch?.park}
-			style:--street={swatch?.street}
-			style:--motorway={swatch?.motorway}
-		></span>
+		<ThemeCard {key} />
 		{#if caption}<span class="theme-caption">{caption}</span>{/if}
 	</label>
 {/snippet}

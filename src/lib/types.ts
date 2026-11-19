@@ -22,6 +22,13 @@ export interface VersaTilesStylerConfig {
 	addProtocol?: typeof addProtocol;
 	/** Whether the sidebar is open initially. Default: `false`. */
 	open?: boolean;
+	/**
+	 * Show the closed styler as a bar of base styles, each a button that shows its colours, and a
+	 * button that opens the sidebar. `true` offers `colorful`, `colorful-dark` and `satellite`; a list
+	 * names the styles, in its order, such as `['gray', 'gray-dark']`. Default: `false`, a single
+	 * button that opens the sidebar.
+	 */
+	quickStyles?: boolean | string[];
 	/** Keep the map view, the style and its options in the URL hash. Default: `true`. */
 	hash?: boolean;
 }

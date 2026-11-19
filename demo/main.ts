@@ -27,6 +27,8 @@ window.addEventListener('DOMContentLoaded', () => {
 			// The demo offers the tiles of other providers; `?external=0` shows it as a VersaTiles server does.
 			addProtocol: maplibregl.addProtocol,
 			externalSources: query.get('external') !== '0',
+			// `?quick` shows the closed styler as a bar of base styles; `?quick=gray,gray-dark` names them.
+			quickStyles: query.get('quick') ? query.get('quick')!.split(',') : query.has('quick'),
 		}),
 		'top-left'
 	);

@@ -23,6 +23,7 @@
 		overlayDefaults,
 		probeSatelliteState,
 		probeVectorState,
+		quickStyleKeys,
 		styleCode,
 		styleForExport,
 		type StyleKey,
@@ -56,7 +57,7 @@
 	} from '../style/sources';
 	import { registerPMTiles } from '../style/pmtiles';
 	import { languageOptions } from '../options/languages';
-	import { onDestroy, untrack } from 'svelte';
+	import { onDestroy, tick, untrack } from 'svelte';
 	import { decodeConfig, encodeConfig, HashManager } from '../transfer/hash';
 	import { provideFontPickerState } from './state/font_picker.svelte';
 	import { provideColorPickerState } from './state/color_picker.svelte';
@@ -67,6 +68,7 @@
 	import VectorStylePanel from './VectorStylePanel.svelte';
 	import SatelliteStylePanel from './SatelliteStylePanel.svelte';
 	import ThemeSelect from './ThemeSelect.svelte';
+	import QuickStyleBar from './QuickStyleBar.svelte';
 	import ExportDialog from './ExportDialog.svelte';
 	import SourceOptions from './sections/SourceOptions.svelte';
 	import InspectPopup from './InspectPopup.svelte';
@@ -440,6 +442,43 @@
 		};
 	});
 
+	// ── Quick-style bar ──────────────────────────────────────────────────────────
+
+	/** The styles the page offers in the bar that stands for the closed styler, if it asks for one. */
+	const quickKeys = untrack(() => quickStyleKeys(config.quickStyles));
+	/**
+	 * The bar's styles: those whose tiles turn out to be missing are left out. The themes can be chosen
+	 * while their tiles load, as in the theme picker; satellite is shown meanwhile, so that the bar does
+	 * not grow under the pointer, but can only be chosen once its tiles are known to be there.
+	 */
+	let quickStyles = $derived(
+		quickKeys?.flatMap((key) => {
+			const tileJSON = key === 'satellite' ? satelliteTileJSON : vectorTileJSON;
+			if (tileJSON === null) return [];
+			return [{ key, ready: key !== 'satellite' || tileJSON !== undefined }];
+		})
+	);
+	let quickBarShown = $derived(quickKeys !== undefined && !paneOpen);
+	/** The buttons that open and close the sidebar, which take the focus when the other one goes. */
+	let toggleButton = $state<HTMLButtonElement>();
+	let settingsButton = $state<HTMLButtonElement>();
+
+	// The bar has no inspector button: closing the sidebar into it ends the inspection.
+	$effect(() => {
+		if (quickBarShown) untrack(() => (inspectOn = false));
+	});
+
+	/**
+	 * Opens or closes the sidebar from one of its buttons. With the bar, the button that was clicked
+	 * goes away, so the focus moves to the one that takes its place.
+	 */
+	async function setPaneOpen(open: boolean) {
+		paneOpen = open;
+		if (!quickKeys) return;
+		await tick();
+		(open ? toggleButton : settingsButton)?.focus();
+	}
+
 	// ── Header actions ───────────────────────────────────────────────────────────
 
 	let totalChanges = $derived(configChangeCount(minimal, Object.keys(minimal)));
@@ -616,26 +655,37 @@
 	two buttons, because the inspector is part of the styler — it reads the style the pane edits, and
 	writes back to it — even though it acts on the map rather than on the pane.
 -->
-<div class="maplibregl-ctrl maplibregl-ctrl-group styler-buttons">
-	<button
-		type="button"
-		class="maplibregl-ctrl-icon"
-		title="Toggle style editor"
-		aria-label="Toggle style editor"
-		aria-expanded={paneOpen}
-		onclick={() => (paneOpen = !paneOpen)}
-	></button>
-	<button
-		type="button"
-		class="ctrl-inspect"
-		title={inspectOn
-			? 'Stop inspecting the map'
-			: 'Inspect the map: click a feature to see what styles it'}
-		aria-label="Inspect the map"
-		aria-pressed={inspectOn}
-		onclick={() => (inspectOn = !inspectOn)}
-	></button>
-</div>
+{#if quickBarShown && quickStyles}
+	<QuickStyleBar
+		styles={quickStyles}
+		value={currentStyleKey}
+		onselect={switchBaseStyle}
+		onopen={() => setPaneOpen(true)}
+		bind:settings={settingsButton}
+	/>
+{:else}
+	<div class="maplibregl-ctrl maplibregl-ctrl-group styler-buttons">
+		<button
+			type="button"
+			class="maplibregl-ctrl-icon"
+			title="Toggle style editor"
+			aria-label="Toggle style editor"
+			aria-expanded={paneOpen}
+			bind:this={toggleButton}
+			onclick={() => setPaneOpen(!paneOpen)}
+		></button>
+		<button
+			type="button"
+			class="ctrl-inspect"
+			title={inspectOn
+				? 'Stop inspecting the map'
+				: 'Inspect the map: click a feature to see what styles it'}
+			aria-label="Inspect the map"
+			aria-pressed={inspectOn}
+			onclick={() => (inspectOn = !inspectOn)}
+		></button>
+	</div>
+{/if}
 {#if paneOpen}
 	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-pane hide-scrollbar">
 		<!-- What the pane is, and what can be done to the style as a whole: one row each. -->
@@ -661,7 +711,7 @@
 					type="button"
 					class="icon-button"
 					aria-label="Close the style editor"
-					onclick={() => (paneOpen = false)}
+					onclick={() => setPaneOpen(false)}
 					><span class="icon icon-close" aria-hidden="true"></span></button
 				>
 			</div>

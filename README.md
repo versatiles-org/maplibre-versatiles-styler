@@ -36,6 +36,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
   warnings are shown before anything is applied
 - Panel header with Reset all (undoable)
 - Switching the base style keeps your changes: labels, layers, terrain and the like follow to the next style, and each style's colors come back with it
+- Optional quick-style bar (`quickStyles`): the closed styler as one-click buttons for light, dark and satellite, or styles of your choice
 - Dark panel and pickers on dark themes and satellite
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
@@ -121,6 +122,7 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 | `externalSources` | `boolean`  | `false`                  | Offer tiles of other providers in the sidebar: OpenFreeMap, Protomaps and custom addresses                 |
 | `addProtocol`     | `function` | –                        | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives               |
 | `open`            | `boolean`  | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise                                  |
+| `quickStyles`     | `boolean \| string[]` | `false`      | Show the closed styler as a bar of base styles and a button for the sidebar. `true` offers `colorful`, `colorful-dark` and `satellite`; a list names the styles |
 | `hash`            | `boolean`  | `true`                   | Keep the map view, the style, its options and other tile sources in the URL hash fragment                  |
 
 ---

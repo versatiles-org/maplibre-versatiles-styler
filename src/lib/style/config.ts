@@ -96,6 +96,32 @@ export function toStyleKey(key: string | null | undefined): StyleKey | undefined
 	return Object.prototype.hasOwnProperty.call(V5_STYLE_KEYS, key) ? V5_STYLE_KEYS[key] : undefined;
 }
 
+/** A style's name to read out: `colorful-dark` is "colorful dark". */
+export function styleName(key: StyleKey): string {
+	return key.replace(/-dark$/, ' dark');
+}
+
+/** The styles of the quick-style bar when the page asks for it with `true`: light, dark, imagery. */
+export const DEFAULT_QUICK_STYLES: readonly StyleKey[] = ['colorful', 'colorful-dark', 'satellite'];
+
+/**
+ * The styles the quick-style bar offers for the `quickStyles` option, in its order and each once;
+ * `undefined` for no bar. Names the styler does not know are left out, with a warning.
+ */
+export function quickStyleKeys(
+	option: boolean | readonly string[] | undefined
+): StyleKey[] | undefined {
+	if (!option) return undefined;
+	if (option === true) return [...DEFAULT_QUICK_STYLES];
+	const keys: StyleKey[] = [];
+	for (const name of option) {
+		const key = toStyleKey(name);
+		if (!key) console.warn(`quickStyles: there is no style "${name}"`);
+		else if (!keys.includes(key)) keys.push(key);
+	}
+	return keys.length > 0 ? keys : undefined;
+}
+
 /**
  * The colour behind the map: black for satellite and the dark themes, white for the light ones. It is
  * what shows around the globe, where MapLibre leaves the canvas transparent — a style cannot set it,
