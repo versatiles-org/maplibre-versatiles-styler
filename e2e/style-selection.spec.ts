@@ -264,39 +264,57 @@ test("a dark style gives MapLibre's controls dark colors too", async ({ page }) 
 	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });
 
-test("the map's color scheme follows its style; other controls follow it with light-dark()", async ({
-	page,
-}) => {
-	// A control of the page: a MapLibre group, one colored by `light-dark()` inside it.
+test('only the controls that opt in follow the scheme the styler signals', async ({ page }) => {
+	// Two controls of the page, each a MapLibre group with a button and a field: one opts in.
 	await page.evaluate(() => {
 		const map = (window as unknown as { _map: { addControl(control: unknown): void } })._map;
-		map.addControl({
-			onAdd() {
-				const group = document.createElement('div');
-				group.className = 'maplibregl-ctrl maplibregl-ctrl-group page-control';
-				const button = document.createElement('button');
-				button.className = 'page-button';
-				button.style.color = 'light-dark(rgb(1, 1, 1), rgb(2, 2, 2))';
-				group.append(button);
-				return group;
-			},
-			onRemove() {},
-		});
+		for (const name of ['aware', 'plain']) {
+			map.addControl({
+				onAdd() {
+					const group = document.createElement('div');
+					group.className = `maplibregl-ctrl maplibregl-ctrl-group page-${name}`;
+					if (name === 'aware') group.classList.add('maplibregl-ctrl-scheme-aware');
+					group.innerHTML = '<button type="button">x</button><input>';
+					return group;
+				},
+				onRemove() {},
+			});
+		}
 	});
 	const map = page.locator('.maplibregl-map');
-	const group = page.locator('.page-control');
-	const button = page.locator('.page-button');
-	await expect(map).toHaveCSS('color-scheme', 'light');
-	await expect(button).toHaveCSS('color', 'rgb(1, 1, 1)');
+	const aware = page.locator('.page-aware');
+	const plain = page.locator('.page-plain');
+	await expect(map).toHaveAttribute('data-color-scheme', 'light');
+	await expect(aware).toHaveCSS('color-scheme', 'light');
+	await expect(aware).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 
 	await selectStyle(page, 'colorful-dark');
-	await expect(map).toHaveCSS('color-scheme', 'dark');
-	await expect(button).toHaveCSS('color', 'rgb(2, 2, 2)');
-	// the styler leaves the page's own controls to themselves
-	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+	await expect(map).toHaveAttribute('data-color-scheme', 'dark');
+	// a signal only: the container keeps the page's scheme
+	await expect(map).toHaveCSS('color-scheme', 'normal');
+
+	await expect(aware).toHaveCSS('color-scheme', 'dark');
+	await expect(aware).toHaveCSS('background-color', 'rgb(22, 27, 34)');
+	await expect(aware.locator('button')).toHaveCSS('color', 'rgb(228, 233, 239)');
+	await expect(aware.locator('input')).not.toHaveCSS('background-color', 'rgb(255, 255, 255)');
+
+	await expect(plain).toHaveCSS('color-scheme', 'normal');
+	await expect(plain).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+	await expect(plain.locator('button')).not.toHaveCSS('color', 'rgb(228, 233, 239)');
+	await expect(plain.locator('input')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 
 	await selectStyle(page, 'satellite');
-	await expect(map).toHaveCSS('color-scheme', 'dark');
+	await expect(map).toHaveAttribute('data-color-scheme', 'dark');
+});
+
+test('a page sets the colors of the controls that follow the scheme', async ({ page }) => {
+	await page.addStyleTag({
+		content: ':root { --maplibregl-ctrl-bg: light-dark(rgb(1, 2, 3), rgb(4, 5, 6)); }',
+	});
+	const group = page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-group').first();
+	await expect(group).toHaveCSS('background-color', 'rgb(1, 2, 3)');
+	await selectStyle(page, 'colorful-dark');
+	await expect(group).toHaveCSS('background-color', 'rgb(4, 5, 6)');
 });
 
 test('with `darkControls: false`, a dark style leaves every control light', async ({ page }) => {
@@ -306,8 +324,8 @@ test('with `darkControls: false`, a dark style leaves every control light', asyn
 	await expect.poll(async () => (await getMapStyle(page)).name).toBe('versatiles-colorful-dark');
 
 	await expect(page.locator('.maplibregl-map.versatiles-styler-dark')).toHaveCount(0);
-	// the page's color scheme, not the map's
-	await expect(page.locator('.maplibregl-map')).toHaveCSS('color-scheme', 'normal');
+	// no scheme signalled at all
+	await expect(page.locator('.maplibregl-map')).not.toHaveAttribute('data-color-scheme');
 	await expect(page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-group').first()).toHaveCSS(
 		'background-color',
 		'rgb(255, 255, 255)'

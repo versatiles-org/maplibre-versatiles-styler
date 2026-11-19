@@ -26,7 +26,7 @@
 	The closed styler as a bar: a button for each style it offers, and one that opens the sidebar. Not
 	a `maplibregl-ctrl-group`, which sizes every button in it to 29×29px.
 -->
-<div class="maplibregl-ctrl styler-quickbar">
+<div class="maplibregl-ctrl maplibregl-ctrl-scheme-aware styler-quickbar">
 	<div class="quickbar-styles" role="radiogroup" aria-label="Base style">
 		{#each styles as style (style.key)}
 			<label title={styleName(style.key)}>

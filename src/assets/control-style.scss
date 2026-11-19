@@ -2683,46 +2683,88 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 	}
 }
 
-// The dark panel's surface, line and ink, which MapLibre's controls take on too.
+// The dark panel's surface, line and ink, which the controls that follow the map take on too.
 $dark-bg: #161b22;
 $dark-line: #2a313b;
 $dark-ink: #e4e9ef;
 
-/**
- * MapLibre's own control buttons. Their icons are images, which `light-dark()` cannot swap, so the
- * styler darkens these controls itself; every other control follows the map container's
- * `color-scheme` on its own (see "Dark mode" in the README).
- */
+// The map's colour scheme, as the styler signals it on the map container (see "Dark mode" in the
+// README).
+$dark-map: '.maplibregl-map[data-color-scheme="dark"]';
+$light-map: '.maplibregl-map[data-color-scheme="light"]';
+
+// MapLibre's own control buttons.
 $maplibre-buttons: '.maplibregl-ctrl-zoom-in, .maplibregl-ctrl-zoom-out, .maplibregl-ctrl-compass, .maplibregl-ctrl-geolocate, .maplibregl-ctrl-fullscreen, .maplibregl-ctrl-shrink, .maplibregl-ctrl-terrain, .maplibregl-ctrl-globe';
 
-// A dark map gets dark MapLibre controls: their groups, the attribution and the scale. The icons are
-// inverted and turned back to their hue, so that the blue of an active geolocation stays blue.
-.versatiles-styler-dark {
-	.maplibregl-ctrl-group:has(> :is(#{$maplibre-buttons})) {
-		background: $dark-bg;
-		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+/**
+ * The controls that follow the map's colour scheme: those that opt in with the class
+ * `maplibregl-ctrl-scheme-aware`, and MapLibre's own groups, which the styler opts in on MapLibre's
+ * behalf. This is the convention proposed for MapLibre, until MapLibre has it: a control takes on the
+ * scheme only when it asks to, so that every other control stays as it is drawn.
+ */
+$scheme-aware: '.maplibregl-ctrl-scheme-aware, .maplibregl-ctrl-group:has(> :is(#{$maplibre-buttons}))';
+
+// Without `light-dark()`, the colours below would be invalid, and the controls transparent: older
+// browsers keep the controls as they are.
+@supports (color: light-dark(#000, #fff)) {
+	// `color-scheme` on the control itself turns its form fields and scrollbars, and resolves every
+	// `light-dark()` in it, including the variables of the page.
+	#{$dark-map} :is(#{$scheme-aware}) {
+		color-scheme: dark;
+	}
+
+	// Light on a light map, even on a dark page.
+	#{$light-map} :is(#{$scheme-aware}) {
+		color-scheme: light;
+	}
+
+	// The variables are read, never defined here: a page may set them anywhere, e.g. on `:root`.
+	:is(#{$scheme-aware}) {
+		background: var(--maplibregl-ctrl-bg, light-dark(#fff, #{$dark-bg}));
+		color: var(--maplibregl-ctrl-fg, light-dark(#333, #{$dark-ink}));
+
+		// The text colour of a button is the system's, which follows the scheme on its own: it takes
+		// the control's instead, and so do the icons drawn in `currentColor`.
+		button {
+			color: inherit;
+		}
 
 		button + button {
-			border-top-color: $dark-line;
+			border-top-color: var(--maplibregl-ctrl-line, light-dark(#ddd, #{$dark-line}));
+		}
+
+		@media (hover: hover) {
+			button:not(:disabled):hover {
+				background-color: var(
+					--maplibregl-ctrl-hover,
+					light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 8%))
+				);
+			}
+		}
+
+		button:not(:disabled):active {
+			background-color: var(
+				--maplibregl-ctrl-hover,
+				light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 8%))
+			);
 		}
 	}
 
+	#{$dark-map} :is(#{$scheme-aware}):is(.maplibregl-ctrl-group) {
+		box-shadow: 0 0 0 2px rgb(255 255 255 / 12%);
+	}
+}
+
+// What `color-scheme` cannot do for MapLibre's controls: their icons are images, which are inverted
+// and turned back to their hue, so that the blue of an active geolocation stays blue. And the
+// attribution and the scale, which are no groups.
+#{$dark-map} {
 	// In forced colors, MapLibre picks icons for the system's scheme itself: inverting them would undo it.
 	@media not all and (forced-colors: active) {
 		:is(#{$maplibre-buttons}) .maplibregl-ctrl-icon,
 		.maplibregl-ctrl-attrib-button {
 			filter: invert(1) hue-rotate(180deg);
 		}
-	}
-
-	@media (hover: hover) {
-		.maplibregl-ctrl button:is(#{$maplibre-buttons}):not(:disabled):hover {
-			background-color: rgba(255, 255, 255, 0.08);
-		}
-	}
-
-	.maplibregl-ctrl button:is(#{$maplibre-buttons}):not(:disabled):active {
-		background-color: rgba(255, 255, 255, 0.08);
 	}
 
 	.maplibregl-ctrl.maplibregl-ctrl-attrib {
@@ -2745,8 +2787,18 @@ $maplibre-buttons: '.maplibregl-ctrl-zoom-in, .maplibregl-ctrl-zoom-out, .maplib
 	}
 }
 
+// The styler's own panel, pickers and dialogs follow the map: their fields and scrollbars by the
+// scheme, the rest by the tokens below.
+#{$dark-map} .maplibregl-versatiles-styler {
+	color-scheme: dark;
+}
+
+#{$light-map} .maplibregl-versatiles-styler {
+	color-scheme: light;
+}
+
 // A dark map deserves a dark panel: the same tokens, other values.
-.versatiles-styler-dark .maplibregl-versatiles-styler {
+#{$dark-map} .maplibregl-versatiles-styler {
 	--bg: #{$dark-bg};
 	--sunken: #0f1318;
 	--line: #{$dark-line};

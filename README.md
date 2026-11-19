@@ -37,7 +37,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Panel header with Reset all (undoable)
 - Switching the base style keeps your changes: labels, layers, terrain and the like follow to the next style, and each style's colors come back with it
 - Optional quick-style bar (`quickStyles`): the closed styler as one-click buttons for light, dark and satellite, or styles of your choice
-- Dark controls on dark themes and satellite: the panel, the pickers and MapLibre's controls; the map container gets the style's `color-scheme`, which other controls can follow (see [Dark mode](#dark-mode))
+- Dark controls on dark themes and satellite: the panel, the pickers, MapLibre's controls and every control that opts in (see [Dark mode](#dark-mode))
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite
@@ -130,23 +130,39 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 
 ## Dark mode
 
-A dark style or satellite needs dark controls on top of it: white buttons glare on a dark map, and dark text vanishes on it. The rule the VersaTiles libraries follow:
+A dark style or satellite needs dark controls on top of it: white buttons glare on a dark map. But a control that wasn't made for it turns unreadable when its colors are switched from outside, so each control decides for itself. The convention the VersaTiles libraries follow, which we also propose for MapLibre:
 
-1. **Whoever picks the map style sets the map container's [`color-scheme`](https://developer.mozilla.org/docs/Web/CSS/color-scheme)**: `dark` for a dark style or satellite, `light` otherwise. Inside the map, the map's scheme wins over the page's: the controls sit on the map, so they need contrast with it. The styler does this, unless `darkControls` is `false`.
-2. **Controls on the map take their colors from [`light-dark()`](https://developer.mozilla.org/docs/Web/CSS/color_value/light-dark)**, and draw their icons in `currentColor`. They then follow every map that sets its scheme, with no class to know about and no code:
+1. **Whoever picks the map style marks the map container with `data-color-scheme`**: `dark` for a dark style or satellite, `light` otherwise. The attribute changes nothing by itself. The styler sets it, unless `darkControls` is `false`.
+2. **A control that follows the scheme opts in with the class `maplibregl-ctrl-scheme-aware`.** It then gets the map's [`color-scheme`](https://developer.mozilla.org/docs/Web/CSS/color-scheme) on its own element, which turns its form fields and scrollbars, and a background and text color that follow it. Its buttons take the text color, and so do icons drawn in `currentColor`:
+
+   ```js
+   container.className = 'maplibregl-ctrl maplibregl-ctrl-group maplibregl-ctrl-scheme-aware';
+   ```
+
+   A control that colors itself uses [`light-dark()`](https://developer.mozilla.org/docs/Web/CSS/color_value/light-dark), which resolves by that `color-scheme`:
 
    ```css
-   .my-control {
+   .my-control-panel {
      background: light-dark(#fff, #161b22);
      color: light-dark(#333, #e4e9ef);
    }
    ```
 
-3. **`prefers-color-scheme` is for the page around the map.** It is the visitor's system setting, and cannot say whether the map is dark.
+   A control without the class stays exactly as it is drawn.
+3. **The colors are variables**, which a page may set anywhere, e.g. on `:root`, to give all controls that follow the scheme its own colors. Each one is a `light-dark()` pair:
 
-The `color-scheme` also turns form controls and scrollbars inside the map dark. A control that leaves the colors of its inputs to the browser, but gives them a white box, should color them too.
+   | Variable                  | Default                                              |
+   | ------------------------- | ---------------------------------------------------- |
+   | `--maplibregl-ctrl-bg`    | `light-dark(#fff, #161b22)`                          |
+   | `--maplibregl-ctrl-fg`    | `light-dark(#333, #e4e9ef)`                          |
+   | `--maplibregl-ctrl-line`  | `light-dark(#ddd, #2a313b)`                          |
+   | `--maplibregl-ctrl-hover` | `light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 8%))` |
 
-MapLibre's own controls draw their icons as images, which `light-dark()` cannot swap; the styler darkens them itself, together with the attribution and the scale. While it shows a dark style, it also marks the map container with the class `versatiles-styler-dark`.
+4. **`prefers-color-scheme` is for the page around the map.** It is the visitor's system setting, and cannot say whether the map is dark.
+
+Why not `color-scheme` on the map container itself: it would reach every control inside, including those that never asked. Buttons would get light text, so icons drawn in `currentColor` vanish on a white group, and unstyled form fields would turn dark inside white panels.
+
+Until MapLibre has this convention, the styler provides it: the rules for `maplibregl-ctrl-scheme-aware`, and for MapLibre's own controls, whose icons it inverts, together with the attribution and the scale. They need a browser with `light-dark()` (2024 or later); older browsers keep the controls light. A dialog attached outside the map container, e.g. to `<body>`, does not get the scheme: its control reads `data-color-scheme` from the container and sets `color-scheme` on the dialog itself.
 
 ---
 

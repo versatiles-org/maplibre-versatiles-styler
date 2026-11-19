@@ -30,10 +30,11 @@ export interface VersaTilesStylerConfig {
 	 */
 	quickStyles?: boolean | string[];
 	/**
-	 * Let the controls follow the map's colours: on a dark style or satellite, the styler's sidebar,
-	 * bar and dialogs and MapLibre's controls turn dark, and the map container gets the
-	 * `color-scheme` of its style, which controls drawn with `light-dark()` follow. Default: `true`;
-	 * `false` leaves the controls, and the colour scheme, to the page.
+	 * Let the controls follow the map's colours: the styler marks the map container with
+	 * `data-color-scheme="dark"` or `"light"` by its style, and on a dark style or satellite, the
+	 * styler's sidebar, bar and dialogs, MapLibre's controls and every control with the class
+	 * `maplibregl-ctrl-scheme-aware` turn dark. Default: `true`; `false` sets no scheme and leaves
+	 * every control as it is drawn.
 	 */
 	darkControls?: boolean;
 	/** Keep the map view, the style and its options in the URL hash. Default: `true`. */

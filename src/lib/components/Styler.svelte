@@ -355,18 +355,17 @@
 	// comes back when the styler is removed.
 	const container = untrack(() => map.getContainer());
 	const hostBackground = container.style.backgroundColor;
-	const hostColorScheme = container.style.colorScheme;
+	const hostColorScheme = container.dataset.colorScheme;
 	/** Whether the controls follow the map's colours, unless the page keeps their look its own. */
 	const darkControls = untrack(() => config.darkControls !== false);
 	$effect(() => {
 		container.style.backgroundColor = containerBackground(currentStyleKey);
 		if (!darkControls) return;
 		const dark = isDarkStyle(currentStyleKey);
-		// The map's colour scheme, for every control on it: those drawn with `light-dark()` follow it,
-		// and so do form controls and scrollbars. Inside the map, it wins over the page's.
-		container.style.colorScheme = dark ? 'dark' : 'light';
-		// The styler's own panel, pickers and dialogs, and MapLibre's controls, whose icons are images
-		// that `light-dark()` cannot swap.
+		// The map's colour scheme, as a signal: it changes nothing by itself, and only the controls that
+		// opt in take it on (see "Dark mode" in the README).
+		container.dataset.colorScheme = dark ? 'dark' : 'light';
+		// The class of the styler before the signal, for pages that styled by it.
 		container.classList.toggle('versatiles-styler-dark', dark);
 	});
 
@@ -655,7 +654,8 @@
 		clearTimeout(statusTimer);
 		clearTimeout(undoTimer);
 		container.style.backgroundColor = hostBackground;
-		container.style.colorScheme = hostColorScheme;
+		if (hostColorScheme === undefined) delete container.dataset.colorScheme;
+		else container.dataset.colorScheme = hostColorScheme;
 		container.classList.remove('versatiles-styler-dark');
 	});
 </script>
@@ -674,7 +674,7 @@
 		bind:settings={settingsButton}
 	/>
 {:else}
-	<div class="maplibregl-ctrl maplibregl-ctrl-group styler-buttons">
+	<div class="maplibregl-ctrl maplibregl-ctrl-group maplibregl-ctrl-scheme-aware styler-buttons">
 		<button
 			type="button"
 			class="maplibregl-ctrl-icon"
