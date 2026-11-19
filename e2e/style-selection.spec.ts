@@ -249,7 +249,7 @@ test('another style keeps the changes every style shares, and each palette its c
 	await expect.poll(hashConfig).toEqual(changes);
 });
 
-test("a dark style gives the map's other controls dark colors too", async ({ page }) => {
+test("a dark style gives MapLibre's controls dark colors too", async ({ page }) => {
 	// the demo's navigation control, which is MapLibre's
 	const group = page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-group').first();
 	const icon = group.locator('.maplibregl-ctrl-icon').first();
@@ -264,6 +264,41 @@ test("a dark style gives the map's other controls dark colors too", async ({ pag
 	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });
 
+test("the map's color scheme follows its style; other controls follow it with light-dark()", async ({
+	page,
+}) => {
+	// A control of the page: a MapLibre group, one colored by `light-dark()` inside it.
+	await page.evaluate(() => {
+		const map = (window as unknown as { _map: { addControl(control: unknown): void } })._map;
+		map.addControl({
+			onAdd() {
+				const group = document.createElement('div');
+				group.className = 'maplibregl-ctrl maplibregl-ctrl-group page-control';
+				const button = document.createElement('button');
+				button.className = 'page-button';
+				button.style.color = 'light-dark(rgb(1, 1, 1), rgb(2, 2, 2))';
+				group.append(button);
+				return group;
+			},
+			onRemove() {},
+		});
+	});
+	const map = page.locator('.maplibregl-map');
+	const group = page.locator('.page-control');
+	const button = page.locator('.page-button');
+	await expect(map).toHaveCSS('color-scheme', 'light');
+	await expect(button).toHaveCSS('color', 'rgb(1, 1, 1)');
+
+	await selectStyle(page, 'colorful-dark');
+	await expect(map).toHaveCSS('color-scheme', 'dark');
+	await expect(button).toHaveCSS('color', 'rgb(2, 2, 2)');
+	// the styler leaves the page's own controls to themselves
+	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+
+	await selectStyle(page, 'satellite');
+	await expect(map).toHaveCSS('color-scheme', 'dark');
+});
+
 test('with `darkControls: false`, a dark style leaves every control light', async ({ page }) => {
 	await page.goto('/?dark=0#panel=open');
 	await page.locator('.maplibregl-versatiles-styler .maplibregl-pane').waitFor();
@@ -271,6 +306,8 @@ test('with `darkControls: false`, a dark style leaves every control light', asyn
 	await expect.poll(async () => (await getMapStyle(page)).name).toBe('versatiles-colorful-dark');
 
 	await expect(page.locator('.maplibregl-map.versatiles-styler-dark')).toHaveCount(0);
+	// the page's color scheme, not the map's
+	await expect(page.locator('.maplibregl-map')).toHaveCSS('color-scheme', 'normal');
 	await expect(page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-group').first()).toHaveCSS(
 		'background-color',
 		'rgb(255, 255, 255)'

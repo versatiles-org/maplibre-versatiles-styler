@@ -355,16 +355,19 @@
 	// comes back when the styler is removed.
 	const container = untrack(() => map.getContainer());
 	const hostBackground = container.style.backgroundColor;
-	/** Whether a dark map gets dark controls, unless the page keeps their look its own. */
+	const hostColorScheme = container.style.colorScheme;
+	/** Whether the controls follow the map's colours, unless the page keeps their look its own. */
 	const darkControls = untrack(() => config.darkControls !== false);
 	$effect(() => {
 		container.style.backgroundColor = containerBackground(currentStyleKey);
-		// A dark map gets a dark panel and dark controls: the map's own, and the styler's pickers and
-		// dialogs, which are inside the container too.
-		container.classList.toggle(
-			'versatiles-styler-dark',
-			darkControls && isDarkStyle(currentStyleKey)
-		);
+		if (!darkControls) return;
+		const dark = isDarkStyle(currentStyleKey);
+		// The map's colour scheme, for every control on it: those drawn with `light-dark()` follow it,
+		// and so do form controls and scrollbars. Inside the map, it wins over the page's.
+		container.style.colorScheme = dark ? 'dark' : 'light';
+		// The styler's own panel, pickers and dialogs, and MapLibre's controls, whose icons are images
+		// that `light-dark()` cannot swap.
+		container.classList.toggle('versatiles-styler-dark', dark);
 	});
 
 	// Switch away from a style only once its source is known to be missing, not while it loads.
@@ -652,6 +655,7 @@
 		clearTimeout(statusTimer);
 		clearTimeout(undoTimer);
 		container.style.backgroundColor = hostBackground;
+		container.style.colorScheme = hostColorScheme;
 		container.classList.remove('versatiles-styler-dark');
 	});
 </script>

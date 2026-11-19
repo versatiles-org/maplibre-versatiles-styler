@@ -2683,22 +2683,24 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 	}
 }
 
-// The dark panel's surface, line and ink, which the map's other controls take on too.
+// The dark panel's surface, line and ink, which MapLibre's controls take on too.
 $dark-bg: #161b22;
 $dark-line: #2a313b;
 $dark-ink: #e4e9ef;
 
-// A dark map gets dark controls: MapLibre's own and those of the page, as far as they are drawn the
-// MapLibre way — a white group, icons as dark images. The icons are inverted and turned back to their
-// hue, so that the blue of an active geolocation stays blue.
-.versatiles-styler-dark {
-	.maplibregl-ctrl-group {
-		background: $dark-bg;
+/**
+ * MapLibre's own control buttons. Their icons are images, which `light-dark()` cannot swap, so the
+ * styler darkens these controls itself; every other control follows the map container's
+ * `color-scheme` on its own (see "Dark mode" in the README).
+ */
+$maplibre-buttons: '.maplibregl-ctrl-zoom-in, .maplibregl-ctrl-zoom-out, .maplibregl-ctrl-compass, .maplibregl-ctrl-geolocate, .maplibregl-ctrl-fullscreen, .maplibregl-ctrl-shrink, .maplibregl-ctrl-terrain, .maplibregl-ctrl-globe';
 
-		// The styler's sidebar is a group too, with a shadow of its own.
-		&:not(:empty, .maplibregl-pane) {
-			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
-		}
+// A dark map gets dark MapLibre controls: their groups, the attribution and the scale. The icons are
+// inverted and turned back to their hue, so that the blue of an active geolocation stays blue.
+.versatiles-styler-dark {
+	.maplibregl-ctrl-group:has(> :is(#{$maplibre-buttons})) {
+		background: $dark-bg;
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 
 		button + button {
 			border-top-color: $dark-line;
@@ -2707,19 +2709,19 @@ $dark-ink: #e4e9ef;
 
 	// In forced colors, MapLibre picks icons for the system's scheme itself: inverting them would undo it.
 	@media not all and (forced-colors: active) {
-		.maplibregl-ctrl button .maplibregl-ctrl-icon,
+		:is(#{$maplibre-buttons}) .maplibregl-ctrl-icon,
 		.maplibregl-ctrl-attrib-button {
 			filter: invert(1) hue-rotate(180deg);
 		}
 	}
 
 	@media (hover: hover) {
-		.maplibregl-ctrl button:not(:disabled):hover {
+		.maplibregl-ctrl button:is(#{$maplibre-buttons}):not(:disabled):hover {
 			background-color: rgba(255, 255, 255, 0.08);
 		}
 	}
 
-	.maplibregl-ctrl button:not(:disabled):active {
+	.maplibregl-ctrl button:is(#{$maplibre-buttons}):not(:disabled):active {
 		background-color: rgba(255, 255, 255, 0.08);
 	}
 
@@ -2749,16 +2751,6 @@ $dark-ink: #e4e9ef;
 	--sunken: #0f1318;
 	--line: #{$dark-line};
 	--ink: #{$dark-ink};
-
-	// The styler's own buttons draw their icons in the text colour, or the accent while they are on.
-	button.maplibregl-ctrl-icon:not([aria-expanded='true']),
-	button.ctrl-inspect:not([aria-pressed='true']) {
-		color: $dark-ink;
-	}
-
-	.maplibregl-ctrl-group.styler-buttons button + button {
-		border-left-color: $dark-line;
-	}
 	--muted: #a2acb9;
 	--subtle: #8d97a4;
 	--accent: #5b9cff;
@@ -2766,6 +2758,28 @@ $dark-ink: #e4e9ef;
 	--ring: rgba(91, 156, 255, 0.4);
 	--warn: #f0a44b;
 	--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.5);
+
+	// The styler's buttons: a group of its own, drawn in the panel's colours.
+	.maplibregl-ctrl-group.styler-buttons {
+		background: var(--bg);
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+
+		button + button {
+			border-left-color: var(--line);
+		}
+
+		@media (hover: hover) {
+			button:not(:disabled):hover {
+				background-color: rgba(255, 255, 255, 0.08);
+			}
+		}
+	}
+
+	// Their icons in the text colour, or the accent while they are on.
+	button.maplibregl-ctrl-icon:not([aria-expanded='true']),
+	button.ctrl-inspect:not([aria-pressed='true']) {
+		color: var(--ink);
+	}
 
 	.maplibregl-list .entry select {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6.5L8 10l3.5-3.5' fill='none' stroke='%238d97a4' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");

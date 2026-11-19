@@ -37,7 +37,7 @@ Perfect for data journalism, demos, prototyping, or interactive style exploratio
 - Panel header with Reset all (undoable)
 - Switching the base style keeps your changes: labels, layers, terrain and the like follow to the next style, and each style's colors come back with it
 - Optional quick-style bar (`quickStyles`): the closed styler as one-click buttons for light, dark and satellite, or styles of your choice
-- Dark controls on dark themes and satellite: the panel, the pickers and the map's other controls (`darkControls: false` keeps them light)
+- Dark controls on dark themes and satellite: the panel, the pickers and MapLibre's controls; the map container gets the style's `color-scheme`, which other controls can follow (see [Dark mode](#dark-mode))
 - Works as a standard MapLibre control (`map.addControl`)
 - CSS is injected automatically — no separate stylesheet needed
 - Written in TypeScript, bundled with Vite
@@ -123,8 +123,30 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 | `addProtocol`     | `function` | –                        | MapLibre's `addProtocol`. With it, `externalSources` also offers tiles from PMTiles archives               |
 | `open`            | `boolean`  | `false`                  | Whether the sidebar is open initially, unless the URL hash says otherwise                                  |
 | `quickStyles`     | `boolean \| string[]` | `false`      | Show the closed styler as a bar of base styles and a button for the sidebar. `true` offers `colorful`, `colorful-dark` and `satellite`; a list names the styles |
-| `darkControls`    | `boolean`  | `true`                   | Give the styler's panel and the map's other controls dark colors while the map has a dark style or satellite |
+| `darkControls`    | `boolean`  | `true`                   | Let the controls follow the map's colors: see [Dark mode](#dark-mode). `false` leaves them to the page |
 | `hash`            | `boolean`  | `true`                   | Keep the map view, the style, its options and other tile sources in the URL hash fragment                  |
+
+---
+
+## Dark mode
+
+A dark style or satellite needs dark controls on top of it: white buttons glare on a dark map, and dark text vanishes on it. The rule the VersaTiles libraries follow:
+
+1. **Whoever picks the map style sets the map container's [`color-scheme`](https://developer.mozilla.org/docs/Web/CSS/color-scheme)**: `dark` for a dark style or satellite, `light` otherwise. Inside the map, the map's scheme wins over the page's: the controls sit on the map, so they need contrast with it. The styler does this, unless `darkControls` is `false`.
+2. **Controls on the map take their colors from [`light-dark()`](https://developer.mozilla.org/docs/Web/CSS/color_value/light-dark)**, and draw their icons in `currentColor`. They then follow every map that sets its scheme, with no class to know about and no code:
+
+   ```css
+   .my-control {
+     background: light-dark(#fff, #161b22);
+     color: light-dark(#333, #e4e9ef);
+   }
+   ```
+
+3. **`prefers-color-scheme` is for the page around the map.** It is the visitor's system setting, and cannot say whether the map is dark.
+
+The `color-scheme` also turns form controls and scrollbars inside the map dark. A control that leaves the colors of its inputs to the browser, but gives them a white box, should color them too.
+
+MapLibre's own controls draw their icons as images, which `light-dark()` cannot swap; the styler darkens them itself, together with the attribution and the scale. While it shows a dark style, it also marks the map container with the class `versatiles-styler-dark`.
 
 ---
 
