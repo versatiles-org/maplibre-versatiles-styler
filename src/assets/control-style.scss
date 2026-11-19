@@ -2705,9 +2705,12 @@ $dark-ink: #e4e9ef;
 		}
 	}
 
-	.maplibregl-ctrl button .maplibregl-ctrl-icon,
-	.maplibregl-ctrl-attrib-button {
-		filter: invert(1) hue-rotate(180deg);
+	// In forced colors, MapLibre picks icons for the system's scheme itself: inverting them would undo it.
+	@media not all and (forced-colors: active) {
+		.maplibregl-ctrl button .maplibregl-ctrl-icon,
+		.maplibregl-ctrl-attrib-button {
+			filter: invert(1) hue-rotate(180deg);
+		}
 	}
 
 	@media (hover: hover) {

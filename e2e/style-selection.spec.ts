@@ -282,3 +282,11 @@ test('with `darkControls: false`, a dark style leaves every control light', asyn
 	// the map still shows black around the globe, as dark styles do
 	await expect(page.locator('.maplibregl-map')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
 });
+
+test('in forced colors, a dark style leaves the icons as MapLibre picks them', async ({ page }) => {
+	await page.emulateMedia({ forcedColors: 'active' });
+	await selectStyle(page, 'colorful-dark');
+	await expect(page.locator('.maplibregl-map.versatiles-styler-dark')).toHaveCount(1);
+	const icon = page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-icon').first();
+	await expect(icon).toHaveCSS('filter', 'none');
+});
