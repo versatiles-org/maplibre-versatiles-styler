@@ -2683,12 +2683,79 @@ $chevron-down: "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E
 	}
 }
 
+// The dark panel's surface, line and ink, which the map's other controls take on too.
+$dark-bg: #161b22;
+$dark-line: #2a313b;
+$dark-ink: #e4e9ef;
+
+// A dark map gets dark controls: MapLibre's own and those of the page, as far as they are drawn the
+// MapLibre way — a white group, icons as dark images. The icons are inverted and turned back to their
+// hue, so that the blue of an active geolocation stays blue.
+.versatiles-styler-dark {
+	.maplibregl-ctrl-group {
+		background: $dark-bg;
+
+		// The styler's sidebar is a group too, with a shadow of its own.
+		&:not(:empty, .maplibregl-pane) {
+			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+		}
+
+		button + button {
+			border-top-color: $dark-line;
+		}
+	}
+
+	.maplibregl-ctrl button .maplibregl-ctrl-icon,
+	.maplibregl-ctrl-attrib-button {
+		filter: invert(1) hue-rotate(180deg);
+	}
+
+	@media (hover: hover) {
+		.maplibregl-ctrl button:not(:disabled):hover {
+			background-color: rgba(255, 255, 255, 0.08);
+		}
+	}
+
+	.maplibregl-ctrl button:not(:disabled):active {
+		background-color: rgba(255, 255, 255, 0.08);
+	}
+
+	.maplibregl-ctrl.maplibregl-ctrl-attrib {
+		background-color: rgba(22, 27, 34, 0.6);
+		color: $dark-ink;
+
+		&.maplibregl-compact {
+			background-color: $dark-bg;
+		}
+
+		a {
+			color: rgba(255, 255, 255, 0.75);
+		}
+	}
+
+	.maplibregl-ctrl-scale {
+		background-color: rgba(22, 27, 34, 0.75);
+		border-color: $dark-ink;
+		color: $dark-ink;
+	}
+}
+
 // A dark map deserves a dark panel: the same tokens, other values.
 .versatiles-styler-dark .maplibregl-versatiles-styler {
-	--bg: #161b22;
+	--bg: #{$dark-bg};
 	--sunken: #0f1318;
-	--line: #2a313b;
-	--ink: #e4e9ef;
+	--line: #{$dark-line};
+	--ink: #{$dark-ink};
+
+	// The styler's own buttons draw their icons in the text colour, or the accent while they are on.
+	button.maplibregl-ctrl-icon:not([aria-expanded='true']),
+	button.ctrl-inspect:not([aria-pressed='true']) {
+		color: $dark-ink;
+	}
+
+	.maplibregl-ctrl-group.styler-buttons button + button {
+		border-left-color: $dark-line;
+	}
 	--muted: #a2acb9;
 	--subtle: #8d97a4;
 	--accent: #5b9cff;

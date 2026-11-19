@@ -248,3 +248,18 @@ test('another style keeps the changes every style shares, and each palette its c
 	await selectStyle(page, 'colorful');
 	await expect.poll(hashConfig).toEqual(changes);
 });
+
+test("a dark style gives the map's other controls dark colors too", async ({ page }) => {
+	// the demo's navigation control, which is MapLibre's
+	const group = page.locator('.maplibregl-ctrl-top-right .maplibregl-ctrl-group').first();
+	const icon = group.locator('.maplibregl-ctrl-icon').first();
+	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+	await expect(icon).toHaveCSS('filter', 'none');
+
+	await selectStyle(page, 'colorful-dark');
+	await expect(group).toHaveCSS('background-color', 'rgb(22, 27, 34)');
+	await expect(icon).toHaveCSS('filter', 'invert(1) hue-rotate(180deg)');
+
+	await selectStyle(page, 'colorful');
+	await expect(group).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+});
