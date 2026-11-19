@@ -714,16 +714,19 @@
 						class="icon-button"
 						aria-label="Reset all changes"
 						title="Reset all {totalChanges} changes"
-						onclick={resetAll}><span class="icon icon-reset" aria-hidden="true"></span></button
+						onclick={resetAll}
 					>
+						<span class="icon icon-reset" aria-hidden="true"></span>
+					</button>
 				{/if}
 				<button
 					type="button"
 					class="icon-button"
 					aria-label="Close the style editor"
 					onclick={() => setPaneOpen(false)}
-					><span class="icon icon-close" aria-hidden="true"></span></button
 				>
+					<span class="icon icon-close" aria-hidden="true"></span>
+				</button>
 			</div>
 		</div>
 		{#if status}
@@ -739,15 +742,17 @@
 				class="toolbar-button"
 				aria-haspopup="dialog"
 				onclick={() => (importOpen = true)}
-				><span class="icon icon-import" aria-hidden="true"></span>Import…</button
 			>
+				<span class="icon icon-import" aria-hidden="true"></span>Import…
+			</button>
 			<button
 				type="button"
 				class="toolbar-button"
 				aria-haspopup="dialog"
 				onclick={() => (exportOpen = true)}
-				><span class="icon icon-export" aria-hidden="true"></span>Export…</button
 			>
+				<span class="icon icon-export" aria-hidden="true"></span>Export…
+			</button>
 		</div>
 		<h4 class="section-group">Setup</h4>
 		<SidebarSection
@@ -811,8 +816,9 @@
 				href="https://github.com/versatiles-org/maplibre-versatiles-styler"
 				target="_blank"
 				rel="noopener noreferrer"
-				><span class="icon icon-github" aria-hidden="true"></span>Improve me on GitHub</a
 			>
+				<span class="icon icon-github" aria-hidden="true"></span>Improve me on GitHub
+			</a>
 		</div>
 	</div>
 {/if}

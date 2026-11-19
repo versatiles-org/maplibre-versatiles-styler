@@ -100,9 +100,9 @@
 	>
 		<div class="theme-picker-header">
 			<span class="theme-picker-title">Base style</span>
-			<button type="button" class="theme-picker-close" aria-label="Close" onclick={onclose}
-				>×</button
-			>
+			<button type="button" class="theme-picker-close" aria-label="Close" onclick={onclose}>
+				×
+			</button>
 		</div>
 		<div class="theme-picker-body" role="radiogroup" aria-label="Base style">
 			{#if groups.own.length > 0}

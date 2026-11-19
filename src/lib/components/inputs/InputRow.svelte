@@ -73,8 +73,10 @@
 					for={uid}
 					title={name}
 					onpointerdown={(e) => (touched = e.pointerType !== 'mouse')}
-					onclick={tapLabel}>{label}</label
-				><HintTip {label} {hint} bind:this={tip} />
+					onclick={tapLabel}
+				>
+					{label}
+				</label><HintTip {label} {hint} bind:this={tip} />
 			</span>
 		{:else}
 			<label for={uid} title={name}>{label}</label>
@@ -82,9 +84,9 @@
 	</div>
 	<div class="input">
 		{@render children(uid)}
-		<button type="button" class="reset" disabled={disabled || !isModified} onclick={onReset}
-			>&circlearrowleft;</button
-		>
+		<button type="button" class="reset" disabled={disabled || !isModified} onclick={onReset}>
+			&circlearrowleft;
+		</button>
 	</div>
 	{#if warning}
 		<p class="warning" role="note">⚠ {warning}</p>

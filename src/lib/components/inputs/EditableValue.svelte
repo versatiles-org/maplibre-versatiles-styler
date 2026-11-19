@@ -70,6 +70,8 @@
 		title="Click to enter a value"
 		bind:this={button}
 		aria-label="{label}: {display}. Enter a value"
-		onclick={() => (editing = true)}>{display}</button
+		onclick={() => (editing = true)}
 	>
+		{display}
+	</button>
 {/if}

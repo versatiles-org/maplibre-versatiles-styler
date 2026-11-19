@@ -34,17 +34,19 @@
 		<span class="section-title">{title}</span>
 		{#if value}<span class="section-value">{value}</span>{/if}
 		{#if changes > 0}
-			<span class="section-count" title="{changes} {changes === 1 ? 'change' : 'changes'}"
-				>{changes}</span
-			>
+			<span class="section-count" title="{changes} {changes === 1 ? 'change' : 'changes'}">
+				{changes}
+			</span>
 			{#if onReset}
 				<button
 					type="button"
 					class="section-reset"
 					title="Reset this section"
 					aria-label="Reset {title}"
-					onclick={handleReset}>&circlearrowleft;</button
+					onclick={handleReset}
 				>
+					&circlearrowleft;
+				</button>
 			{/if}
 		{/if}
 	</summary>

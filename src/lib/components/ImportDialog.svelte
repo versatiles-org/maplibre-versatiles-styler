@@ -190,8 +190,10 @@
 				type="button"
 				class="primary-button"
 				disabled={busy || text.trim() === ''}
-				onclick={check}>{busy ? 'Checking…' : 'Check'}</button
+				onclick={check}
 			>
+				{busy ? 'Checking…' : 'Check'}
+			</button>
 		</div>
 
 		{#if error}
@@ -251,9 +253,9 @@
 					<!-- Collapsed: these are true of almost every import, and beside a real warning they
 					     would only teach people to skim past both. -->
 					<details class="import-notes">
-						<summary
-							>{groups.notes.length} more {groups.notes.length === 1 ? 'note' : 'notes'}</summary
-						>
+						<summary>
+							{groups.notes.length} more {groups.notes.length === 1 ? 'note' : 'notes'}
+						</summary>
 						<ul class="import-diagnostics">
 							{#each groups.notes as d, index (index)}
 								<li>{d.message}</li>

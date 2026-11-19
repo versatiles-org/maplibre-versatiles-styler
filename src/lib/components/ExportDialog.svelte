@@ -72,8 +72,10 @@
 				role="radio"
 				aria-checked={option.value === value}
 				tabindex={option.value === value ? 0 : -1}
-				onclick={() => choose(option.value)}>{option.label}</button
+				onclick={() => choose(option.value)}
 			>
+				{option.label}
+			</button>
 		{/each}
 	</div>
 {/snippet}
@@ -89,8 +91,10 @@
 				aria-controls="export-panel-{entry.id}"
 				tabindex={tab === entry.id ? 0 : -1}
 				onclick={() => (tab = entry.id)}
-				onkeydown={(event) => handleTabKeydown(event, index)}>{entry.label}</button
+				onkeydown={(event) => handleTabKeydown(event, index)}
 			>
+				{entry.label}
+			</button>
 		{/each}
 	</div>
 {/snippet}
@@ -112,9 +116,9 @@
 				A <strong>style.json</strong> is the finished map style: colours, fonts and every layer,
 				ready for MapLibre to draw. Nothing is loaded from this styler afterwards — hand the file to
 				<code>new maplibregl.Map({'{ style: … }'})</code>.
-				<a href={DOCS.styleSpec} target="_blank" rel="noopener noreferrer"
-					>What is in a style.json?</a
-				>
+				<a href={DOCS.styleSpec} target="_blank" rel="noopener noreferrer">
+					What is in a style.json?
+				</a>
 			</p>
 			{#if pmtiles}
 				<p class="dialog-note">
@@ -158,8 +162,10 @@
 				<a
 					href={usedTarget === 'npm' ? DOCS.styleNpm : DOCS.styleBrowser}
 					target="_blank"
-					rel="noopener noreferrer">How to use it</a
+					rel="noopener noreferrer"
 				>
+					How to use it
+				</a>
 			</p>
 			{#if targets.length > 1}
 				<div class="dialog-choice">

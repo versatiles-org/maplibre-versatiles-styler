@@ -270,8 +270,9 @@
 	>
 		<div class="font-picker-header">
 			<span class="font-picker-title">Font for {title}</span>
-			<button type="button" class="font-picker-close" aria-label="Close" onclick={onclose}>×</button
-			>
+			<button type="button" class="font-picker-close" aria-label="Close" onclick={onclose}>
+				×
+			</button>
 		</div>
 		<div class="font-picker-tools">
 			<input
@@ -295,8 +296,9 @@
 				title="Show only fonts that can write these scripts"
 				bind:this={filterButton}
 				onclick={() => (filterOpen = !filterOpen)}
-				>{scriptSummary(shared.scripts)}<span aria-hidden="true">&nbsp;▾</span></button
 			>
+				{scriptSummary(shared.scripts)}<span aria-hidden="true">&nbsp;▾</span>
+			</button>
 		</div>
 		{#if filterOpen}
 			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -314,28 +316,35 @@
 							type="button"
 							disabled={isSelection([labelScript])}
 							onclick={() => labelScript && shared.setScripts([labelScript])}
-							>Label language: {scriptName(labelScript)}</button
 						>
+							Label language: {scriptName(labelScript)}
+						</button>
 					{/if}
 					{#if shared.labelTexts}
 						<button
 							type="button"
 							title="The scripts of the labels the map shows now"
 							disabled={layers.length === 0}
-							onclick={selectScriptsInView}>Scripts in view</button
+							onclick={selectScriptsInView}
 						>
+							Scripts in view
+						</button>
 					{/if}
 					<button
 						type="button"
 						title="Every script some font on this server can write"
 						disabled={available.length === 0 || isSelection(available)}
-						onclick={() => shared.setScripts(available)}>All available</button
+						onclick={() => shared.setScripts(available)}
 					>
+						All available
+					</button>
 					<button
 						type="button"
 						disabled={shared.scripts.length === 0}
-						onclick={() => shared.clearScripts()}>Clear</button
+						onclick={() => shared.clearScripts()}
 					>
+						Clear
+					</button>
 				</div>
 				{#if inViewStatus}
 					<p class="font-picker-status" role="status">{inViewStatus}</p>
@@ -367,11 +376,11 @@
 									aria-pressed={selected}
 									title={examples ? `e.g. ${examples}` : undefined}
 									onclick={() => shared.toggleScript(script)}
-									>{#if selected}<span aria-hidden="true">✓&nbsp;</span>{/if}{scriptName(
-										script
-									)}{#if !selected}<span class="font-picker-count">{counts[script]}</span
-										>{/if}</button
 								>
+									{#if selected}<span aria-hidden="true">✓&nbsp;</span>{/if}{scriptName(
+										script
+									)}{#if !selected}<span class="font-picker-count">{counts[script]}</span>{/if}
+								</button>
 							{/each}
 						</div>
 						{#if needsEastAsiaNote(region.scripts)}
@@ -444,8 +453,9 @@
 					<span class="font-picker-caption">
 						{family.name}{#if searching}&nbsp;· {face.title}{/if} · {family.faces.length}
 						{family.faces.length === 1 ? 'style' : 'styles'}
-						{#if badges[family.name]}<span class="font-picker-badge">{badges[family.name]}</span
-							>{/if}
+						{#if badges[family.name]}<span class="font-picker-badge">
+								{badges[family.name]}
+							</span>{/if}
 						{#if note}<span class="font-picker-warning">⚠ {note}</span>{/if}
 					</span>
 				</li>
@@ -459,8 +469,10 @@
 									<button
 										type="button"
 										aria-pressed={base.width === width}
-										onclick={() => pickStyle(family, base, { width })}>{widthLabel(width)}</button
+										onclick={() => pickStyle(family, base, { width })}
 									>
+										{widthLabel(width)}
+									</button>
 								{/each}
 							</div>
 						{/if}
@@ -470,8 +482,10 @@
 									type="button"
 									aria-pressed={base.weight === weight}
 									title={String(weight)}
-									onclick={() => pickStyle(family, base, { weight })}>{weightLabel(weight)}</button
+									onclick={() => pickStyle(family, base, { weight })}
 								>
+									{weightLabel(weight)}
+								</button>
 							{/each}
 						</div>
 						{#if choices.italic}

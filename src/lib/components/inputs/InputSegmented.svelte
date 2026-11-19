@@ -80,8 +80,10 @@
 					tabindex={checked || (selectedIndex === -1 && index === 0) ? 0 : -1}
 					{disabled}
 					onclick={() => choose(option.value)}
-					onkeydown={handleKeydown}>{option.label}</button
+					onkeydown={handleKeydown}
 				>
+					{option.label}
+				</button>
 			{/each}
 		</div>
 	{/snippet}
