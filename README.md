@@ -130,7 +130,7 @@ The `VersaTilesStylerControl` constructor accepts an optional config object:
 
 ## Dark mode
 
-A dark style or satellite needs dark controls on top of it: white buttons glare on a dark map. But a control that wasn't made for it turns unreadable when its colors are switched from outside, so each control decides for itself. The convention the VersaTiles libraries follow, which we also propose for MapLibre:
+A dark style or satellite needs dark controls on top of it: white buttons glare on a dark map. But a control that wasn't made for it turns unreadable when its colors are switched from outside, so each control decides for itself. The convention the VersaTiles libraries follow, which we also propose for MapLibre, is described in full, with how each VersaTiles control follows it, in [versatiles-frontend](https://github.com/versatiles-org/versatiles-frontend/blob/main/docs/color-scheme.md). In short:
 
 1. **Whoever picks the map style marks the map container with `data-color-scheme`**: `dark` for a dark style or satellite, `light` otherwise. The attribute changes nothing by itself. The styler sets it, unless `darkControls` is `false`.
 2. **A control that follows the scheme opts in with the class `maplibregl-ctrl-scheme-aware`.** It then gets the map's [`color-scheme`](https://developer.mozilla.org/docs/Web/CSS/color-scheme) on its own element, which turns its form fields and scrollbars, and a background and text color that follow it. Its buttons take the text color, and so do icons drawn in `currentColor`:
