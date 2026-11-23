@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-11-23
+
+### Documentation
+
+- link the full description of the colour-scheme convention in versatiles-frontend ([dd23a3e](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/dd23a3e4eee8a44d6b8cd533772344e3cb854eab))
+
+### Chores
+
+- update @versatiles/style and svelte dependencies to latest versions ([5091822](https://github.com/versatiles-org/maplibre-versatiles-styler/commit/5091822639907447de60f66121f7553babb64fe6))
+
 ## [3.1.0] - 2026-11-19
 
 ### Features
